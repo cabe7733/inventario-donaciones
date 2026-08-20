@@ -29,3 +29,6 @@ coverage
 
 # Supabase CLI local
 .supabase
+
+# TS incremental build info
+*.tsbuildinfo
