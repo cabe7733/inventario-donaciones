@@ -7,9 +7,8 @@ import { todayKey } from '../../lib/format';
 import type { Medication } from '../../db/types';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
-import { Field } from '../../components/ui/Field';
+import { Field, inputClass } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
-import { Stepper } from '../../components/ui/Stepper';
 import { useToast } from '../../components/ui/Toast';
 
 interface Props {
@@ -25,16 +24,18 @@ export function EntradaModal({ medication, open, onClose }: Props) {
   const lots = useLiveQuery(() => (medication ? lotsFor(medication.id) : []), [medication]);
 
   const [loteId, setLoteId] = useState<string | null>(null);
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState('1');
   const [error, setError] = useState<string>();
+  const [qtyError, setQtyError] = useState<string>();
   const [fecha, setFecha] = useState(todayKey());
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setLoteId(null);
-      setQty(1);
+      setQty('1');
       setError(undefined);
+      setQtyError(undefined);
       setFecha(todayKey());
     }
   }, [open]);
@@ -53,8 +54,15 @@ export function EntradaModal({ medication, open, onClose }: Props) {
 
   const save = async () => {
     if (!medication) return;
+    setError(undefined);
+    setQtyError(undefined);
     if (!loteId) {
       setError(t('common.required'));
+      return;
+    }
+    const qtyNum = Number.parseInt(qty, 10);
+    if (!(qtyNum >= 1)) {
+      setQtyError(t('movimientos.error.qty'));
       return;
     }
     setSaving(true);
@@ -62,11 +70,11 @@ export function EntradaModal({ medication, open, onClose }: Props) {
       await registerMedicationEntrada({
         medicationId: medication.id,
         loteId,
-        qty,
+        qty: qtyNum,
         fecha: `${fecha}T12:00:00`,
       });
       toast.push({
-        message: t('medicamentos.entradaOk', { qty: String(qty), name: medication.name }),
+        message: t('medicamentos.entradaOk', { qty: String(qtyNum), name: medication.name }),
         tone: 'success',
       });
       onClose();
@@ -95,8 +103,20 @@ export function EntradaModal({ medication, open, onClose }: Props) {
               : undefined
           }
         />
-        <Field id="en-qty" label={t('medicamentos.cantidad')}>
-          <Stepper value={qty} onChange={setQty} />
+        <Field id="en-qty" label={t('medicamentos.cantidad')} error={qtyError}>
+          <input
+            id="en-qty"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            className={inputClass}
+            value={qty}
+            onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))}
+            onKeyDown={(e) => {
+              if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
+            }}
+          />
         </Field>
         <Field id="en-fecha" label={t('movimientos.fecha')}>
           <input

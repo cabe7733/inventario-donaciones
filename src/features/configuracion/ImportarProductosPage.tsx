@@ -147,7 +147,12 @@ export function ImportarProductosPage() {
   const [rows, setRows] = useState<PreviewRow[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<{ ok: number; created: number; skipped: number } | null>(null);
+  const [result, setResult] = useState<{
+    ok: number;
+    created: number;
+    productsCreated: number;
+    productsUpdated: number;
+  } | null>(null);
 
   const summary = useMemo(() => {
     const ok = rows.filter((r) => r.status === 'ok').length;
@@ -205,6 +210,7 @@ export function ImportarProductosPage() {
         async () => {
           const catByName = new Map<string, string>();
           const unitByName = new Map<string, string>();
+          const productByName = new Map<string, string>();
 
           const existingCats = await db.categories.where('_deleted').equals(0).toArray();
           for (const c of existingCats) {
@@ -214,9 +220,15 @@ export function ImportarProductosPage() {
           for (const u of existingUnits) {
             if (u.scope === 'product') unitByName.set(u.name.toLowerCase(), u.id);
           }
+          const existingProducts = await db.products.where('_deleted').equals(0).toArray();
+          for (const p of existingProducts) {
+            productByName.set(p.name.toLowerCase(), p.id);
+          }
 
           let nextCatOrder = existingCats.filter((c) => c.scope === 'product').length;
           let createdCats = 0;
+          let productsCreated = 0;
+          let productsUpdated = 0;
           const now = nowISO();
           const did = deviceId();
 
@@ -232,33 +244,57 @@ export function ImportarProductosPage() {
             let unitId: string;
             const unitName = r.unit ?? 'Unidad';
             const unitKey = unitName.toLowerCase();
-            const cached = unitByName.get(unitKey);
-            if (cached) {
-              unitId = cached;
+            const cachedUnit = unitByName.get(unitKey);
+            if (cachedUnit) {
+              unitId = cachedUnit;
             } else {
               unitId = await addUnit(unitName, 'product');
               unitByName.set(unitKey, unitId);
             }
 
-            const productId = newId();
-            const row: Product = {
-              id: productId,
-              name: r.product,
-              aliases: [],
-              categoryId: catId,
-              unitId,
-              minStock: null,
-              totalStock: r.qty,
-              isActive: 1,
-              createdAt: now,
-              updatedAt: now,
-              _version: 1,
-              _deleted: 0,
-              _syncedAt: null,
-              _deviceId: did,
-              _clientUuid: newId(),
-            };
-            await db.products.add(row);
+            const productKey = r.product.toLowerCase();
+            const existingProductId = productByName.get(productKey);
+            let productId: string;
+
+            if (existingProductId) {
+              // El producto ya existe: no se duplica, se actualiza su categoría/unidad
+              // y se suma la cantidad importada al stock actual mediante un movimiento.
+              productId = existingProductId;
+              const existing = await db.products.get(existingProductId);
+              if (existing) {
+                await db.products.update(existingProductId, {
+                  categoryId: catId,
+                  unitId,
+                  totalStock: existing.totalStock + r.qty,
+                  updatedAt: now,
+                  _version: existing._version + 1,
+                  _syncedAt: null,
+                });
+              }
+              productsUpdated++;
+            } else {
+              productId = newId();
+              const row: Product = {
+                id: productId,
+                name: r.product,
+                aliases: [],
+                categoryId: catId,
+                unitId,
+                minStock: null,
+                totalStock: r.qty,
+                isActive: 1,
+                createdAt: now,
+                updatedAt: now,
+                _version: 1,
+                _deleted: 0,
+                _syncedAt: null,
+                _deviceId: did,
+                _clientUuid: newId(),
+              };
+              await db.products.add(row);
+              productByName.set(productKey, productId);
+              productsCreated++;
+            }
 
             if (r.qty > 0) {
               await db.movements.add({
@@ -281,7 +317,12 @@ export function ImportarProductosPage() {
               });
             }
           }
-          return { ok: okRows.length, created: createdCats, skipped: 0 };
+          return {
+            ok: okRows.length,
+            created: createdCats,
+            productsCreated,
+            productsUpdated,
+          };
         },
       );
 
@@ -389,6 +430,8 @@ export function ImportarProductosPage() {
           {t('import.summary', {
             ok: String(result.ok),
             cats: String(result.created),
+            newProducts: String(result.productsCreated),
+            updatedProducts: String(result.productsUpdated),
           })}
         </p>
       )}

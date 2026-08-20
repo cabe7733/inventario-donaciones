@@ -5,9 +5,8 @@ import { StockError } from '../../lib/movements';
 import { todayKey } from '../../lib/format';
 import type { Medication } from '../../db/types';
 import { Button } from '../../components/ui/Button';
-import { Field } from '../../components/ui/Field';
+import { Field, inputClass } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
-import { Stepper } from '../../components/ui/Stepper';
 import { useToast } from '../../components/ui/Toast';
 
 interface FeFoSeg {
@@ -26,7 +25,8 @@ export function SalidaModal({ medication, open, onClose }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
 
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState('1');
+  const [qtyError, setQtyError] = useState<string>();
   const [fecha, setFecha] = useState(todayKey());
   const [plan, setPlan] = useState<FeFoSeg[]>([]);
   const [insufficient, setInsufficient] = useState(false);
@@ -34,7 +34,8 @@ export function SalidaModal({ medication, open, onClose }: Props) {
 
   useEffect(() => {
     if (!open || !medication) return;
-    setQty(1);
+    setQty('1');
+    setQtyError(undefined);
     setFecha(todayKey());
     void updatePlan(1);
   }, [open, medication]);
@@ -48,23 +49,33 @@ export function SalidaModal({ medication, open, onClose }: Props) {
     setInsufficient(Math.round(total) < Math.round(q));
   };
 
-  const changeQty = (q: number) => {
-    setQty(q);
-    void updatePlan(q);
+  const changeQty = (raw: string) => {
+    const digits = raw.replace(/[^0-9]/g, '');
+    setQty(digits);
+    const q = Number.parseInt(digits, 10);
+    if (q >= 1) void updatePlan(q);
+    else setPlan([]);
   };
 
   const save = async () => {
-    if (!medication || insufficient) return;
+    if (!medication) return;
+    setQtyError(undefined);
+    const qtyNum = Number.parseInt(qty, 10);
+    if (!(qtyNum >= 1)) {
+      setQtyError(t('movimientos.error.qty'));
+      return;
+    }
+    if (insufficient) return;
     setSaving(true);
     try {
       const consumed = await salidaFefo({
         medicationId: medication.id,
-        qty,
+        qty: qtyNum,
         fecha: `${fecha}T12:00:00`,
       });
       const names = consumed.map((c) => `${c.lote} (${c.qty})`).join(', ');
       toast.push({
-        message: t('medicamentos.salidaOk', { qty: String(qty), name: medication.name, lotes: names }),
+        message: t('medicamentos.salidaOk', { qty: String(qtyNum), name: medication.name, lotes: names }),
         tone: 'neutral',
       });
       onClose();
@@ -81,8 +92,20 @@ export function SalidaModal({ medication, open, onClose }: Props) {
       <div className="flex flex-col gap-4">
         <p className="text-body text-muted">{t('medicamentos.salida.hint')}</p>
 
-        <Field id="sa-qty" label={t('medicamentos.cantidad')}>
-          <Stepper value={qty} onChange={changeQty} />
+        <Field id="sa-qty" label={t('medicamentos.cantidad')} error={qtyError}>
+          <input
+            id="sa-qty"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            className={inputClass}
+            value={qty}
+            onChange={(e) => changeQty(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
+            }}
+          />
         </Field>
         <Field id="sa-fecha" label={t('movimientos.fecha')}>
           <input
