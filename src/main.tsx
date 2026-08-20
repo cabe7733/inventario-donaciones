@@ -8,8 +8,21 @@ import { router } from './router';
 import { ThemeProvider } from './lib/theme/ThemeProvider';
 import { ToastProvider } from './components/ui/Toast';
 import { seedIfEmpty } from './db/seed';
+import { syncNow, syncEnabled } from './lib/sync';
 
 seedIfEmpty();
+
+if (syncEnabled) {
+  const run = () => {
+    void syncNow().catch(() => {
+      /* offline: se reintenta en el próximo evento online/intervalo */
+    });
+  };
+  run();
+  window.addEventListener('online', run);
+  // ponytail: intervalo de 60s cubre retries y cambios de otros dispositivos
+  setInterval(run, 60_000);
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

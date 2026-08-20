@@ -32,3 +32,5 @@ coverage
 
 # TS incremental build info
 *.tsbuildinfo
+
+.vercel
