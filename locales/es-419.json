@@ -75,6 +75,7 @@
     "hoy": "Hoy",
     "ayer": "Ayer",
     "error.product": "Selecciona un producto",
+    "error.qty": "Ingresa una cantidad válida",
     "entradaOk": "Entrada registrada: {{qty}} × {{name}}",
     "salidaOk": "Salida registrada: {{qty}} × {{name}}",
     "stockInsuficiente": "Stock insuficiente para {{name}}. Disponible: {{stock}}"
@@ -231,7 +232,24 @@
     "apariencia": "Apariencia",
     "exportar": "Exportar",
     "acercaDe": "Acerca de",
+    "importar": "Importar productos",
     "apar.light": "Claro",
     "apar.dark": "Oscuro"
+  },
+  "import": {
+    "title": "Importar productos",
+    "subtitle": "Carga masiva desde un archivo plano (CSV o TXT)",
+    "help": "Columnas: producto, categoria, cantidad en stock. Separador ; o ,. La primera fila puede tener encabezados. Si la categoría no existe, se crea automáticamente.",
+    "template": "Descargar plantilla",
+    "pick": "Elegir archivo",
+    "preview": "{{ok}} listas para importar, {{skipped}} con error",
+    "importBtn": "Importar {{count}}",
+    "done": "Importación completada: {{count}} productos",
+    "summary": "Listo. {{ok}} productos importados, {{cats}} categorías creadas.",
+    "rowQty": "Cantidad: {{qty}}",
+    "error.producto": "Falta nombre del producto",
+    "error.categoria": "Falta categoría",
+    "error.cantidad": "Cantidad inválida (debe ser ≥ 0)",
+    "movementNote": "Importación inicial"
   }
 }

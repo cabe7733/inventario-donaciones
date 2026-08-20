@@ -10,9 +10,8 @@ import { todayKey } from '../../lib/format';
 import type { MovementKind } from '../../db/types';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
-import { Field } from '../../components/ui/Field';
+import { Field, inputClass } from '../../components/ui/Field';
 import { Segmented } from '../../components/ui/Segmented';
-import { Stepper } from '../../components/ui/Stepper';
 import { useToast } from '../../components/ui/Toast';
 
 function combineDate(dateKey: string): string {
@@ -31,7 +30,7 @@ export function MovimientoPage() {
 
   const [kind, setKind] = useState<MovementKind>(initial);
   const [productId, setProductId] = useState<string | null>(null);
-  const [qty, setQty] = useState(1);
+  const [qty, setQty] = useState('1');
   const [nota, setNota] = useState('');
   const [dateKey, setDateKey] = useState(todayKey());
   const [error, setError] = useState<string>();
@@ -80,11 +79,16 @@ export function MovimientoPage() {
       return;
     }
     try {
+      const qtyNum = Number.parseInt(qty, 10);
+      if (!(qtyNum >= 1)) {
+        setError(t('movimientos.error.qty'));
+        return;
+      }
       await registerProductMovement({
         kind,
         itemType: 'product',
         itemId: productId,
-        qty,
+        qty: qtyNum,
         fecha: combineDate(dateKey),
         nota,
       });
@@ -92,11 +96,11 @@ export function MovimientoPage() {
       toast.push({
         message:
           kind === 'entrada'
-            ? t('movimientos.entradaOk', { name: p?.name ?? '', qty: String(qty) })
-            : t('movimientos.salidaOk', { name: p?.name ?? '', qty: String(qty) }),
+            ? t('movimientos.entradaOk', { name: p?.name ?? '', qty })
+            : t('movimientos.salidaOk', { name: p?.name ?? '', qty }),
         tone: kind === 'entrada' ? 'success' : 'neutral',
       });
-      setQty(1);
+      setQty('1');
       setNota('');
     } catch (e) {
       if (e instanceof StockError) {
@@ -146,7 +150,19 @@ export function MovimientoPage() {
       />
 
       <Field id="m-qty" label={t('movimientos.cantidad')} required>
-        <Stepper value={qty} onChange={setQty} max={kind === 'salida' ? undefined : undefined} />
+        <input
+          id="m-qty"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          className={inputClass}
+          value={qty}
+          onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))}
+          onKeyDown={(e) => {
+            if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
+          }}
+        />
       </Field>
 
       <div className="grid grid-cols-2 gap-2">
@@ -176,7 +192,7 @@ export function MovimientoPage() {
           className="flex-1"
           onClick={() => {
             setProductId(null);
-            setQty(1);
+            setQty('1');
             setNota('');
             setError(undefined);
           }}

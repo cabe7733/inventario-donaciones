@@ -11,6 +11,7 @@ import {
   UserList,
   Archive,
   Info,
+  UploadSimple,
 } from '@phosphor-icons/react';
 import { useTheme } from '../../lib/theme/ThemeProvider';
 
@@ -45,6 +46,14 @@ export function MasPage() {
         >
           <Ruler size={20} className="text-muted" aria-hidden="true" />
           <span className="flex-1">{t('mas.unidades')}</span>
+          <CaretRight size={16} className="text-muted" aria-hidden="true" />
+        </Link>
+        <Link
+          to="/mas/importar"
+          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
+        >
+          <UploadSimple size={20} className="text-muted" aria-hidden="true" />
+          <span className="flex-1">{t('mas.importar')}</span>
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link

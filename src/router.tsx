@@ -5,6 +5,7 @@ import { DashboardPage } from './features/dashboard/DashboardPage';
 import { MasPage } from './features/configuracion/MasPage';
 import { CategoriasPage } from './features/configuracion/CategoriasPage';
 import { UnidadesPage } from './features/configuracion/UnidadesPage';
+import { ImportarProductosPage } from './features/configuracion/ImportarProductosPage';
 import { MovimientoPage } from './features/movimientos/MovimientoPage';
 import { MovimientosPage } from './features/movimientos/MovimientosPage';
 import { KitsListPage } from './features/kits/KitsListPage';
@@ -51,6 +52,7 @@ export const router = createBrowserRouter([
       { path: 'kits/:id', element: <KitDetailPage /> },
       { path: 'mas/categorias', element: <CategoriasPage /> },
       { path: 'mas/unidades', element: <UnidadesPage /> },
+      { path: 'mas/importar', element: <ImportarProductosPage /> },
       { path: 'mas/movimientos', element: <MovimientosPage /> },
       ...PLACEHOLDERS.map(({ path, key }) => ({
         path,
