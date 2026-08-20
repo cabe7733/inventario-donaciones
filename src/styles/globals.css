@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply text-body;
+  }
+  body {
+    @apply bg-surface text-fg antialiased;
+    min-height: 100dvh;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-primary-500));
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .tap-target {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in var(--duration-fast) var(--ease-decel) both;
+  }
+
+  .animate-sheet-in {
+    animation: sheet-in var(--duration-normal) var(--ease-emphasized) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ponytail: Inter self-hosted se agrega en su fase (binario woff2 no descargable en este entorno).
+   La pila system-ui/Segoe UI/Roboto cubre v1. */
