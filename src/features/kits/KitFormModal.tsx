@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Minus, Plus, X } from '@phosphor-icons/react';
-import { db } from '../../db';
-import { deviceId, newId, nowISO } from '../../lib/ids';
+import { createKit, updateKit, clearKitComponents, addKitComponent, type Category, type Kit, type Product, type Unit } from '../../lib/db';
 import { addCategory, addUnit } from '../../lib/catalog';
-import type { Category, Kit, Product, Unit } from '../../db/types';
+import { newId } from '../../lib/ids';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
@@ -42,8 +41,8 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
   useEffect(() => {
     if (!open) return;
     setName(kit?.name ?? '');
-    setCategoryId(kit?.categoryId ?? null);
-    setUnitId(kit?.unitId ?? null);
+    setCategoryId(kit?.category_id ?? null);
+    setUnitId(kit?.unit_id ?? null);
     setRows(comps.map((c) => ({ key: newId(), productId: c.productId, productName: c.productName, qty: c.qty })));
     setErrors({});
   }, [open, kit, comps]);
@@ -58,8 +57,8 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
   );
   const productItems = useMemo<AocItem[]>(
     () =>
-      (products ?? [])
-        .filter((p) => p.isActive === 1)
+      products
+        .filter((p) => p.is_active)
         .map((p) => {
           const used = rows.some((r) => r.productId === p.id);
           return { id: p.id, label: p.name, sublabel: used ? t('kits.form.alreadyAdded') : undefined };
@@ -82,9 +81,9 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
 
   const removeRow = (key: string) => setRows((prev) => prev.filter((r) => r.key !== key));
 
-  const createCategory = (label: string) => addCategory(label, 'product', 'box', categories.length);
+  const onCreateCategory = (label: string) => addCategory(label, 'product', 'box', categories.length);
 
-  const createUnit = (label: string) => addUnit(label, 'product');
+  const onCreateUnit = (label: string) => addUnit(label, 'product');
 
   const save = async () => {
     const next: typeof errors = {};
@@ -97,51 +96,45 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
     }
     setSaving(true);
     try {
-      const base = {
-        name: name.trim(),
-        categoryId,
-        unitId: unitId!,
-      };
-      const componentRows = rows.map((r, i) => ({
-        productId: r.productId,
-        qty: r.qty,
-        unitId: unitId!,
-        order: i,
-      }));
       if (kit) {
-        await db.transaction('rw', db.kits, db.kitComponents, async () => {
-          await db.kits.update(kit.id, {
-            ...base,
-            _version: kit._version + 1,
-            _syncedAt: null,
-            updatedAt: nowISO(),
-          });
-          await db.kitComponents.where('kitId').equals(kit.id).delete();
-          await db.kitComponents.bulkAdd(
-            componentRows.map((c) => ({ id: newId(), kitId: kit.id, ...c })),
-          );
+        await updateKit(kit.id, {
+          name: name.trim(),
+          category_id: categoryId,
+          unit_id: unitId!,
+          version: kit.version + 1,
         });
+        await clearKitComponents(kit.id);
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          await addKitComponent({
+            kit_id: kit.id,
+            product_id: r.productId,
+            qty: r.qty,
+            unit_id: unitId!,
+            order: i,
+          });
+        }
         toast.push({ message: t('kits.saved'), tone: 'success' });
       } else {
-        await db.transaction('rw', db.kits, db.kitComponents, async () => {
-          const kitId = newId();
-          await db.kits.add({
-            id: kitId,
-            ...base,
-            totalStock: 0,
-            isActive: 1,
-            createdAt: nowISO(),
-            updatedAt: nowISO(),
-            _version: 1,
-            _deleted: 0,
-            _syncedAt: null,
-            _deviceId: deviceId(),
-            _clientUuid: newId(),
-          });
-          await db.kitComponents.bulkAdd(
-            componentRows.map((c) => ({ id: newId(), kitId, ...c })),
-          );
+        const kitId = newId();
+        await createKit({
+          id: kitId,
+          name: name.trim(),
+          category_id: categoryId,
+          unit_id: unitId!,
+          total_stock: 0,
+          is_active: true,
         });
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          await addKitComponent({
+            kit_id: kitId,
+            product_id: r.productId,
+            qty: r.qty,
+            unit_id: unitId!,
+            order: i,
+          });
+        }
         toast.push({ message: t('kits.created'), tone: 'success' });
       }
       onClose();
@@ -174,7 +167,7 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
           value={categoryId}
           onChange={setCategoryId}
           items={categoryItems}
-          onCreate={createCategory}
+          onCreate={onCreateCategory}
         />
 
         <AutocompleteOrCreate
@@ -184,7 +177,7 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
           value={unitId}
           onChange={setUnitId}
           items={unitItems}
-          onCreate={createUnit}
+          onCreate={onCreateUnit}
           error={errors.unit}
         />
 

@@ -1,47 +1,43 @@
-import { db } from '../db';
-import { deviceId, newId } from './ids';
-import type { Category, Scope, Unit } from '../db/types';
+import {
+  fetchCategories as _fetchCategories,
+  fetchUnits as _fetchUnits,
+  createCategory as _createCategory,
+  createUnit as _createUnit,
+  type Scope,
+  type Category,
+  type Unit,
+} from './db';
 
-// ponytail: scope filtra en memoria; listas <100, sin índice extra necesario
+export type { Category, Unit, Scope };
+
 export const categoriasFor = (cats: Category[], scope: Scope): Category[] =>
-  cats.filter((c) => c.scope === scope && c.isActive === 1);
+  cats.filter((c) => c.scope === scope && c.is_active);
 
 export const unitsFor = (units: Unit[], scope: Scope): Unit[] =>
-  units.filter((u) => u.scope === scope && u.isActive === 1);
+  units.filter((u) => u.scope === scope && u.is_active);
 
-export async function addCategory(name: string, scope: Scope, iconKey: string, order: number, color = 'primary-600'): Promise<string> {
-  const id = newId();
-  await db.categories.add({
-    id,
-    name,
-    color,
-    iconKey,
-    scope,
-    order,
-    isActive: 1,
-    _version: 1,
-    _deleted: 0,
-    _syncedAt: null,
-    _deviceId: deviceId(),
-    _clientUuid: newId(),
-  });
-  return id;
+export async function fetchAllCategories(): Promise<Category[]> {
+  return _fetchCategories();
 }
 
-// ponytail: abreviatura por defecto = 4 letras; se edita después en Más > Unidades
-export async function addUnit(name: string, scope: Scope, abbreviation?: string): Promise<string> {
-  const id = newId();
-  await db.units.add({
-    id,
-    name,
-    scope,
-    abbreviation: abbreviation ?? name.toLowerCase().slice(0, 4),
-    isActive: 1,
-    _version: 1,
-    _deleted: 0,
-    _syncedAt: null,
-    _deviceId: deviceId(),
-    _clientUuid: newId(),
-  });
-  return id;
+export async function fetchAllUnits(): Promise<Unit[]> {
+  return _fetchUnits();
+}
+
+export async function addCategory(
+  name: string,
+  scope: Scope,
+  iconKey: string,
+  order: number,
+  color = 'primary-600',
+): Promise<string> {
+  return _createCategory(name, scope, iconKey, order, color);
+}
+
+export async function addUnit(
+  name: string,
+  scope: Scope,
+  abbreviation?: string,
+): Promise<string> {
+  return _createUnit(name, scope, abbreviation);
 }

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { db } from '../../db';
-import { deviceId, newId, nowISO } from '../../lib/ids';
+import { newId } from '../../lib/ids';
 import { addCategory, addUnit } from '../../lib/catalog';
-import type { Category, Medication, Unit } from '../../db/types';
+import { createMedication, updateMedication, type Category, type Medication, type Unit } from '../../lib/db';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
@@ -38,8 +37,8 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
     if (!open) return;
     setName(medication?.name ?? '');
     setPresentacion(medication?.presentacion ?? '');
-    setCategoriaId(medication?.categoriaId ?? null);
-    setUnitId(medication?.unitId ?? null);
+    setCategoriaId(medication?.categoria_id ?? null);
+    setUnitId(medication?.unit_id ?? null);
     setErrors({});
   }, [open, medication]);
 
@@ -53,40 +52,21 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
   );
 
   const createCategory = (label: string) => addCategory(label, 'medication', 'pills', categories.length);
-
   const createUnit = (label: string) => addUnit(label, 'medication');
 
   const save = async () => {
     const next: Errors = {};
     if (!name.trim()) next.name = t('common.required');
     if (!unitId) next.unit = t('common.required');
-    if (Object.keys(next).length) {
-      setErrors(next);
-      return;
-    }
+    if (Object.keys(next).length) { setErrors(next); return; }
     setSaving(true);
     try {
-      const data = { name: name.trim(), presentacion: presentacion.trim(), categoriaId, unitId: unitId! };
+      const data = { name: name.trim(), presentacion: presentacion.trim(), categoria_id: categoriaId, unit_id: unitId! };
       if (medication) {
-        await db.medications.update(medication.id, {
-          ...data,
-          _version: medication._version + 1,
-          _syncedAt: null,
-        });
+        await updateMedication(medication.id, { ...data, version: medication.version + 1 });
         toast.push({ message: t('medicamentos.saved'), tone: 'success' });
       } else {
-        await db.medications.add({
-          id: newId(),
-          ...data,
-          isActive: 1,
-          createdAt: nowISO(),
-          updatedAt: nowISO(),
-          _version: 1,
-          _deleted: 0,
-          _syncedAt: null,
-          _deviceId: deviceId(),
-          _clientUuid: newId(),
-        });
+        await createMedication({ id: newId(), ...data, is_active: true });
         toast.push({ message: t('medicamentos.created'), tone: 'success' });
       }
       onClose();
@@ -96,60 +76,19 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
   };
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={medication ? t('medicamentos.form.editTitle') : t('medicamentos.form.title')}
-    >
+    <Modal open={open} onClose={onClose} title={medication ? t('medicamentos.form.editTitle') : t('medicamentos.form.title')}>
       <div className="flex flex-col gap-4">
         <Field id="md-name" label={t('medicamentos.form.name')} required error={errors.name}>
-          <input
-            id="md-name"
-            className={inputWithError(errors.name)}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t('medicamentos.form.name.placeholder')}
-            autoFocus
-          />
+          <input id="md-name" className={inputWithError(errors.name)} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('medicamentos.form.name.placeholder')} autoFocus />
         </Field>
-
         <Field id="md-pres" label={t('medicamentos.form.presentacion')} hint={t('medicamentos.form.presentacion.hint')}>
-          <input
-            id="md-pres"
-            className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg placeholder:text-muted"
-            value={presentacion}
-            onChange={(e) => setPresentacion(e.target.value)}
-            placeholder={t('medicamentos.form.presentacion.placeholder')}
-          />
+          <input id="md-pres" className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg placeholder:text-muted" value={presentacion} onChange={(e) => setPresentacion(e.target.value)} placeholder={t('medicamentos.form.presentacion.placeholder')} />
         </Field>
-
-        <AutocompleteOrCreate
-          id="md-cat"
-          label={t('medicamentos.form.categoria')}
-          value={categoriaId}
-          onChange={setCategoriaId}
-          items={categoryItems}
-          onCreate={createCategory}
-        />
-
-        <AutocompleteOrCreate
-          id="md-unit"
-          label={t('medicamentos.form.unit')}
-          required
-          value={unitId}
-          onChange={setUnitId}
-          items={unitItems}
-          onCreate={createUnit}
-          error={errors.unit}
-        />
-
+        <AutocompleteOrCreate id="md-cat" label={t('medicamentos.form.categoria')} value={categoriaId} onChange={setCategoriaId} items={categoryItems} onCreate={createCategory} />
+        <AutocompleteOrCreate id="md-unit" label={t('medicamentos.form.unit')} required value={unitId} onChange={setUnitId} items={unitItems} onCreate={createUnit} error={errors.unit} />
         <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={() => void save()} disabled={saving}>
-            {t('common.save')}
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={() => void save()} disabled={saving}>{t('common.save')}</Button>
         </div>
       </div>
     </Modal>

@@ -1,11 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowDownRight, ArrowUpRight } from '@phosphor-icons/react';
-import { db } from '../../db';
+import { fetchMovements, fetchProducts, fetchMedications, fetchKits, fetchUnits, type Movement, type ItemType } from '../../lib/db';
 import { formatNumber, formatTime, formatDateShort, toLocalDateKey, todayKey } from '../../lib/format';
-import type { ItemType, Movement } from '../../db/types';
 import { Segmented } from '../../components/ui/Segmented';
 
 const ITEM_NAV_KEY: Record<ItemType, string> = {
@@ -23,36 +21,28 @@ export function MovimientosPage() {
   const [params, setParams] = useSearchParams();
   const scope = params.get('scope') ?? 'all';
 
-  const movements = useLiveQuery(
-    () => db.movements.orderBy('fecha').reverse().limit(200).toArray(),
-    [],
-  );
+  const [movements, setMovements] = useState<Movement[]>([]);
+  const [maps, setMaps] = useState<{ product: Map<string, string>; medication: Map<string, string>; kit: Map<string, string> }>({ product: new Map(), medication: new Map(), kit: new Map() });
+  const [unitBy, setUnitBy] = useState<Map<string, string>>(new Map());
+  const [loading, setLoading] = useState(true);
 
-  const products = useLiveQuery(
-    () => db.products.where('_deleted').equals(0).toArray(),
-    [],
-  );
-  const medications = useLiveQuery(
-    () => db.medications.where('_deleted').equals(0).toArray(),
-    [],
-  );
-  const kits = useLiveQuery(() => db.kits.where('_deleted').equals(0).toArray(), []);
-  const units = useLiveQuery(() => db.units.toArray(), []);
-
-  const maps = useMemo(
-    () => ({
-      product: new Map((products ?? []).map((p) => [p.id, p.name])),
-      medication: new Map((medications ?? []).map((m) => [m.id, m.name])),
-      kit: new Map((kits ?? []).map((k) => [k.id, k.name])),
-    }),
-    [products, medications, kits],
-  );
-  const unitBy = useMemo(() => new Map((units ?? []).map((u) => [u.id, u.abbreviation])), [units]);
+  useEffect(() => {
+    void (async () => {
+      const [movs, prods, meds, kits, units] = await Promise.all([fetchMovements({ limit: 200 }), fetchProducts(), fetchMedications(), fetchKits(), fetchUnits()]);
+      setMovements(movs);
+      setMaps({
+        product: new Map(prods.map((p) => [p.id, p.name])),
+        medication: new Map(meds.map((m) => [m.id, m.name])),
+        kit: new Map(kits.map((k) => [k.id, k.name])),
+      });
+      setUnitBy(new Map(units.map((u) => [u.id, u.abbreviation])));
+      setLoading(false);
+    })();
+  }, []);
 
   const scoped = useMemo(() => {
-    if (!movements) return undefined;
-    if (scope === 'product') return movements.filter((m) => m.itemType !== 'medication');
-    if (scope === 'medication') return movements.filter((m) => m.itemType === 'medication');
+    if (scope === 'product') return movements.filter((m) => m.item_type !== 'medication');
+    if (scope === 'medication') return movements.filter((m) => m.item_type === 'medication');
     return movements;
   }, [movements, scope]);
 
@@ -63,7 +53,7 @@ export function MovimientosPage() {
 
   const grouped = useMemo(() => {
     const g = new Map<string, Movement[]>();
-    for (const m of scoped ?? []) {
+    for (const m of scoped) {
       const key = toLocalDateKey(m.fecha);
       const list = g.get(key) ?? [];
       list.push(m);
@@ -72,73 +62,39 @@ export function MovimientosPage() {
     return [...g.entries()];
   }, [scoped]);
 
+  function yesterdayKey(): string {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return toLocalDateKey(d.toISOString());
+  }
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <h1 className="text-h2">{t('movimientos.historial')}</h1>
-
-      <Segmented
-        value={scope}
-        onChange={setScope}
-        ariaLabel={t('movimientos.scope')}
-        options={[
-          { value: 'all', label: t('movimientos.scope.all') },
-          { value: 'product', label: t('movimientos.scope.products') },
-          { value: 'medication', label: t('movimientos.scope.medications') },
-        ]}
-      />
-
-      {!scoped || scoped.length === 0 ? (
+      <Segmented value={scope} onChange={setScope} ariaLabel={t('movimientos.scope')} options={[{ value: 'all', label: t('movimientos.scope.all') }, { value: 'product', label: t('movimientos.scope.products') }, { value: 'medication', label: t('movimientos.scope.medications') }]} />
+      {loading ? (
+        <p className="text-body text-muted">{t('common.loading')}</p>
+      ) : scoped.length === 0 ? (
         <p className="text-body text-muted">{t('movimientos.historial.empty')}</p>
       ) : (
         grouped.map(([key, list]) => {
-          const label =
-            key === todayKey()
-              ? t('movimientos.hoy')
-              : key === yesterdayKey()
-                ? t('movimientos.ayer')
-                : formatDateShort(key);
+          const label = key === todayKey() ? t('movimientos.hoy') : key === yesterdayKey() ? t('movimientos.ayer') : formatDateShort(key);
           return (
             <section key={key}>
               <h2 className="text-label mb-2 text-muted">{label}</h2>
               <ul className="flex flex-col gap-2">
                 {list.map((m) => (
-                  <li
-                    key={m.id}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
-                  >
-                    <span
-                      aria-hidden="true"
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                        m.kind === 'entrada'
-                          ? 'bg-success-500/15 text-success-700'
-                          : 'bg-secondary-500/15 text-secondary-700'
-                      }`}
-                    >
-                      {m.kind === 'entrada' ? (
-                        <ArrowDownRight size={20} />
-                      ) : (
-                        <ArrowUpRight size={20} />
-                      )}
+                  <li key={m.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+                    <span aria-hidden="true" className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${m.kind === 'entrada' ? 'bg-success-500/15 text-success-700' : 'bg-secondary-500/15 text-secondary-700'}`}>
+                      {m.kind === 'entrada' ? <ArrowDownRight size={20} /> : <ArrowUpRight size={20} />}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-body font-medium">
-                        {itemName(m.itemType, m.itemId, maps)}
-                      </p>
-                      <p className="truncate text-caption text-muted">
-                        {m.nota || t(ITEM_NAV_KEY[m.itemType])}
-                      </p>
+                      <p className="truncate text-body font-medium">{itemName(m.item_type, m.item_id, maps)}</p>
+                      <p className="truncate text-caption text-muted">{m.nota || t(ITEM_NAV_KEY[m.item_type])}</p>
                     </div>
                     <div className="text-right">
-                      <p
-                        className={`text-numeric font-semibold ${
-                          m.kind === 'entrada' ? 'text-success-700' : 'text-secondary-700'
-                        }`}
-                      >
-                        {m.kind === 'entrada' ? '+' : '−'}
-                        {formatNumber(m.qty)}
-                        <span className="ml-1 text-caption text-muted">
-                          {unitBy.get(m.unitId) ?? ''}
-                        </span>
+                      <p className={`text-numeric font-semibold ${m.kind === 'entrada' ? 'text-success-700' : 'text-secondary-700'}`}>
+                        {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}<span className="ml-1 text-caption text-muted">{unitBy.get(m.unit_id) ?? ''}</span>
                       </p>
                       <p className="text-caption text-muted">{formatTime(m.fecha)}</p>
                     </div>
@@ -151,10 +107,4 @@ export function MovimientosPage() {
       )}
     </div>
   );
-}
-
-function yesterdayKey(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return toLocalDateKey(d.toISOString());
 }

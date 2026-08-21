@@ -1,11 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { PencilSimple, Plus, Trash } from '@phosphor-icons/react';
-import { db } from '../../db';
-import { categoriasFor, addCategory } from '../../lib/catalog';
-import type { Category, Scope } from '../../db/types';
+import { fetchCategories, fetchProducts, fetchMedications, createCategory, updateCategory, deleteCategory, type Category, type Scope } from '../../lib/db';
+import { categoriasFor } from '../../lib/catalog';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -27,42 +25,26 @@ export function CategoriasPage() {
   const toast = useToast();
 
   const [scope, setScope] = useState<Scope>('product');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [counts, setCounts] = useState<Map<string, number>>(new Map());
 
-  const categories = useLiveQuery(() => db.categories.where('_deleted').equals(0).toArray(), []);
-  const counts = useLiveQuery(
-    () =>
-      Promise.all([
-        db.products
-          .where('_deleted')
-          .equals(0)
-          .toArray()
-          .then((ps) => {
-            const m = new Map<string, number>();
-            for (const p of ps) {
-              if (p.categoryId) m.set(p.categoryId, (m.get(p.categoryId) ?? 0) + 1);
-            }
-            return m;
-          }),
-        db.medications
-          .where('_deleted')
-          .equals(0)
-          .toArray()
-          .then((ms) => {
-            const m = new Map<string, number>();
-            for (const med of ms) {
-              if (med.categoriaId) m.set(med.categoriaId, (m.get(med.categoriaId) ?? 0) + 1);
-            }
-            return m;
-          }),
-      ]).then(([prod, med]) => {
-        const merged = new Map(prod);
-        for (const [k, v] of med) merged.set(k, (merged.get(k) ?? 0) + v);
-        return merged;
-      }),
-    [],
-  );
+  const load = async () => {
+    const cats = await fetchCategories();
+    setCategories(cats);
+    const [ps, ms] = await Promise.all([fetchProducts(), fetchMedications()]);
+    const m = new Map<string, number>();
+    for (const p of ps) {
+      if (p.category_id) m.set(p.category_id, (m.get(p.category_id) ?? 0) + 1);
+    }
+    for (const med of ms) {
+      if (med.categoria_id) m.set(med.categoria_id, (m.get(med.categoria_id) ?? 0) + 1);
+    }
+    setCounts(m);
+  };
 
-  const visible = categoriasFor(categories ?? [], scope);
+  useEffect(() => { load(); }, []);
+
+  const visible = categoriasFor(categories, scope);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
@@ -97,18 +79,18 @@ export function CategoriasPage() {
     setSaving(true);
     try {
       if (editing) {
-        await db.categories.update(editing.id, {
+        await updateCategory(editing.id, {
           name: trimmed,
           color,
-          _version: editing._version + 1,
-          _syncedAt: null,
+          version: editing.version + 1,
         });
         toast.push({ message: t('categorias.saved'), tone: 'success' });
       } else {
-        await addCategory(trimmed, scope, scope === 'medication' ? 'pills' : 'box', visible.length, color);
+        await createCategory(trimmed, scope, scope === 'medication' ? 'pills' : 'box', visible.length, color);
         toast.push({ message: t('categorias.created'), tone: 'success' });
       }
       setFormOpen(false);
+      load();
     } finally {
       setSaving(false);
     }
@@ -116,13 +98,10 @@ export function CategoriasPage() {
 
   const remove = async () => {
     if (!deleting) return;
-    await db.categories.update(deleting.id, {
-      _deleted: 1,
-      _version: deleting._version + 1,
-      _syncedAt: null,
-    });
+    await deleteCategory(deleting.id, deleting.version);
     toast.push({ message: t('categorias.deleted'), tone: 'success' });
     setDeleting(null);
+    load();
   };
 
   return (
@@ -161,7 +140,7 @@ export function CategoriasPage() {
               aria-hidden="true"
             />
             <span className="flex-1 truncate text-body font-medium">{c.name}</span>
-            <span className="text-caption text-muted">{counts?.get(c.id) ?? 0}</span>
+            <span className="text-caption text-muted">{counts.get(c.id) ?? 0}</span>
             <button
               type="button"
               aria-label={`${t('common.edit')} ${c.name}`}

@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { CaretRight, Cube, PencilSimple, Plus, Package, HandHeart } from '@phosphor-icons/react';
-import { db } from '../../db';
+import { fetchKits, fetchCategories, fetchUnits, fetchProducts, fetchAllKitComponents, type Kit, type Category, type Unit, type Product, type KitComponent } from '../../lib/db';
 import { formatNumber } from '../../lib/format';
-import type { Kit } from '../../db/types';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { KitFormModal } from './KitFormModal';
@@ -14,30 +12,43 @@ import { KitActionModal } from './KitActionModal';
 export function KitsListPage() {
   const { t } = useTranslation();
 
-  const kits = useLiveQuery(() => db.kits.where('_deleted').equals(0).toArray(), []);
-  const categories = useLiveQuery(() => db.categories.where('_deleted').equals(0).toArray(), []);
-  const units = useLiveQuery(() => db.units.where('_deleted').equals(0).toArray(), []);
-  const products = useLiveQuery(() => db.products.where('_deleted').equals(0).toArray(), []);
-  const kitComps = useLiveQuery(() => db.kitComponents.toArray(), []);
+  const [kits, setKits] = useState<Kit[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [kitComps, setKitComps] = useState<KitComponent[]>([]);
+
+  useEffect(() => {
+    fetchKits().then(setKits);
+    fetchCategories().then(setCategories);
+    fetchUnits().then(setUnits);
+    fetchProducts().then(setProducts);
+    fetchAllKitComponents().then(setKitComps);
+  }, []);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Kit | null>(null);
   const [action, setAction] = useState<{ mode: 'build' | 'deliver'; kit: Kit } | null>(null);
 
-  const productMap = useMemo(() => new Map((products ?? []).map((p) => [p.id, p.name])), [products]);
+  const productMap = useMemo(() => new Map(products.map((p) => [p.id, p.name])), [products]);
   const compsByKit = useMemo(() => {
     const m = new Map<string, Array<{ productId: string; qty: number; productName: string }>>();
-    for (const c of kitComps ?? []) {
-      const list = m.get(c.kitId) ?? [];
-      list.push({ productId: c.productId, qty: c.qty, productName: productMap.get(c.productId) ?? '?' });
-      m.set(c.kitId, list);
+    for (const c of kitComps) {
+      const list = m.get(c.kit_id) ?? [];
+      list.push({ productId: c.product_id, qty: c.qty, productName: productMap.get(c.product_id) ?? '?' });
+      m.set(c.kit_id, list);
     }
     return m;
   }, [kitComps, productMap]);
 
-  const catBy = useMemo(() => new Map((categories ?? []).map((c) => [c.id, c.name])), [categories]);
-  const unitBy = useMemo(() => new Map((units ?? []).map((u) => [u.id, u.abbreviation])), [units]);
-  const productById = useMemo(() => new Map((products ?? []).map((p) => [p.id, p])), [products]);
+  const catBy = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+  const unitBy = useMemo(() => new Map(units.map((u) => [u.id, u.abbreviation])), [units]);
+  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+
+  const refresh = () => {
+    fetchKits().then(setKits);
+    fetchAllKitComponents().then(setKitComps);
+  };
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -54,7 +65,7 @@ export function KitsListPage() {
         </Button>
       </header>
 
-      {!kits || kits.length === 0 ? (
+      {kits.length === 0 ? (
         <EmptyState
           icon={Cube}
           title={t('kits.list.empty')}
@@ -88,9 +99,9 @@ export function KitsListPage() {
                         <CaretRight size={14} className="shrink-0 text-muted" aria-hidden="true" />
                       </Link>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        {k.categoryId && catBy.get(k.categoryId) && (
+                        {k.category_id && catBy.get(k.category_id) && (
                           <span className="rounded-full bg-primary-50 px-2 py-0.5 text-caption text-primary-700">
-                            {catBy.get(k.categoryId!)}
+                            {catBy.get(k.category_id!)}
                           </span>
                         )}
                         <span className="text-caption text-muted">
@@ -100,8 +111,8 @@ export function KitsListPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-numeric-lg text-primary-700">
-                        {formatNumber(k.totalStock)}
-                        <span className="ml-1 text-caption text-muted">{unitBy.get(k.unitId) ?? ''}</span>
+                        {formatNumber(k.total_stock)}
+                        <span className="ml-1 text-caption text-muted">{unitBy.get(k.unit_id) ?? ''}</span>
                       </span>
                       <button
                         type="button"
@@ -134,11 +145,11 @@ export function KitsListPage() {
 
       <KitFormModal
         open={formOpen}
-        onClose={() => setFormOpen(false)}
+        onClose={() => { setFormOpen(false); refresh(); }}
         kit={editing}
-        categories={categories ?? []}
-        units={units ?? []}
-        products={products ?? []}
+        categories={categories}
+        units={units}
+        products={products}
         comps={editing ? compsByKit.get(editing.id) ?? [] : []}
       />
 
@@ -146,7 +157,7 @@ export function KitsListPage() {
         mode={action?.mode ?? 'build'}
         kit={action?.kit ?? null}
         open={action !== null}
-        onClose={() => setAction(null)}
+        onClose={() => { setAction(null); refresh(); }}
         components={action ? compsByKit.get(action.kit.id) ?? [] : []}
         productMap={productById}
       />

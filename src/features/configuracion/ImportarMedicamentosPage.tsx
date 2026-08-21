@@ -2,16 +2,19 @@ import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { CheckCircle, WarningCircle, XCircle } from '@phosphor-icons/react';
-import { importProductsFromRows } from '../../lib/db';
+import { importMedicationsFromRows } from '../../lib/db';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../components/ui/Toast';
 
 interface ParsedRow {
   raw: string[];
-  product: string;
+  medication: string;
   category: string;
   qty: number;
   unit: string | null;
+  presentation: string | null;
+  lot: string | null;
+  expiry: string | null;
   lineNo: number;
 }
 
@@ -56,7 +59,7 @@ function detectSeparator(sample: string[]): string {
 function isHeaderRow(cells: string[]): boolean {
   if (cells.length < 3) return false;
   const first = cells[0].toLowerCase();
-  if (first === 'producto' || first === 'product' || first === 'nombre' || first === 'name') {
+  if (first === 'medicamento' || first === 'medication' || first === 'nombre' || first === 'name') {
     return cells.some((c) => c.toLowerCase().includes('cant'));
   }
   return false;
@@ -76,26 +79,33 @@ function parseFile(text: string): ParsedRow[] {
   const rows: ParsedRow[] = [];
   for (let i = headerIdx; i < lines.length; i++) {
     const cells = split(lines[i]);
-    let product = '', category = '', qtyStr = '', unit: string | null = null;
+    let medication = '', category = '', qtyStr = '', unit: string | null = null, presentation: string | null = null, lot: string | null = null, expiry: string | null = null;
+
     if (headerCols) {
       const get = (...names: string[]) => { for (const n of names) { const idx = headerCols!.indexOf(n); if (idx >= 0) return cells[idx] ?? ''; } return ''; };
-      product = get('producto', 'product', 'nombre', 'name');
+      medication = get('medicamento', 'medication', 'nombre', 'name');
       category = get('categoria', 'categoría', 'category');
-      qtyStr = get('cantidad', 'qty', 'stock', 'cantidad en stock');
+      qtyStr = get('cantidad', 'qty', 'stock');
       unit = get('unidad', 'unit') || null;
+      presentation = get('presentacion', 'presentación', 'presentation') || null;
+      lot = get('lote', 'lot') || null;
+      expiry = get('vencimiento', 'expiry', 'expiracion', 'expiración') || null;
     } else {
-      product = cells[0] ?? '';
+      medication = cells[0] ?? '';
       category = cells[1] ?? '';
       qtyStr = cells[2] ?? '';
       unit = cells[3] || null;
+      presentation = cells[4] || null;
+      lot = cells[5] || null;
+      expiry = cells[6] || null;
     }
     const qty = Number.parseInt(qtyStr, 10);
-    rows.push({ raw: cells, product: product.trim(), category: category.trim(), qty: Number.isFinite(qty) ? qty : NaN, unit: unit?.trim() || null, lineNo: i + 1 });
+    rows.push({ raw: cells, medication: medication.trim(), category: category.trim(), qty: Number.isFinite(qty) ? qty : NaN, unit: unit?.trim() || null, presentation: presentation?.trim() || null, lot: lot?.trim() || null, expiry: expiry?.trim() || null, lineNo: i + 1 });
   }
   return rows;
 }
 
-export function ImportarProductosPage() {
+export function ImportarMedicamentosPage() {
   const { t } = useTranslation();
   const toast = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -103,7 +113,7 @@ export function ImportarProductosPage() {
   const [rows, setRows] = useState<PreviewRow[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [importing, setImporting] = useState(false);
-  const [result, setResult] = useState<{ ok: number; createdCats: number; productsCreated: number; productsUpdated: number } | null>(null);
+  const [result, setResult] = useState<{ ok: number; createdCats: number; medsCreated: number; medsUpdated: number; lotsCreated: number } | null>(null);
 
   const summary = useMemo(() => {
     const ok = rows.filter((r) => r.status === 'ok').length;
@@ -119,9 +129,9 @@ export function ImportarProductosPage() {
     const text = await file.text();
     const parsed = parseFile(text);
     const preview: PreviewRow[] = parsed.map((r) => {
-      if (!r.product) return { ...r, status: 'error', reason: t('import.error.producto') };
-      if (!r.category) return { ...r, status: 'error', reason: t('import.error.categoria') };
-      if (!Number.isFinite(r.qty) || r.qty < 0) return { ...r, status: 'error', reason: t('import.error.cantidad') };
+      if (!r.medication) return { ...r, status: 'error', reason: 'Falta nombre del medicamento' };
+      if (!r.category) return { ...r, status: 'error', reason: 'Falta categoría' };
+      if (!Number.isFinite(r.qty) || r.qty < 0) return { ...r, status: 'error', reason: 'Cantidad inválida' };
       return { ...r, status: 'ok' };
     });
     setRows(preview);
@@ -130,12 +140,12 @@ export function ImportarProductosPage() {
   const reset = () => { setRows([]); setFileName(''); setResult(null); if (fileRef.current) fileRef.current.value = ''; };
 
   const downloadTemplate = () => {
-    const sample = 'producto;categoria;cantidad en stock;unidad\nArroz 1 kg;Alimentos;25;bolsa\nLeche entera;Lácteos;40;caja\n';
+    const sample = 'medicamento;categoria;cantidad;unidad;presentacion;lote;vencimiento\nAmoxicilina 500mg;Antibióticos;100;caja;20 comprimidos;L2408A;2025-12-31\nIbuprofeno 400mg;Antiinflamatorios;50;blister;10 comprimidos;I2409B;\n';
     const blob = new Blob([sample], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'plantilla-productos.csv';
+    a.download = 'plantilla-medicamentos.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -145,14 +155,17 @@ export function ImportarProductosPage() {
     if (okRows.length === 0) return;
     setImporting(true);
     try {
-      const stats = await importProductsFromRows(okRows.map((r) => ({
-        product: r.product,
+      const stats = await importMedicationsFromRows(okRows.map((r) => ({
+        medication: r.medication,
         category: r.category,
         qty: r.qty,
         unit: r.unit ?? undefined,
+        presentation: r.presentation ?? undefined,
+        lot: r.lot ?? undefined,
+        expiry: r.expiry ?? undefined,
       })));
       setResult(stats);
-      toast.push({ message: t('import.done', { count: stats.ok }), tone: 'success' });
+      toast.push({ message: `Importación completada: ${stats.ok} medicamentos`, tone: 'success' });
     } catch (e) {
       toast.push({ message: e instanceof Error ? e.message : t('common.error'), tone: 'error' });
     } finally {
@@ -164,12 +177,12 @@ export function ImportarProductosPage() {
     <div className="flex flex-col gap-4 p-4">
       <header>
         <Link to="/mas" className="text-caption text-muted hover:text-primary-700">← {t('nav.mas')}</Link>
-        <h1 className="text-h2">{t('import.title')}</h1>
-        <p className="text-body-sm text-muted">{t('import.subtitle')}</p>
+        <h1 className="text-h2">{t('importMed.title')}</h1>
+        <p className="text-body-sm text-muted">{t('importMed.subtitle')}</p>
       </header>
 
       <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3">
-        <p className="text-body-sm text-muted">{t('import.help')}</p>
+        <p className="text-body-sm text-muted">{t('importMed.help')}</p>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" size="sm" onClick={downloadTemplate}>{t('import.template')}</Button>
           <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-body-sm font-semibold text-fg hover:bg-neutral-100 dark:hover:bg-neutral-100">
@@ -197,8 +210,8 @@ export function ImportarProductosPage() {
                   {r.status === 'ok' ? <CheckCircle size={16} className="text-success-700" aria-hidden="true" /> : <WarningCircle size={16} className="text-danger-700" aria-hidden="true" />}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">{r.product || '(sin nombre)'} <span className="text-muted">— {r.category}</span></p>
-                  <p className="text-caption text-muted">{t('import.rowQty', { qty: String(r.qty) })}{r.unit && ` · ${r.unit}`}</p>
+                  <p className="truncate font-medium">{r.medication || '(sin nombre)'} <span className="text-muted">— {r.category}</span></p>
+                  <p className="text-caption text-muted">{t('import.rowQty', { qty: String(r.qty) })}{r.unit && ` · ${r.unit}`}{r.lot && ` · Lote: ${r.lot}`}</p>
                   {r.reason && <p className="text-caption text-danger-700">{r.reason}</p>}
                 </div>
                 <span className="shrink-0 text-caption text-muted">L{r.lineNo}</span>
@@ -210,7 +223,7 @@ export function ImportarProductosPage() {
 
       {result && (
         <p className="text-body-sm text-success-700">
-          {t('import.summary', { ok: String(result.ok), cats: String(result.createdCats), newProducts: String(result.productsCreated), updatedProducts: String(result.productsUpdated) })}
+          Listo. {result.ok} filas importadas, {result.createdCats} categorías creadas, {result.medsCreated} medicamentos nuevos, {result.medsUpdated} actualizados, {result.lotsCreated} lotes creados.
         </p>
       )}
     </div>

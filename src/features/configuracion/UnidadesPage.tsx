@@ -1,11 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { PencilSimple, Plus, Trash } from '@phosphor-icons/react';
-import { db } from '../../db';
-import { addUnit } from '../../lib/catalog';
-import type { Scope, Unit } from '../../db/types';
+import { fetchUnits, fetchProducts, fetchMedications, createUnit, updateUnit, deleteUnit, type Scope, type Unit } from '../../lib/db';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -17,23 +14,24 @@ export function UnidadesPage() {
   const toast = useToast();
 
   const [scope, setScope] = useState<Scope>('product');
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [usage, setUsage] = useState<Map<string, number>>(new Map());
 
-  const units = useLiveQuery(() => db.units.where('_deleted').equals(0).toArray(), []);
-  const usage = useLiveQuery(
-    () =>
-      (scope === 'medication' ? db.medications : db.products)
-        .where('_deleted')
-        .equals(0)
-        .toArray()
-        .then((rows) => {
-          const m = new Map<string, number>();
-          for (const row of rows) m.set(row.unitId, (m.get(row.unitId) ?? 0) + 1);
-          return m;
-        }),
-    [scope],
-  );
+  const load = async () => {
+    const u = await fetchUnits();
+    setUnits(u);
+    const rows = scope === 'medication' ? await fetchMedications() : await fetchProducts();
+    const m = new Map<string, number>();
+    for (const row of rows) {
+      const uid = 'unit_id' in row ? row.unit_id : undefined;
+      if (uid) m.set(uid, (m.get(uid) ?? 0) + 1);
+    }
+    setUsage(m);
+  };
 
-  const visible = units?.filter((u) => u.scope === scope && u.isActive === 1) ?? [];
+  useEffect(() => { load(); }, [scope]);
+
+  const visible = units.filter((u) => u.scope === scope && u.is_active);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Unit | null>(null);
@@ -70,18 +68,18 @@ export function UnidadesPage() {
     setSaving(true);
     try {
       if (editing) {
-        await db.units.update(editing.id, {
+        await updateUnit(editing.id, {
           name: name.trim(),
           abbreviation: abbreviation.trim(),
-          _version: editing._version + 1,
-          _syncedAt: null,
+          version: editing.version + 1,
         });
         toast.push({ message: t('unidades.saved'), tone: 'success' });
       } else {
-        await addUnit(name.trim(), scope, abbreviation.trim());
+        await createUnit(name.trim(), scope, abbreviation.trim());
         toast.push({ message: t('unidades.created'), tone: 'success' });
       }
       setFormOpen(false);
+      load();
     } finally {
       setSaving(false);
     }
@@ -89,19 +87,16 @@ export function UnidadesPage() {
 
   const remove = async () => {
     if (!deleting) return;
-    const count = usage?.get(deleting.id) ?? 0;
+    const count = usage.get(deleting.id) ?? 0;
     if (count > 0) {
       toast.push({ message: t('unidades.delete.inUse', { count }), tone: 'error' });
       setDeleting(null);
       return;
     }
-    await db.units.update(deleting.id, {
-      _deleted: 1,
-      _version: deleting._version + 1,
-      _syncedAt: null,
-    });
+    await deleteUnit(deleting.id, deleting.version);
     toast.push({ message: t('unidades.deleted'), tone: 'success' });
     setDeleting(null);
+    load();
   };
 
   return (
@@ -139,7 +134,7 @@ export function UnidadesPage() {
             <span className="rounded bg-neutral-100 px-2 py-0.5 text-caption font-semibold text-muted dark:bg-neutral-100">
               {u.abbreviation}
             </span>
-            <span className="text-caption text-muted">{usage?.get(u.id) ?? 0}</span>
+            <span className="text-caption text-muted">{usage.get(u.id) ?? 0}</span>
             <button
               type="button"
               aria-label={`${t('common.edit')} ${u.name}`}

@@ -1,6 +1,10 @@
-import { db } from '../db';
-import { deviceId, newId, nowISO } from './ids';
-import type { ItemType, MovementKind } from '../db/types';
+import {
+  createMovement as _createMovement,
+  updateProduct,
+  fetchProduct,
+  type MovementKind,
+  type ItemType,
+} from './db';
 
 export class StockError extends Error {}
 
@@ -20,65 +24,43 @@ export function round2(n: number): number {
 
 export async function addMovement(row: {
   kind: MovementKind;
-  itemType: ItemType;
-  itemId: string;
+  item_type: ItemType;
+  item_id: string;
   qty: number;
-  unitId: string;
-  loteId: string | null;
+  unit_id: string;
+  lote_id: string | null;
   fecha: string;
   nota: string;
 }): Promise<void> {
-  await db.movements.add({
-    id: newId(),
-    kind: row.kind,
-    itemType: row.itemType,
-    itemId: row.itemId,
-    qty: row.qty,
-    unitId: row.unitId,
-    loteId: row.loteId,
-    fecha: row.fecha,
-    operadorId: null,
-    nota: row.nota,
-    createdAt: nowISO(),
-    _version: 1,
-    _deleted: 0,
-    _syncedAt: null,
-    _deviceId: deviceId(),
-    _clientUuid: newId(),
-  });
+  await _createMovement(row);
 }
 
-// Registra un movimiento de PRODUCTO en una sola transacción. Salidas validadas
-// contra el stock disponible (bloquea stock negativo).
+// Registra un movimiento de PRODUCTO. Salidas validadas contra stock disponible.
 export async function registerProductMovement(input: MovementInput): Promise<void> {
   const qty = round2(input.qty);
   if (!(qty > 0)) throw new StockError('qty inválida');
 
-  await db.transaction('rw', db.products, db.movements, async () => {
-    const p = await db.products.get(input.itemId);
-    if (!p) throw new StockError(`producto no existe: ${input.itemId}`);
+  const p = await fetchProduct(input.itemId);
+  if (!p) throw new StockError(`producto no existe: ${input.itemId}`);
 
-    const next = input.kind === 'entrada' ? p.totalStock + qty : p.totalStock - qty;
-    if (next < 0) {
-      throw new StockError(`stock insuficiente para ${p.name}: disponible ${p.totalStock}`);
-    }
+  const next = input.kind === 'entrada' ? p.total_stock + qty : p.total_stock - qty;
+  if (next < 0) {
+    throw new StockError(`stock insuficiente para ${p.name}: disponible ${p.total_stock}`);
+  }
 
-    await db.products.update(p.id, {
-      totalStock: round2(next),
-      _version: p._version + 1,
-      _syncedAt: null,
-      updatedAt: nowISO(),
-    });
+  await updateProduct(p.id, {
+    total_stock: round2(next),
+    version: p.version + 1,
+  });
 
-    await addMovement({
-      kind: input.kind,
-      itemType: 'product',
-      itemId: p.id,
-      qty,
-      unitId: p.unitId,
-      loteId: input.loteId ?? null,
-      fecha: input.fecha,
-      nota: input.nota ?? '',
-    });
+  await _createMovement({
+    kind: input.kind,
+    item_type: 'product',
+    item_id: p.id,
+    qty,
+    unit_id: p.unit_id,
+    lote_id: input.loteId ?? null,
+    fecha: input.fecha,
+    nota: input.nota ?? '',
   });
 }

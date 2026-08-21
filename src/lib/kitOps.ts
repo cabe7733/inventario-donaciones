@@ -1,134 +1,98 @@
-import { db } from '../db';
-import { deviceId, newId, nowISO } from './ids';
-import { addMovement, StockError, round2 } from './movements';
+import {
+  fetchKit,
+  fetchKitComponents,
+  fetchProduct,
+  updateProduct,
+  updateKit,
+  createMovement,
+  createKitBuild,
+  createKitDelivery,
+} from './db';
+import { nowISO } from './ids';
+import { round2, StockError } from './movements';
 
-// Ensambla `qty` kits: descuenta componentes (producto por producto), suma stock
-// del kit y registra la trazabilidad en movements + kit_builds.
+// Ensambla `qty` kits: descuenta componentes, suma stock del kit.
 export async function buildKit(kitId: string, qty: number): Promise<void> {
   if (!(qty > 0)) throw new StockError('qty inválida');
   const fecha = nowISO();
 
-  await db.transaction(
-    'rw',
-    db.kits,
-    db.kitComponents,
-    db.products,
-    db.kitBuilds,
-    db.movements,
-    async () => {
-      const kit = await db.kits.get(kitId);
-      if (!kit) throw new StockError('kit no existe');
-      const comps = await db.kitComponents.where('kitId').equals(kitId).toArray();
-      if (comps.length === 0) throw new StockError('el kit no tiene componentes');
+  const kit = await fetchKit(kitId);
+  if (!kit) throw new StockError('kit no existe');
+  const comps = await fetchKitComponents(kitId);
+  if (comps.length === 0) throw new StockError('el kit no tiene componentes');
 
-      for (const c of comps) {
-        const p = await db.products.get(c.productId);
-        const need = round2(c.qty * qty);
-        if (!p || p.totalStock < need) {
-          throw new StockError(
-            `Falta ${p?.name ?? '?'} para ensamblar ${qty} × ${kit.name}: requiere ${need}`,
-          );
-        }
-        await db.products.update(p.id, {
-          totalStock: round2(p.totalStock - need),
-          _version: p._version + 1,
-          _syncedAt: null,
-          updatedAt: nowISO(),
-        });
-        await addMovement({
-          kind: 'salida',
-          itemType: 'product',
-          itemId: p.id,
-          qty: need,
-          unitId: p.unitId,
-          loteId: null,
-          fecha,
-          nota: `Ensamblado en kit “${kit.name}” (${qty})`,
-        });
-      }
+  for (const c of comps) {
+    const p = await fetchProduct(c.product_id);
+    const need = round2(c.qty * qty);
+    if (!p || p.total_stock < need) {
+      throw new StockError(
+        `Falta ${p?.name ?? '?'} para ensamblar ${qty} × ${kit.name}: requiere ${need}`,
+      );
+    }
+    await updateProduct(p.id, {
+      total_stock: round2(p.total_stock - need),
+      version: p.version + 1,
+    });
+    await createMovement({
+      kind: 'salida',
+      item_type: 'product',
+      item_id: p.id,
+      qty: need,
+      unit_id: p.unit_id,
+      lote_id: null,
+      fecha,
+      nota: `Ensamblado en kit "${kit.name}" (${qty})`,
+    });
+  }
 
-      await db.kits.update(kit.id, {
-        totalStock: round2(kit.totalStock + qty),
-        _version: kit._version + 1,
-        _syncedAt: null,
-        updatedAt: nowISO(),
-      });
+  await updateKit(kit.id, {
+    total_stock: round2(kit.total_stock + qty),
+    version: kit.version + 1,
+  });
 
-      await db.kitBuilds.add({
-        id: newId(),
-        kitId: kit.id,
-        qty,
-        fecha,
-        operadorId: null,
-        nota: '',
-        createdAt: nowISO(),
-        _version: 1,
-        _deleted: 0,
-        _syncedAt: null,
-        _deviceId: deviceId(),
-        _clientUuid: newId(),
-      });
+  await createKitBuild(kit.id, qty, fecha);
 
-      await addMovement({
-        kind: 'entrada',
-        itemType: 'kit',
-        itemId: kit.id,
-        qty,
-        unitId: kit.unitId,
-        loteId: null,
-        fecha,
-        nota: '',
-      });
-    },
-  );
+  await createMovement({
+    kind: 'entrada',
+    item_type: 'kit',
+    item_id: kit.id,
+    qty,
+    unit_id: kit.unit_id,
+    lote_id: null,
+    fecha,
+    nota: '',
+  });
 }
 
-// Entrega `qty` kits: valida stock del kit.
+// Entrega `qty` kits.
 export async function deliverKit(kitId: string, qty: number): Promise<void> {
   if (!(qty > 0)) throw new StockError('qty inválida');
   const fecha = nowISO();
 
-  await db.transaction('rw', db.kits, db.kitDeliveries, db.movements, async () => {
-    const kit = await db.kits.get(kitId);
-    if (!kit) throw new StockError('kit no existe');
-    const next = round2(kit.totalStock - qty);
-    if (next < 0) {
-      throw new StockError(
-        `Stock insuficiente de kit ${kit.name}: disponible ${kit.totalStock}`,
-      );
-    }
+  const kit = await fetchKit(kitId);
+  if (!kit) throw new StockError('kit no existe');
+  const next = round2(kit.total_stock - qty);
+  if (next < 0) {
+    throw new StockError(
+      `Stock insuficiente de kit ${kit.name}: disponible ${kit.total_stock}`,
+    );
+  }
 
-    await db.kits.update(kit.id, {
-      totalStock: next,
-      _version: kit._version + 1,
-      _syncedAt: null,
-      updatedAt: nowISO(),
-    });
+  await updateKit(kit.id, {
+    total_stock: next,
+    version: kit.version + 1,
+  });
 
-    await db.kitDeliveries.add({
-      id: newId(),
-      kitId: kit.id,
-      qty,
-      fecha,
-      operadorId: null,
-      nota: '',
-      createdAt: nowISO(),
-      _version: 1,
-      _deleted: 0,
-      _syncedAt: null,
-      _deviceId: deviceId(),
-      _clientUuid: newId(),
-    });
+  await createKitDelivery(kit.id, qty, fecha);
 
-    await addMovement({
-      kind: 'salida',
-      itemType: 'kit',
-      itemId: kit.id,
-      qty,
-      unitId: kit.unitId,
-      loteId: null,
-      fecha,
-      nota: '',
-    });
+  await createMovement({
+    kind: 'salida',
+    item_type: 'kit',
+    item_id: kit.id,
+    qty,
+    unit_id: kit.unit_id,
+    lote_id: null,
+    fecha,
+    nota: '',
   });
 }

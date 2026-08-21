@@ -20,9 +20,13 @@ const ProductosList = lazy(() =>
   import('./features/productos/ProductosListPage').then((m) => ({ default: m.ProductosListPage })),
 );
 
-/* const MedicamentosList = lazy(() =>
+const MedicamentosList = lazy(() =>
   import('./features/medicamentos/MedicamentosPage').then((m) => ({ default: m.MedicamentosPage })),
-); */
+);
+
+const ImportarMedicamentosPage = lazy(() =>
+  import('./features/configuracion/ImportarMedicamentosPage').then((m) => ({ default: m.ImportarMedicamentosPage })),
+);
 
 const PLACEHOLDERS = [
   { path: 'mas/operadores', key: 'mas.operadores' },
@@ -47,12 +51,28 @@ export const router = createBrowserRouter([
           </SuspenseBoundary>
         ),
       },
+      {
+        path: 'medicamentos',
+        element: (
+          <SuspenseBoundary>
+            <MedicamentosList />
+          </SuspenseBoundary>
+        ),
+      },
       { path: 'mas', element: <MasPage /> },
       { path: 'kits', element: <KitsListPage /> },
       { path: 'kits/:id', element: <KitDetailPage /> },
       { path: 'mas/categorias', element: <CategoriasPage /> },
       { path: 'mas/unidades', element: <UnidadesPage /> },
       { path: 'mas/importar', element: <ImportarProductosPage /> },
+      {
+        path: 'mas/importar-medicamentos',
+        element: (
+          <SuspenseBoundary>
+            <ImportarMedicamentosPage />
+          </SuspenseBoundary>
+        ),
+      },
       { path: 'mas/movimientos', element: <MovimientosPage /> },
       ...PLACEHOLDERS.map(({ path, key }) => ({
         path,

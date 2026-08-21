@@ -30,11 +30,7 @@
     "kits": "Kits",
     "mas": "Más"
   },
-  "offline": {
-    "banner": "Sin conexión — tus cambios se guardan en cola",
-    "pending": "{{count}} cambio pendiente de sincronizar",
-    "pending_other": "{{count}} cambios pendientes de sincronizar"
-  },
+
   "dashboard": {
     "title": "Inicio",
     "hello": "Hola, {{name}}",
@@ -233,6 +229,7 @@
     "exportar": "Exportar",
     "acercaDe": "Acerca de",
     "importar": "Importar productos",
+    "importarMedicamentos": "Importar medicamentos",
     "apar.light": "Claro",
     "apar.dark": "Oscuro"
   },
@@ -251,5 +248,10 @@
     "error.categoria": "Falta categoría",
     "error.cantidad": "Cantidad inválida (debe ser ≥ 0)",
     "movementNote": "Importación inicial"
+  },
+  "importMed": {
+    "title": "Importar medicamentos",
+    "subtitle": "Carga masiva de medicamentos desde un archivo plano (CSV o TXT)",
+    "help": "Columnas: medicamento, categoria, cantidad, unidad, presentacion, lote, vencimiento. Separador ; o ,. La primera fila puede tener encabezados. Si la categoría o el medicamento no existen, se crean automáticamente. Si se provee lote, se crea o actualiza el stock del lote."
   }
 }

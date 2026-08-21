@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { buildKit, deliverKit } from '../../lib/kitOps';
 import { StockError } from '../../lib/movements';
 import { formatNumber } from '../../lib/format';
-import type { Kit, Product } from '../../db/types';
+import type { Kit, Product } from '../../lib/db';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -41,7 +41,7 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
     return lines.join(' · ');
   }, [isBuild, components, qty, productMap]);
 
-  const max = isBuild ? undefined : kit?.totalStock ?? 0;
+  const max = isBuild ? undefined : kit?.total_stock ?? 0;
 
   const run = async () => {
     if (!kit || busy) return;
@@ -96,7 +96,7 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
         </div>
         {!isBuild && kit && (
           <p className="text-caption text-muted">
-            {t('kits.stockActual', { stock: formatNumber(kit.totalStock) })}
+            {t('kits.stockActual', { stock: formatNumber(kit.total_stock) })}
           </p>
         )}
       </div>

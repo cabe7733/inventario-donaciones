@@ -2,34 +2,23 @@ import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { House, Package, Cube, DotsThree } from '@phosphor-icons/react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../../db';
+import { House, Package, Pill, Cube, DotsThree } from '@phosphor-icons/react';
 
 const TABS = [
   { to: '/inicio', icon: House, key: 'nav.inicio', end: true },
   { to: '/productos', icon: Package, key: 'nav.productos', end: false },
+  { to: '/medicamentos', icon: Pill, key: 'nav.medicamentos', end: false },
   { to: '/kits', icon: Cube, key: 'nav.kits', end: false },
   { to: '/mas', icon: DotsThree, key: 'nav.mas', end: false },
 ] as const;
 
 export function AppShell() {
   const { t } = useTranslation();
-  const pendingSync = useLiveQuery(() => db.syncQueue.count(), []);
 
   return (
     <div className="flex min-h-dvh flex-col bg-surface text-fg">
       <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4">
         <span className="text-h3 text-primary-700">Donario</span>
-        {pendingSync !== undefined && pendingSync > 0 && (
-          <span
-            className="rounded-full bg-info-500/15 px-3 py-1 text-caption font-semibold text-info-700"
-            role="status"
-            aria-live="polite"
-          >
-            {t('offline.pending', { count: pendingSync })}
-          </span>
-        )}
       </header>
 
       <main id="main" role="main" tabIndex={-1} className="flex-1">

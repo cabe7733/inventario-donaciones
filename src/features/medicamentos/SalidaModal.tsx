@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { fefoPlan, salidaFefo } from '../../lib/medicationOps';
 import { StockError } from '../../lib/movements';
 import { todayKey } from '../../lib/format';
-import type { Medication } from '../../db/types';
+import type { Medication } from '../../lib/db';
 import { Button } from '../../components/ui/Button';
 import { Field, inputClass } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -61,23 +61,13 @@ export function SalidaModal({ medication, open, onClose }: Props) {
     if (!medication) return;
     setQtyError(undefined);
     const qtyNum = Number.parseInt(qty, 10);
-    if (!(qtyNum >= 1)) {
-      setQtyError(t('movimientos.error.qty'));
-      return;
-    }
+    if (!(qtyNum >= 1)) { setQtyError(t('movimientos.error.qty')); return; }
     if (insufficient) return;
     setSaving(true);
     try {
-      const consumed = await salidaFefo({
-        medicationId: medication.id,
-        qty: qtyNum,
-        fecha: `${fecha}T12:00:00`,
-      });
+      const consumed = await salidaFefo({ medicationId: medication.id, qty: qtyNum, fecha: `${fecha}T12:00:00` });
       const names = consumed.map((c) => `${c.lote} (${c.qty})`).join(', ');
-      toast.push({
-        message: t('medicamentos.salidaOk', { qty: String(qtyNum), name: medication.name, lotes: names }),
-        tone: 'neutral',
-      });
+      toast.push({ message: t('medicamentos.salidaOk', { qty: String(qtyNum), name: medication.name, lotes: names }), tone: 'neutral' });
       onClose();
     } catch (e) {
       if (e instanceof StockError) toast.push({ message: e.message, tone: 'error' });
@@ -91,61 +81,29 @@ export function SalidaModal({ medication, open, onClose }: Props) {
     <Modal open={open} onClose={onClose} title={t('medicamentos.salida')}>
       <div className="flex flex-col gap-4">
         <p className="text-body text-muted">{t('medicamentos.salida.hint')}</p>
-
         <Field id="sa-qty" label={t('medicamentos.cantidad')} error={qtyError}>
-          <input
-            id="sa-qty"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="off"
-            className={inputClass}
-            value={qty}
-            onChange={(e) => changeQty(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault();
-            }}
-          />
+          <input id="sa-qty" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" className={inputClass} value={qty} onChange={(e) => changeQty(e.target.value)} onKeyDown={(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault(); }} />
         </Field>
         <Field id="sa-fecha" label={t('movimientos.fecha')}>
-          <input
-            id="sa-fecha"
-            type="date"
-            className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-          />
+          <input id="sa-fecha" type="date" className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg" value={fecha} onChange={(e) => setFecha(e.target.value)} />
         </Field>
-
         {plan.length > 0 && (
           <div className="rounded-lg bg-primary-50 p-3">
             <p className="text-label mb-1 text-primary-700">{t('medicamentos.fefo.plan')}</p>
             <ul className="flex flex-col gap-1">
               {plan.map((s, i) => (
                 <li key={i} className="flex justify-between text-body-sm text-primary-700">
-                  <span>
-                    {s.lote}
-                    {s.vencimiento && ` — ${t('medicamentos.vtoShort', { fecha: s.vencimiento })}`}
-                  </span>
+                  <span>{s.lote}{s.vencimiento && ` — ${t('medicamentos.vtoShort', { fecha: s.vencimiento })}`}</span>
                   <span className="font-semibold">−{s.qty}</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
-        {insufficient && (
-          <p className="text-caption text-danger-700" role="alert">
-            {t('medicamentos.fefo.insufficient')}
-          </p>
-        )}
-
+        {insufficient && <p className="text-caption text-danger-700" role="alert">{t('medicamentos.fefo.insufficient')}</p>}
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>
-            {t('common.cancel')}
-          </Button>
-          <Button variant="danger" onClick={() => void save()} disabled={saving || insufficient}>
-            {t('medicamentos.salida.save')}
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="danger" onClick={() => void save()} disabled={saving || insufficient}>{t('medicamentos.salida.save')}</Button>
         </div>
       </div>
     </Modal>

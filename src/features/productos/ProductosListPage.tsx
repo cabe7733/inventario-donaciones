@@ -1,12 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { PencilSimple, Plus, Package, Trash, Warning } from '@phosphor-icons/react';
-import { db } from '../../db';
-import { nowISO } from '../../lib/ids';
+import { fetchProducts, fetchCategories, fetchUnits, deleteProduct, type Product, type Category, type Unit } from '../../lib/db';
 import { searchWith } from '../../lib/search';
 import { categoriasFor, unitsFor } from '../../lib/catalog';
-import type { Product } from '../../db/types';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
@@ -17,12 +14,23 @@ export function ProductosListPage() {
   const { t } = useTranslation();
   const toast = useToast();
 
-  const products = useLiveQuery(() => db.products.where('_deleted').equals(0).toArray(), []);
-  const categories = useLiveQuery(() => db.categories.where('_deleted').equals(0).toArray(), []);
-  const units = useLiveQuery(() => db.units.where('_deleted').equals(0).toArray(), []);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const cats = useMemo(() => categoriasFor(categories ?? [], 'product'), [categories]);
-  const unis = useMemo(() => unitsFor(units ?? [], 'product'), [units]);
+  const reload = async () => {
+    const [p, c, u] = await Promise.all([fetchProducts(), fetchCategories(), fetchUnits()]);
+    setProducts(p);
+    setCategories(c);
+    setUnits(u);
+    setLoading(false);
+  };
+
+  useEffect(() => { void reload(); }, []);
+
+  const cats = useMemo(() => categoriasFor(categories, 'product'), [categories]);
+  const unis = useMemo(() => unitsFor(units, 'product'), [units]);
 
   const [query, setQuery] = useState('');
   const [catFilter, setCatFilter] = useState<string | null>(null);
@@ -34,33 +42,22 @@ export function ProductosListPage() {
   const catBy = useMemo(() => new Map(cats.map((c) => [c.id, c])), [cats]);
 
   const visible = useMemo(() => {
-    if (!products) return undefined;
-    let list = products.filter((p) => p.isActive === 1);
-    if (catFilter) list = list.filter((p) => p.categoryId === catFilter);
+    let list = products.filter((p) => p.is_active);
+    if (catFilter) list = list.filter((p) => p.category_id === catFilter);
     list = searchWith(list, ['name', 'aliases'], query);
     return list.sort((a, b) => a.name.localeCompare(b.name, 'es'));
   }, [products, catFilter, query]);
 
   const remove = async () => {
     if (!deleting) return;
-    await db.products.update(deleting.id, {
-      _deleted: 1,
-      _version: deleting._version + 1,
-      _syncedAt: null,
-      updatedAt: nowISO(),
-    });
+    await deleteProduct(deleting.id, deleting.version);
     toast.push({ message: t('productos.deleted'), tone: 'success' });
     setDeleting(null);
+    void reload();
   };
 
-  const openNew = () => {
-    setEditing(null);
-    setFormOpen(true);
-  };
-  const openEdit = (p: Product) => {
-    setEditing(p);
-    setFormOpen(true);
-  };
+  const openNew = () => { setEditing(null); setFormOpen(true); };
+  const openEdit = (p: Product) => { setEditing(p); setFormOpen(true); };
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -93,7 +90,7 @@ export function ProductosListPage() {
         >
           {t('productos.list.all')}
         </button>
-        {(cats).map((c) => (
+        {cats.map((c) => (
           <button
             key={c.id}
             role="tab"
@@ -108,7 +105,9 @@ export function ProductosListPage() {
         ))}
       </div>
 
-      {visible && visible.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center p-12 text-muted">{t('common.loading')}</div>
+      ) : visible.length === 0 ? (
         <EmptyState
           icon={Package}
           title={t('productos.list.empty')}
@@ -122,18 +121,18 @@ export function ProductosListPage() {
         />
       ) : (
         <ul className="flex flex-col gap-2">
-          {(visible ?? []).map((p) => {
-            const unit = unitBy.get(p.unitId);
-            const low = p.minStock != null && p.totalStock <= p.minStock;
+          {visible.map((p) => {
+            const unit = unitBy.get(p.unit_id);
+            const low = p.min_stock != null && p.total_stock <= p.min_stock;
             return (
               <li key={p.id} className="rounded-lg border border-border bg-card p-3">
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-body font-semibold">{p.name}</p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      {catBy.get(p.categoryId ?? '') && (
+                      {catBy.get(p.category_id ?? '') && (
                         <span className="rounded-full bg-primary-50 px-2 py-0.5 text-caption text-primary-700">
-                          {catBy.get(p.categoryId!)!.name}
+                          {catBy.get(p.category_id!)!.name}
                         </span>
                       )}
                       {low && (
@@ -146,7 +145,7 @@ export function ProductosListPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-numeric-lg text-primary-700">
-                      {p.totalStock}
+                      {p.total_stock}
                       <span className="ml-1 text-caption text-muted">{unit?.abbreviation ?? ''}</span>
                     </span>
                     <button
@@ -175,28 +174,18 @@ export function ProductosListPage() {
 
       <ProductFormModal
         open={formOpen}
-        onClose={() => setFormOpen(false)}
+        onClose={() => { setFormOpen(false); void reload(); }}
         product={editing}
         categories={cats}
         units={unis}
       />
 
-      <Modal
-        open={deleting !== null}
-        onClose={() => setDeleting(null)}
-        title={t('productos.delete.title')}
-      >
+      <Modal open={deleting !== null} onClose={() => setDeleting(null)} title={t('productos.delete.title')}>
         <div className="flex flex-col gap-4">
-          <p className="text-body text-muted">
-            {t('productos.delete.body', { name: deleting?.name })}
-          </p>
+          <p className="text-body text-muted">{t('productos.delete.body', { name: deleting?.name })}</p>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setDeleting(null)}>
-              {t('common.cancel')}
-            </Button>
-            <Button variant="danger" onClick={() => void remove()}>
-              {t('common.delete')}
-            </Button>
+            <Button variant="ghost" onClick={() => setDeleting(null)}>{t('common.cancel')}</Button>
+            <Button variant="danger" onClick={() => void remove()}>{t('common.delete')}</Button>
           </div>
         </div>
       </Modal>

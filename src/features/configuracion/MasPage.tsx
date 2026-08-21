@@ -12,6 +12,7 @@ import {
   Archive,
   Info,
   UploadSimple,
+  Pill,
 } from '@phosphor-icons/react';
 import { useTheme } from '../../lib/theme/ThemeProvider';
 
@@ -54,6 +55,14 @@ export function MasPage() {
         >
           <UploadSimple size={20} className="text-muted" aria-hidden="true" />
           <span className="flex-1">{t('mas.importar')}</span>
+          <CaretRight size={16} className="text-muted" aria-hidden="true" />
+        </Link>
+        <Link
+          to="/mas/importar-medicamentos"
+          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
+        >
+          <Pill size={20} className="text-muted" aria-hidden="true" />
+          <span className="flex-1">{t('mas.importarMedicamentos')}</span>
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link

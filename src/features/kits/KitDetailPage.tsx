@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { HandHeart, Package, Cube } from '@phosphor-icons/react';
-import { db } from '../../db';
+import { fetchKit, fetchKitComponents, fetchProducts, fetchUnits, fetchKitBuilds, fetchKitDeliveries, type Kit, type KitComponent, type Product, type Unit, type KitBuild, type KitDelivery } from '../../lib/db';
 import { formatNumber, formatDate, formatTime } from '../../lib/format';
-import type { Kit } from '../../db/types';
 import { Button } from '../../components/ui/Button';
 import { KitActionModal } from './KitActionModal';
 
@@ -13,18 +11,25 @@ export function KitDetailPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
 
-  const kit = useLiveQuery(() => (id ? db.kits.get(id) : undefined), [id]);
-  const kitComps = useLiveQuery(() => (id ? db.kitComponents.where('kitId').equals(id).toArray() : []), [id]);
-  const products = useLiveQuery(() => db.products.toArray(), []);
-  const units = useLiveQuery(() => db.units.toArray(), []);
-  const builds = useLiveQuery(() => (id ? db.kitBuilds.where('kitId').equals(id).toArray() : []), [id]);
-  const deliveries = useLiveQuery(
-    () => (id ? db.kitDeliveries.where('kitId').equals(id).toArray() : []),
-    [id],
-  );
+  const [kit, setKit] = useState<Kit | null>(null);
+  const [kitComps, setKitComps] = useState<KitComponent[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [builds, setBuilds] = useState<KitBuild[]>([]);
+  const [deliveries, setDeliveries] = useState<KitDelivery[]>([]);
 
-  const productMap = useMemo(() => new Map((products ?? []).map((p) => [p.id, p])), [products]);
-  const unitBy = useMemo(() => new Map((units ?? []).map((u) => [u.id, u.abbreviation])), [units]);
+  useEffect(() => {
+    if (!id) return;
+    fetchKit(id).then(setKit);
+    fetchKitComponents(id).then(setKitComps);
+    fetchProducts().then(setProducts);
+    fetchUnits().then(setUnits);
+    fetchKitBuilds(id).then(setBuilds);
+    fetchKitDeliveries(id).then(setDeliveries);
+  }, [id]);
+
+  const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
+  const unitBy = useMemo(() => new Map(units.map((u) => [u.id, u.abbreviation])), [units]);
 
   const [action, setAction] = useState<{ mode: 'build' | 'deliver'; kit: Kit } | null>(null);
 
@@ -35,10 +40,18 @@ export function KitDetailPage() {
       qty: number;
       fecha: string;
     }> = [];
-    for (const b of builds ?? []) events.push({ key: b.id, kind: 'build', qty: b.qty, fecha: b.fecha });
-    for (const d of deliveries ?? []) events.push({ key: d.id, kind: 'deliver', qty: d.qty, fecha: d.fecha });
+    for (const b of builds) events.push({ key: b.id, kind: 'build', qty: b.qty, fecha: b.fecha });
+    for (const d of deliveries) events.push({ key: d.id, kind: 'deliver', qty: d.qty, fecha: d.fecha });
     return events.sort((a, b) => (a.fecha < b.fecha ? 1 : -1));
   }, [builds, deliveries]);
+
+  const refresh = () => {
+    if (!id) return;
+    fetchKit(id).then(setKit);
+    fetchKitComponents(id).then(setKitComps);
+    fetchKitBuilds(id).then(setBuilds);
+    fetchKitDeliveries(id).then(setDeliveries);
+  };
 
   if (!kit) return null;
 
@@ -51,8 +64,8 @@ export function KitDetailPage() {
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{kit.name}</h1>
         <span className="text-numeric-xl text-primary-700">
-          {formatNumber(kit.totalStock)}
-          <span className="ml-1 text-body text-muted">{unitBy.get(kit.unitId) ?? ''}</span>
+          {formatNumber(kit.total_stock)}
+          <span className="ml-1 text-body text-muted">{unitBy.get(kit.unit_id) ?? ''}</span>
         </span>
       </header>
 
@@ -70,15 +83,15 @@ export function KitDetailPage() {
       <section>
         <h2 className="text-h3 mb-2">{t('kits.components')}</h2>
         <ul className="flex flex-col gap-2">
-          {(kitComps ?? []).map((c) => (
+          {kitComps.map((c) => (
             <li
               key={c.id}
               className="flex items-center justify-between rounded-lg border border-border bg-card p-3"
             >
-              <span className="text-body font-medium">{productMap.get(c.productId)?.name ?? '?'}</span>
+              <span className="text-body font-medium">{productMap.get(c.product_id)?.name ?? '?'}</span>
               <span className="text-numeric text-muted">
                 {formatNumber(c.qty)}
-                <span className="ml-1 text-caption">{unitBy.get(c.unitId) ?? ''}</span>
+                <span className="ml-1 text-caption">{unitBy.get(c.unit_id) ?? ''}</span>
               </span>
             </li>
           ))}
@@ -133,8 +146,8 @@ export function KitDetailPage() {
         mode={action?.mode ?? 'build'}
         kit={action?.kit ?? null}
         open={action !== null}
-        onClose={() => setAction(null)}
-        components={action ? (kitComps ?? []).map((c) => ({ productId: c.productId, qty: c.qty })) : []}
+        onClose={() => { setAction(null); refresh(); }}
+        components={action ? kitComps.map((c) => ({ productId: c.product_id, qty: c.qty })) : []}
         productMap={productMap}
       />
     </div>
