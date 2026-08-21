@@ -6,6 +6,7 @@ import { fetchProducts, fetchMedications, fetchMovements, fetchLots, type Produc
 import { formatNumber, startOfTodayISO } from '../../lib/format';
 import { lotExpired } from '../../lib/medicationOps';
 import { MovementsWidget } from '../movimientos/MovementsWidget';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -50,28 +51,47 @@ export function DashboardPage() {
       </header>
 
       <section className="grid grid-cols-2 gap-3 rounded-lg bg-card p-4 shadow-elev-1">
-        {kpis.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700">
-              <Icon size={20} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-numeric-lg">{loading ? '…' : formatNumber(value)}</p>
-              <p className="text-caption text-muted">{label}</p>
-            </div>
-          </div>
-        ))}
+        {loading
+          ? Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-5 w-10" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+              </div>
+            ))
+          : kpis.map(({ label, value, icon: Icon }) => (
+              <div key={label} className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700">
+                  <Icon size={20} aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-numeric-lg">{formatNumber(value)}</p>
+                  <p className="text-caption text-muted">{label}</p>
+                </div>
+              </div>
+            ))}
       </section>
 
       <section className="grid grid-cols-2 gap-3">
-        <Link to="/movimiento?tipo=entrada" className="bg-primary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
-          <ArrowDownRight size={28} aria-hidden="true" />
-          <span className="text-caption font-semibold">{t('dashboard.quick.entrada')}</span>
-        </Link>
-        <Link to="/movimiento?tipo=salida" className="bg-secondary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
-          <ArrowUpRight size={28} aria-hidden="true" />
-          <span className="text-caption font-semibold">{t('dashboard.quick.salida')}</span>
-        </Link>
+        {loading ? (
+          <>
+            <Skeleton className="min-h-[88px] rounded-lg" />
+            <Skeleton className="min-h-[88px] rounded-lg" />
+          </>
+        ) : (
+          <>
+            <Link to="/movimiento?tipo=entrada" className="bg-primary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
+              <ArrowDownRight size={28} aria-hidden="true" />
+              <span className="text-caption font-semibold">{t('dashboard.quick.entrada')}</span>
+            </Link>
+            <Link to="/movimiento?tipo=salida" className="bg-secondary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
+              <ArrowUpRight size={28} aria-hidden="true" />
+              <span className="text-caption font-semibold">{t('dashboard.quick.salida')}</span>
+            </Link>
+          </>
+        )}
       </section>
 
       <MovementsWidget />

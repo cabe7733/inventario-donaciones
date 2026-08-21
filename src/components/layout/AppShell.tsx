@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { NavLink } from 'react-router-dom';
-import { House, Package, Pill, Cube, DotsThree } from '@phosphor-icons/react';
+import { House, Package, Pill, Cube, DotsThree, CaretLeft } from '@phosphor-icons/react';
 
 const TABS = [
   { to: '/inicio', icon: House, key: 'nav.inicio', end: true },
@@ -12,21 +11,36 @@ const TABS = [
   { to: '/mas', icon: DotsThree, key: 'nav.mas', end: false },
 ] as const;
 
+const TAB_PATHS = TABS.map((t) => t.to);
+
 export function AppShell() {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isSubPage = !TAB_PATHS.some((p) => location.pathname === p || location.pathname === p + '/');
 
   return (
     <div className="flex min-h-dvh flex-col bg-surface text-fg">
-      <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4">
-        <span className="text-h3 text-primary-700">Donario</span>
+      <header className="flex h-14 items-center gap-2 border-b border-border bg-card px-4">
+        {isSubPage ? (
+          <>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex h-11 w-11 items-center justify-center -ml-2 rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+              aria-label={t('common.back')}
+            >
+              <CaretLeft size={20} aria-hidden="true" />
+            </button>
+            <span className="text-h3 text-primary-700">Donario</span>
+          </>
+        ) : (
+          <span className="text-h3 text-primary-700">Donario</span>
+        )}
       </header>
 
       <main id="main" role="main" tabIndex={-1} className="flex-1">
-        <Suspense
-          fallback={
-            <div className="flex items-center justify-center p-12 text-muted">{t('common.loading')}</div>
-          }
-        >
+        <Suspense fallback={null}>
           <Outlet />
         </Suspense>
       </main>

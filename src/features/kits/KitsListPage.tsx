@@ -121,7 +121,7 @@ export function KitsListPage() {
                           setEditing(k);
                           setFormOpen(true);
                         }}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+                        className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
                       >
                         <PencilSimple size={18} aria-hidden="true" />
                       </button>

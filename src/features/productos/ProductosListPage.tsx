@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PencilSimple, Plus, Package, Trash, Warning } from '@phosphor-icons/react';
-import { fetchProducts, fetchCategories, fetchUnits, deleteProduct, type Product, type Category, type Unit } from '../../lib/db';
+import { fetchProducts, fetchCategories, fetchUnits, deleteProduct, restoreProduct, type Product, type Category, type Unit } from '../../lib/db';
 import { searchWith } from '../../lib/search';
 import { categoriasFor, unitsFor } from '../../lib/catalog';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
+import { SkeletonList } from '../../components/ui/Skeleton';
+import { SearchInput } from '../../components/ui/SearchInput';
 import { ProductFormModal } from './ProductFormModal';
 
 export function ProductosListPage() {
@@ -50,8 +52,19 @@ export function ProductosListPage() {
 
   const remove = async () => {
     if (!deleting) return;
-    await deleteProduct(deleting.id, deleting.version);
-    toast.push({ message: t('productos.deleted'), tone: 'success' });
+    const item = deleting;
+    await deleteProduct(item.id, item.version);
+    toast.push({
+      message: t('productos.deleted'),
+      tone: 'success',
+      action: {
+        label: t('common.undo'),
+        onClick: async () => {
+          await restoreProduct(item.id, item.version + 1);
+          void reload();
+        },
+      },
+    });
     setDeleting(null);
     void reload();
   };
@@ -69,17 +82,18 @@ export function ProductosListPage() {
         </Button>
       </header>
 
-      <div className="relative">
-        <input
-          aria-label={t('common.search')}
-          className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg placeholder:text-muted focus:border-primary-500 focus:outline-none"
-          placeholder={t('common.search')}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
+      <SearchInput
+        value={query}
+        onChange={setQuery}
+        placeholder={t('common.search')}
+        aria-label={t('common.search')}
+      />
 
-      <div className="flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label={t('productos.list.cats')}>
+      <div
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [mask-image:linear-gradient(to_right,transparent_0,black_12px,black_calc(100%-12px),transparent_100%)]"
+        role="tablist"
+        aria-label={t('productos.list.cats')}
+      >
         <button
           role="tab"
           aria-selected={catFilter === null}
@@ -106,7 +120,7 @@ export function ProductosListPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center p-12 text-muted">{t('common.loading')}</div>
+        <SkeletonList />
       ) : visible.length === 0 ? (
         <EmptyState
           icon={Package}
@@ -152,7 +166,7 @@ export function ProductosListPage() {
                       type="button"
                       aria-label={`${t('common.edit')} ${p.name}`}
                       onClick={() => openEdit(p)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
                     >
                       <PencilSimple size={18} aria-hidden="true" />
                     </button>
@@ -160,7 +174,7 @@ export function ProductosListPage() {
                       type="button"
                       aria-label={`${t('common.delete')} ${p.name}`}
                       onClick={() => setDeleting(p)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
                     >
                       <Trash size={18} aria-hidden="true" />
                     </button>

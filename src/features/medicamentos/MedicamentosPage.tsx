@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
+import { SkeletonList } from '../../components/ui/Skeleton';
 import { MedicationFormModal } from './MedicationFormModal';
 import { LotesModal } from './LotesModal';
 import { EntradaModal } from './EntradaModal';
@@ -78,7 +79,7 @@ export function MedicamentosPage() {
       </header>
 
       {loading ? (
-        <div className="flex items-center justify-center p-12 text-muted">{t('common.loading')}</div>
+        <SkeletonList />
       ) : medications.length === 0 ? (
         <EmptyState
           icon={Pill}
@@ -145,7 +146,7 @@ export function MedicamentosPage() {
                       type="button"
                       aria-label={`${t('common.edit')} ${m.name}`}
                       onClick={() => { setEditing(m); setFormOpen(true); }}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
                     >
                       <PencilSimple size={18} aria-hidden="true" />
                     </button>
@@ -153,7 +154,7 @@ export function MedicamentosPage() {
                       type="button"
                       aria-label={`${t('common.delete')} ${m.name}`}
                       onClick={() => setDeleting(m)}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
                     >
                       <Trash size={18} aria-hidden="true" />
                     </button>

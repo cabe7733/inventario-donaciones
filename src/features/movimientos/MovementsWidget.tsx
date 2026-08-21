@@ -4,6 +4,7 @@ import { ArrowDownRight, ArrowUpRight, Package, Pill, Cube } from '@phosphor-ico
 import { Link } from 'react-router-dom';
 import { fetchMovements, fetchProducts, fetchMedications, fetchKits, type Movement, type ItemType } from '../../lib/db';
 import { formatNumber, formatTime } from '../../lib/format';
+import { SkeletonCard } from '../../components/ui/Skeleton';
 
 const ICON: Record<ItemType, typeof Package> = {
   product: Package,
@@ -15,6 +16,7 @@ export function MovementsWidget() {
   const { t } = useTranslation();
   const [recent, setRecent] = useState<Movement[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void (async () => {
@@ -25,6 +27,7 @@ export function MovementsWidget() {
       for (const x of meds) m.set(x.id, x.name);
       for (const x of kits) m.set(x.id, x.name);
       setNames(m);
+      setLoading(false);
     })();
   }, []);
 
@@ -34,7 +37,13 @@ export function MovementsWidget() {
         <h2 className="text-h3">{t('dashboard.recent')}</h2>
         <Link to="/mas/movimientos" className="text-caption font-semibold text-primary-700">{t('dashboard.verTodo')}</Link>
       </div>
-      {recent.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 3 }, (_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      ) : recent.length === 0 ? (
         <p className="text-body text-muted">{t('dashboard.recent.empty')}</p>
       ) : (
         <ul className="flex flex-col gap-2">

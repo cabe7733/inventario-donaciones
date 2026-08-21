@@ -29,10 +29,7 @@ const ImportarMedicamentosPage = lazy(() =>
 );
 
 const PLACEHOLDERS = [
-  { path: 'mas/operadores', key: 'mas.operadores' },
-  { path: 'mas/sincronizacion', key: 'mas.sincronizacion' },
   { path: 'mas/exportar', key: 'mas.exportar' },
-  { path: 'mas/acerca', key: 'mas.acercaDe' },
 ];
 
 export const router = createBrowserRouter([

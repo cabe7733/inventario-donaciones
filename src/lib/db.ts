@@ -333,6 +333,14 @@ export async function deleteProduct(id: string, version: number): Promise<void> 
   if (error) throw error;
 }
 
+export async function restoreProduct(id: string, version: number): Promise<void> {
+  const { error } = await supabase
+    .from('products')
+    .update({ deleted: false, version: version + 1, updated_at: nowISO() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 // ---------- Medications ----------
 
 export async function fetchMedications(): Promise<Medication[]> {

@@ -14,7 +14,9 @@
     "required": "Este campo es obligatorio",
     "noResults": "Sin resultados",
     "count": "{{count}} elemento",
-    "count_other": "{{count}} elementos"
+    "count_other": "{{count}} elementos",
+    "undo": "Deshacer",
+    "back": "Volver"
   },
   "a11y": {
     "toasts": "Notificaciones",

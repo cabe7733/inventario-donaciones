@@ -7,10 +7,7 @@ import {
   Tag,
   Ruler,
   Package,
-  ArrowsClockwise,
-  UserList,
   Archive,
-  Info,
   UploadSimple,
   Pill,
 } from '@phosphor-icons/react';
@@ -66,35 +63,11 @@ export function MasPage() {
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link
-          to="/mas/operadores"
-          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
-        >
-          <UserList size={20} className="text-muted" aria-hidden="true" />
-          <span className="flex-1">{t('mas.operadores')}</span>
-          <CaretRight size={16} className="text-muted" aria-hidden="true" />
-        </Link>
-        <Link
-          to="/mas/sincronizacion"
-          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
-        >
-          <ArrowsClockwise size={20} className="text-muted" aria-hidden="true" />
-          <span className="flex-1">{t('mas.sincronizacion')}</span>
-          <CaretRight size={16} className="text-muted" aria-hidden="true" />
-        </Link>
-        <Link
           to="/mas/exportar"
           className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
         >
           <Archive size={20} className="text-muted" aria-hidden="true" />
           <span className="flex-1">{t('mas.exportar')}</span>
-          <CaretRight size={16} className="text-muted" aria-hidden="true" />
-        </Link>
-        <Link
-          to="/mas/acerca"
-          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
-        >
-          <Info size={20} className="text-muted" aria-hidden="true" />
-          <span className="flex-1">{t('mas.acercaDe')}</span>
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
       </nav>

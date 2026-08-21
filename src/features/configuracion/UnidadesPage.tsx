@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { PencilSimple, Plus, Trash } from '@phosphor-icons/react';
 import { fetchUnits, fetchProducts, fetchMedications, createUnit, updateUnit, deleteUnit, type Scope, type Unit } from '../../lib/db';
 import { Button } from '../../components/ui/Button';
@@ -102,12 +101,7 @@ export function UnidadesPage() {
   return (
     <div className="flex flex-col gap-4 p-4">
       <header className="flex items-center justify-between gap-2">
-        <div>
-          <Link to="/mas" className="text-caption text-muted hover:text-primary-700">
-            ← {t('nav.mas')}
-          </Link>
-          <h1 className="text-h2">{t('unidades.title')}</h1>
-        </div>
+        <h1 className="text-h2">{t('unidades.title')}</h1>
         <Button onClick={openNew}>
           <Plus size={18} aria-hidden="true" />
           {t('unidades.new')}
@@ -139,7 +133,7 @@ export function UnidadesPage() {
               type="button"
               aria-label={`${t('common.edit')} ${u.name}`}
               onClick={() => openEdit(u)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
             >
               <PencilSimple size={18} aria-hidden="true" />
             </button>
@@ -147,7 +141,7 @@ export function UnidadesPage() {
               type="button"
               aria-label={`${t('common.delete')} ${u.name}`}
               onClick={() => setDeleting(u)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
             >
               <Trash size={18} aria-hidden="true" />
             </button>

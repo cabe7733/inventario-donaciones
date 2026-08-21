@@ -5,6 +5,7 @@ import { ArrowDownRight, ArrowUpRight } from '@phosphor-icons/react';
 import { fetchMovements, fetchProducts, fetchMedications, fetchKits, fetchUnits, type Movement, type ItemType } from '../../lib/db';
 import { formatNumber, formatTime, formatDateShort, toLocalDateKey, todayKey } from '../../lib/format';
 import { Segmented } from '../../components/ui/Segmented';
+import { SkeletonList } from '../../components/ui/Skeleton';
 
 const ITEM_NAV_KEY: Record<ItemType, string> = {
   product: 'nav.productos',
@@ -73,7 +74,7 @@ export function MovimientosPage() {
       <h1 className="text-h2">{t('movimientos.historial')}</h1>
       <Segmented value={scope} onChange={setScope} ariaLabel={t('movimientos.scope')} options={[{ value: 'all', label: t('movimientos.scope.all') }, { value: 'product', label: t('movimientos.scope.products') }, { value: 'medication', label: t('movimientos.scope.medications') }]} />
       {loading ? (
-        <p className="text-body text-muted">{t('common.loading')}</p>
+        <SkeletonList />
       ) : scoped.length === 0 ? (
         <p className="text-body text-muted">{t('movimientos.historial.empty')}</p>
       ) : (
