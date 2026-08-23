@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildKit, deliverKit } from '../../lib/kitOps';
+import { buildKit, deliverKit, maxBuildable } from '../../lib/kitOps';
 import { StockError } from '../../lib/movements';
 import { formatNumber } from '../../lib/format';
 import type { Kit, Product } from '../../lib/db';
@@ -43,7 +43,19 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
     return lines.join(' · ');
   }, [isBuild, components, qty, productMap]);
 
-  const max = isBuild ? undefined : kit?.total_stock ?? 0;
+  // Máximo ensamblable sin que ningún componente quede en 0.
+  const maxBuild = useMemo(() => {
+    if (!isBuild) return 0;
+    let max = Number.POSITIVE_INFINITY;
+    for (const c of components) {
+      const stock = productMap.get(c.productId)?.total_stock ?? 0;
+      max = Math.min(max, maxBuildable(stock, c.qty));
+    }
+    return components.length === 0 ? 0 : max;
+  }, [isBuild, components, productMap]);
+
+  const max = isBuild ? maxBuild : kit?.total_stock ?? 0;
+  const blocked = isBuild && (maxBuild < 1 || qty > maxBuild);
 
   const run = async () => {
     if (!kit || busy) return;
@@ -89,11 +101,22 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
           </p>
         )}
 
+        {isBuild &&
+          (maxBuild < 1 ? (
+            <p role="alert" className="rounded-lg bg-danger-500/10 px-3 py-2 text-caption font-semibold text-danger-700">
+              {t('kits.action.noStock')}
+            </p>
+          ) : (
+            <p role="alert" className="rounded-lg bg-warning-500/10 px-3 py-2 text-caption font-semibold text-warning-700">
+              {t('kits.action.maxBuildable', { count: maxBuild })}
+            </p>
+          ))}
+
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
             {t('common.cancel')}
           </Button>
-          <Button variant={isBuild ? 'primary' : 'danger'} onClick={() => void run()} disabled={busy}>
+          <Button variant={isBuild ? 'primary' : 'danger'} onClick={() => void run()} disabled={busy || blocked}>
             {isBuild ? t('kits.ensamblar') : t('kits.entregar')}
           </Button>
         </div>

@@ -11,6 +11,12 @@ import {
 import { nowISO } from './ids';
 import { round2, StockError } from './movements';
 
+// Máximo de kits ensamblables sin que el producto quede en 0.
+export function maxBuildable(stock: number, qtyPerKit: number): number {
+  if (qtyPerKit <= 0) return Number.POSITIVE_INFINITY;
+  return Math.max(0, Math.ceil(stock / qtyPerKit) - 1);
+}
+
 // Ensambla `qty` kits: descuenta componentes, suma stock del kit.
 export async function buildKit(kitId: string, qty: number, centerId: string): Promise<void> {
   if (!(qty > 0)) throw new StockError('qty inválida');
@@ -21,14 +27,20 @@ export async function buildKit(kitId: string, qty: number, centerId: string): Pr
   const comps = await fetchKitComponents(kitId);
   if (comps.length === 0) throw new StockError('el kit no tiene componentes');
 
+  // Valida todo antes de descontar: si falta stock no se toca ningún producto.
+  const plan: Array<{ p: NonNullable<Awaited<ReturnType<typeof fetchProduct>>>; need: number }> = [];
   for (const c of comps) {
     const p = await fetchProduct(c.product_id);
     const need = round2(c.qty * qty);
-    if (!p || p.total_stock < need) {
+    if (!p || p.total_stock - need <= 0) {
       throw new StockError(
-        `Falta ${p?.name ?? '?'} para ensamblar ${qty} × ${kit.name}: requiere ${need}`,
+        `No se puede ensamblar ${qty} × ${kit.name}: ${p?.name ?? '?'} quedaría en 0. Con el stock actual podés ensamblar hasta ${maxBuildable(p?.total_stock ?? 0, c.qty)}.`,
       );
     }
+    plan.push({ p, need });
+  }
+
+  for (const { p, need } of plan) {
     await updateProduct(p.id, {
       total_stock: round2(p.total_stock - need),
     });

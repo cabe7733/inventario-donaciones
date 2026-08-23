@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { ArrowDown, ArrowUp, DotsThree, FileArrowDown, PencilSimple, Pill, Plus, Trash, UploadSimple, WarningCircle, Clock } from '@phosphor-icons/react';
 import { fetchMedications, fetchCategories, fetchUnits, fetchLots, deleteMedication, importMedicationsFromRows, type Medication, type Category, type Unit } from '../../lib/db';
 import { stockFor, lotExpired, lotExpiresSoon } from '../../lib/medicationOps';
@@ -13,10 +14,12 @@ import { ImportDialog, type ImportDialogConfig, type ParsedImportRow } from '../
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import { Segmented } from '../../components/ui/Segmented';
 import { MedicationFormModal } from './MedicationFormModal';
 import { LotesModal } from './LotesModal';
 import { EntradaModal } from './EntradaModal';
 import { SalidaModal } from './SalidaModal';
+import { MedMovementsList } from './MedMovementsList';
 
 const MEDS_TEMPLATE = 'medicamento;categoria;cantidad;unidad;presentacion;lote;vencimiento\nAmoxicilina 500mg;Antibióticos;100;caja;20 comprimidos;L2408A;2025-12-31\nIbuprofeno 400mg;Antiinflamatorios;50;blister;10 comprimidos;I2409B;\n';
 
@@ -95,6 +98,10 @@ export function MedicamentosPage() {
   const { t } = useTranslation();
   const toast = useToast();
   const { user, centerId } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const vista = params.get('vista') ?? 'inventario';
+  const setVista = (v: string) =>
+    v === 'inventario' ? setParams({}, { replace: true }) : setParams({ vista: v }, { replace: true });
 
   const [medications, setMedications] = useState<Medication[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -194,6 +201,7 @@ export function MedicamentosPage() {
     <div className="flex flex-col gap-4 p-4">
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('medicamentos.list.title')}</h1>
+        {vista === 'inventario' && (
         <div className="flex items-center gap-2">
           <Dropdown
             ariaLabel="Más acciones"
@@ -223,9 +231,24 @@ export function MedicamentosPage() {
             {t('medicamentos.new')}
           </Button>
         </div>
+        )}
       </header>
 
-      {loading ? (
+      <Segmented
+        value={vista}
+        onChange={setVista}
+        ariaLabel={t('medicamentos.tabs.aria')}
+        options={[
+          { value: 'inventario', label: t('medicamentos.tabs.inventario') },
+          { value: 'entradas', label: t('medicamentos.tabs.entradas') },
+          { value: 'salidas', label: t('medicamentos.tabs.salidas') },
+          { value: 'movimientos', label: t('medicamentos.tabs.movimientos') },
+        ]}
+      />
+
+      {vista !== 'inventario' ? (
+        <MedMovementsList kind={vista === 'entradas' ? 'entrada' : vista === 'salidas' ? 'salida' : undefined} />
+      ) : loading ? (
         <SkeletonList />
       ) : medications.length === 0 ? (
         <EmptyState

@@ -53,7 +53,11 @@
     "verTodo": "Ver todo",
     "recent.empty": "Sin movimientos aún. Empieza registrando una entrada.",
     "alerts": "Alertas",
-    "alerts.none": "Todo en orden"
+    "alerts.none": "Todo en orden",
+    "medMov": "Movimientos de medicamentos",
+    "medMov.entradasHoy": "Entradas hoy",
+    "medMov.salidasHoy": "Salidas hoy",
+    "medMov.empty": "Sin movimientos de medicamentos aún."
   },
   "movimientos": {
     "entrada": "Entrada",
@@ -155,7 +159,13 @@
     "vto.soon": "Vence pronto",
     "sinVto": "Sin vencimiento",
     "fefo.plan": "Plan de salida (FEFO)",
-    "fefo.insufficient": "Stock insuficiente. Revisá el plan o agregá stock."
+    "fefo.insufficient": "Stock insuficiente. Revisá el plan o agregá stock.",
+    "tabs.aria": "Secciones de medicamentos",
+    "tabs.inventario": "Inventario",
+    "tabs.entradas": "Entradas",
+    "tabs.salidas": "Salidas",
+    "tabs.movimientos": "Movimientos",
+    "mov.empty": "Sin movimientos de medicamentos aún."
   },
   "kits": {
     "list.title": "Kits",
@@ -187,6 +197,9 @@
     "action.buildQuestion": "¿Cuántos kits «{{name}}» querés ensamblar?",
     "action.deliverQuestion": "¿Cuántos kits «{{name}}» se entregan?",
     "action.consumes": "Consume",
+    "action.maxBuildable": "Con el stock actual podés ensamblar hasta {{count}} kit",
+    "action.maxBuildable_other": "Con el stock actual podés ensamblar hasta {{count}} kits",
+    "action.noStock": "Stock insuficiente: con el stock actual no podés ensamblar ningún kit.",
     "stockActual": "Stock actual del kit: {{stock}}",
     "created": "Kit creado",
     "saved": "Kit guardado",
