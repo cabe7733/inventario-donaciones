@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { ArrowDownRight, ArrowUpRight, Stack, Triangle, Package, Warning, Pill } from '@phosphor-icons/react';
+import { ArrowDownRight, ArrowUpRight, Stack, Triangle, Warning, Pill } from '@phosphor-icons/react';
 import { fetchProducts, fetchMedications, fetchMovements, fetchLots, type Product, type Movement } from '../../lib/db';
 import { formatNumber, startOfTodayISO } from '../../lib/format';
 import { lotExpired } from '../../lib/medicationOps';
@@ -44,32 +44,25 @@ export function DashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6 p-4">
+    <div className="flex flex-col gap-6 p-4 lg:p-6">
       <header>
-        <p className="text-body-sm text-muted">Donario</p>
         <h1 className="text-h2">{t('dashboard.title')}</h1>
       </header>
 
-      <section className="grid grid-cols-2 gap-3 rounded-lg bg-card p-4 shadow-elev-1">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {loading
           ? Array.from({ length: 4 }, (_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-9 w-9 shrink-0 rounded-lg" />
-                <div className="space-y-1.5">
-                  <Skeleton className="h-5 w-10" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
+              <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-7 w-14" />
               </div>
             ))
           : kpis.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-50 text-primary-700">
-                  <Icon size={20} aria-hidden="true" />
+              <div key={label} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
+                <span className="flex items-center gap-1.5 text-caption text-muted">
+                  <Icon size={14} aria-hidden="true" /> {label}
                 </span>
-                <div>
-                  <p className="text-numeric-lg">{formatNumber(value)}</p>
-                  <p className="text-caption text-muted">{label}</p>
-                </div>
+                <p className="text-numeric-lg text-fg">{formatNumber(value)}</p>
               </div>
             ))}
       </section>
@@ -82,11 +75,11 @@ export function DashboardPage() {
           </>
         ) : (
           <>
-            <Link to="/movimiento?tipo=entrada" className="bg-primary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
+            <Link to="/entradas/nueva?tipo=entrada" className="bg-primary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
               <ArrowDownRight size={28} aria-hidden="true" />
               <span className="text-caption font-semibold">{t('dashboard.quick.entrada')}</span>
             </Link>
-            <Link to="/movimiento?tipo=salida" className="bg-secondary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
+            <Link to="/salidas/nueva?tipo=salida" className="bg-secondary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
               <ArrowUpRight size={28} aria-hidden="true" />
               <span className="text-caption font-semibold">{t('dashboard.quick.salida')}</span>
             </Link>
@@ -116,14 +109,17 @@ export function DashboardPage() {
           <h2 className="text-h3 mb-3">{t('medicamentos.vto.expired')}</h2>
           <div className="flex items-center gap-2 rounded-lg border border-danger-500/40 bg-danger-500/10 p-3">
             <Pill size={16} className="text-danger-700" aria-hidden="true" />
-            <span className="flex-1 text-body-sm font-medium">{expiredLots} medicamento(s) con lotes vencidos</span>
+            <span className="flex-1 text-body-sm font-medium">
+              {expiredLots === 1
+                ? '1 medicamento con lotes vencidos'
+                : `${expiredLots} medicamentos con lotes vencidos`}
+            </span>
+            <Link to="/medicamentos" className="text-caption font-semibold text-danger-700 hover:underline">
+              Ver
+            </Link>
           </div>
         </section>
       )}
-
-      <span className="text-caption text-muted flex items-center gap-1">
-        <Package size={16} aria-hidden="true" /> Donario
-      </span>
     </div>
   );
 }

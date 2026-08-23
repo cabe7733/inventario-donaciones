@@ -4,6 +4,7 @@ import { registerMedicationEntrada, lotsFor } from '../../lib/medicationOps';
 import { StockError } from '../../lib/movements';
 import { todayKey } from '../../lib/format';
 import type { Medication } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputClass } from '../../components/ui/Field';
@@ -19,6 +20,7 @@ interface Props {
 export function EntradaModal({ medication, open, onClose }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [lots, setLots] = useState<Awaited<ReturnType<typeof lotsFor>>>([]);
   const [loteId, setLoteId] = useState<string | null>(null);
@@ -53,11 +55,18 @@ export function EntradaModal({ medication, open, onClose }: Props) {
     setError(undefined);
     setQtyError(undefined);
     if (!loteId) { setError(t('common.required')); return; }
+    if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
     const qtyNum = Number.parseInt(qty, 10);
     if (!(qtyNum >= 1)) { setQtyError(t('movimientos.error.qty')); return; }
     setSaving(true);
     try {
-      await registerMedicationEntrada({ medicationId: medication.id, loteId, qty: qtyNum, fecha: `${fecha}T12:00:00` });
+      await registerMedicationEntrada({
+        medicationId: medication.id,
+        loteId,
+        qty: qtyNum,
+        fecha: `${fecha}T12:00:00`,
+        centerId,
+      });
       toast.push({ message: t('medicamentos.entradaOk', { qty: String(qtyNum), name: medication.name }), tone: 'success' });
       onClose();
     } catch (e) {

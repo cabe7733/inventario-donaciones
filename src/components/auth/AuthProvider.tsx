@@ -61,15 +61,22 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   if (!user || user.id !== userId) return null;
 
   const meta = user.user_metadata ?? {};
-  await supabase.from('profiles').insert({
+  const firstName = (meta.first_name as string | undefined) ?? '';
+  const lastName = (meta.last_name as string | undefined) ?? '';
+  const fullName = (meta.full_name as string | undefined) ?? `${firstName} ${lastName}`.trim();
+  const { error: insertErr } = await supabase.from('profiles').insert({
     id: user.id,
-    full_name: meta.full_name ?? '',
-    first_name: meta.first_name ?? '',
-    last_name: meta.last_name ?? '',
+    full_name: fullName,
+    first_name: firstName,
+    last_name: lastName,
     doc_type: meta.doc_type ?? null,
     doc_number: meta.doc_number ?? null,
     birth_date: meta.birth_date ?? null,
-  }).then(() => {});
+  });
+  if (insertErr) {
+    console.error('fetchProfile insert failed', insertErr);
+    return null;
+  }
 
   const { data: retry } = await supabase
     .from('profiles')

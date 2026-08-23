@@ -4,6 +4,7 @@ import { Minus, Plus, X } from '@phosphor-icons/react';
 import { createKit, updateKit, clearKitComponents, addKitComponent, type Category, type Kit, type Product, type Unit } from '../../lib/db';
 import { addCategory, addUnit } from '../../lib/catalog';
 import { newId } from '../../lib/ids';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
@@ -30,6 +31,7 @@ interface Props {
 export function KitFormModal({ open, onClose, kit, categories, units, products, comps }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -81,9 +83,15 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
 
   const removeRow = (key: string) => setRows((prev) => prev.filter((r) => r.key !== key));
 
-  const onCreateCategory = (label: string) => addCategory(label, 'product', 'box', categories.length);
+  const onCreateCategory = async (label: string) => {
+    if (!centerId) throw new Error('No hay centro activo');
+    return addCategory(label, 'product', 'box', categories.length, 'primary-600', centerId);
+  };
 
-  const onCreateUnit = (label: string) => addUnit(label, 'product');
+  const onCreateUnit = async (label: string) => {
+    if (!centerId) throw new Error('No hay centro activo');
+    return addUnit(label, 'product', undefined, centerId);
+  };
 
   const save = async () => {
     const next: typeof errors = {};
@@ -92,6 +100,10 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
     if (rows.length === 0) next.comps = t('kits.form.needComponent');
     if (Object.keys(next).length) {
       setErrors(next);
+      return;
+    }
+    if (!centerId) {
+      toast.push({ message: 'No hay centro activo', tone: 'error' });
       return;
     }
     setSaving(true);
@@ -123,6 +135,7 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
           unit_id: unitId!,
           total_stock: 0,
           is_active: true,
+          center_id: centerId,
         });
         for (let i = 0; i < rows.length; i++) {
           const r = rows[i];
@@ -137,6 +150,11 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
         toast.push({ message: t('kits.created'), tone: 'success' });
       }
       onClose();
+    } catch (e) {
+      toast.push({
+        message: e instanceof Error ? e.message : 'Error al guardar',
+        tone: 'error',
+      });
     } finally {
       setSaving(false);
     }

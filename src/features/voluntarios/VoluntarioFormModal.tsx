@@ -120,12 +120,12 @@ export function VoluntarioFormModal({ volunteer, onClose }: VoluntarioFormModalP
             <input id="email" type="email" {...register('email')} className={inputWithError(errors.email)} />
           </Field>
 
-          <Field id="phone" label="Teléfono" error={errors.phone?.message}>
-            <input id="phone" {...register('phone')} className={inputWithError(errors.phone)} />
+          <Field id="phone" label="Teléfono" hint="Ej.: 300 123 4567" error={errors.phone?.message}>
+            <input id="phone" type="tel" placeholder="300 123 4567" {...register('phone')} className={inputWithError(errors.phone)} />
           </Field>
 
-          <Field id="id_number" label="Número de documento" error={errors.id_number?.message}>
-            <input id="id_number" {...register('id_number')} className={inputWithError(errors.id_number)} />
+          <Field id="id_number" label="Cédula o NIT" error={errors.id_number?.message}>
+            <input id="id_number" placeholder="Ej.: 1234567890" {...register('id_number')} className={inputWithError(errors.id_number)} />
           </Field>
 
           <Field id="availability" label="Disponibilidad" error={errors.availability?.message}>
@@ -134,6 +134,7 @@ export function VoluntarioFormModal({ volunteer, onClose }: VoluntarioFormModalP
               <option value="tiempo completo">Tiempo completo</option>
               <option value="fines de semana">Fines de semana</option>
               <option value="flexible">Flexible</option>
+              <option value="eventos especiales">Eventos especiales</option>
             </select>
           </Field>
 

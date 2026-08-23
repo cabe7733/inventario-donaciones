@@ -5,22 +5,24 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../components/auth/AuthProvider';
+import { DEPARTAMENTOS, municipiosFor } from '../../lib/colombia';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Button } from '../../components/ui/Button';
 import { Segmented } from '../../components/ui/Segmented';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 
 const centerSchema = z.object({
   // Step 1: Center data
   name: z.string().min(2, 'Nombre muy corto'),
   address: z.string().min(1, 'Dirección requerida'),
   city: z.string().optional(),
-  state: z.string().optional(),
+  state: z.string().min(1, 'Selecciona un departamento'),
   phone: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   // Step 2: Representative data
   entity_type: z.enum(['person', 'entity']),
   entity_name: z.string().min(1, 'Nombre requerido'),
-  entity_rfc: z.string().min(1, 'Cédula/NIT requerido'),
+  entity_rfc: z.string().min(1, 'Cédula o NIT requerido'),
   representative_name: z.string().optional(),
   representative_phone: z.string().optional(),
   representative_email: z.string().email('Email inválido').optional().or(z.literal('')),
@@ -46,6 +48,9 @@ export function CreateCenterPage() {
   });
 
   const entityType = watch('entity_type');
+  const state = watch('state');
+  const city = watch('city') ?? '';
+  const municipios = municipiosFor(state);
 
   const onSubmit = async (data: CenterFormData) => {
     setError(undefined);
@@ -120,18 +125,37 @@ export function CreateCenterPage() {
               </Field>
 
               <div className="grid grid-cols-2 gap-4">
-                <Field id="city" label="Ciudad" error={errors.city?.message}>
-                  <input id="city" {...register('city')} className={inputWithError(errors.city)} />
+                <Field id="state" label="Departamento" required error={errors.state?.message}>
+                  <SearchableSelect
+                    id="state"
+                    value={state ?? ''}
+                    onChange={(v) => {
+                      setValue('state', v, { shouldValidate: true });
+                      if (city && !municipiosFor(v).includes(city)) {
+                        setValue('city', '', { shouldValidate: false });
+                      }
+                    }}
+                    options={DEPARTAMENTOS.map((d) => d.name)}
+                    placeholder="Selecciona un departamento"
+                  />
                 </Field>
 
-                <Field id="state" label="Estado/Provincia" error={errors.state?.message}>
-                  <input id="state" {...register('state')} className={inputWithError(errors.state)} />
+                <Field id="city" label="Municipio" error={errors.city?.message}>
+                  <SearchableSelect
+                    id="city"
+                    value={city}
+                    onChange={(v) => setValue('city', v, { shouldValidate: true })}
+                    options={municipios}
+                    placeholder={state ? 'Selecciona un municipio' : 'Primero elige un departamento'}
+                    emptyText={state ? 'Sin resultados' : 'Selecciona un departamento'}
+                    disabled={!state}
+                  />
                 </Field>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <Field id="phone" label="Teléfono" error={errors.phone?.message}>
-                  <input id="phone" {...register('phone')} className={inputWithError(errors.phone)} />
+                <Field id="phone" label="Teléfono" hint="Ej.: 300 123 4567" error={errors.phone?.message}>
+                  <input id="phone" type="tel" placeholder="300 123 4567" {...register('phone')} className={inputWithError(errors.phone)} />
                 </Field>
 
                 <Field id="email-center" label="Email del centro" error={errors.email?.message}>
@@ -167,8 +191,13 @@ export function CreateCenterPage() {
                 <input id="entity_name" {...register('entity_name')} className={inputWithError(errors.entity_name)} />
               </Field>
 
-              <Field id="entity_rfc" label={entityType === 'person' ? 'Cédula' : 'NIT/RFC'} required error={errors.entity_rfc?.message}>
-                <input id="entity_rfc" {...register('entity_rfc')} className={inputWithError(errors.entity_rfc)} />
+              <Field id="entity_rfc" label={entityType === 'person' ? 'Cédula de ciudadanía' : 'NIT'} required error={errors.entity_rfc?.message}>
+                <input
+                  id="entity_rfc"
+                  placeholder={entityType === 'person' ? 'Ej.: 1234567890' : 'Ej.: 900123456-7'}
+                  {...register('entity_rfc')}
+                  className={inputWithError(errors.entity_rfc)}
+                />
               </Field>
 
               {entityType === 'entity' && (
@@ -179,7 +208,7 @@ export function CreateCenterPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <Field id="representative_phone" label="Teléfono" error={errors.representative_phone?.message}>
-                  <input id="representative_phone" {...register('representative_phone')} className={inputWithError(errors.representative_phone)} />
+                  <input id="representative_phone" type="tel" placeholder="300 123 4567" {...register('representative_phone')} className={inputWithError(errors.representative_phone)} />
                 </Field>
 
                 <Field id="representative_email" label="Email" error={errors.representative_email?.message}>

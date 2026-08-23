@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { newId } from '../../lib/ids';
 import { addCategory, addUnit } from '../../lib/catalog';
 import { createProduct, updateProduct, type Category, type Product, type Unit } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
@@ -33,6 +34,7 @@ const schema = z.object({
 export function ProductFormModal({ open, onClose, product, categories, units }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [name, setName] = useState('');
   const [aliases, setAliases] = useState('');
@@ -61,8 +63,14 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
     [units],
   );
 
-  const createCategory = (label: string) => addCategory(label, 'product', 'box', categories.length);
-  const createUnit = (label: string) => addUnit(label, 'product');
+  const createCategory = async (label: string) => {
+    if (!centerId) throw new Error('No hay centro activo');
+    return addCategory(label, 'product', 'box', categories.length, 'primary-600', centerId);
+  };
+  const createUnit = async (label: string) => {
+    if (!centerId) throw new Error('No hay centro activo');
+    return addUnit(label, 'product', undefined, centerId);
+  };
 
   const save = async () => {
     const parsed = schema.safeParse({ name, aliases, category_id: categoryId, unit_id: unitId, min_stock: minStock });
@@ -72,6 +80,10 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
         next[issue.path[0] as keyof typeof errors] = t('common.required');
       }
       setErrors(next);
+      return;
+    }
+    if (!centerId) {
+      toast.push({ message: 'No hay centro activo', tone: 'error' });
       return;
     }
     setSaving(true);
@@ -96,10 +108,16 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
           min_stock: parsed.data.min_stock,
           total_stock: 0,
           is_active: true,
+          center_id: centerId,
         });
         toast.push({ message: t('productos.created'), tone: 'success' });
       }
       onClose();
+    } catch (e) {
+      toast.push({
+        message: e instanceof Error ? e.message : 'Error al guardar',
+        tone: 'error',
+      });
     } finally {
       setSaving(false);
     }

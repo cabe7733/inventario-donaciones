@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PencilSimple, Plus, Trash } from '@phosphor-icons/react';
+import { Link } from 'react-router-dom';
+import { CaretLeft, PencilSimple, Plus, Trash } from '@phosphor-icons/react';
 import { fetchUnits, fetchProducts, fetchMedications, createUnit, updateUnit, deleteUnit, type Scope, type Unit } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -11,6 +13,7 @@ import { useToast } from '../../components/ui/Toast';
 export function UnidadesPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [scope, setScope] = useState<Scope>('product');
   const [units, setUnits] = useState<Unit[]>([]);
@@ -64,6 +67,10 @@ export function UnidadesPage() {
       setErrors(next);
       return;
     }
+    if (!centerId) {
+      toast.push({ message: 'No hay centro activo', tone: 'error' });
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
@@ -73,11 +80,16 @@ export function UnidadesPage() {
         });
         toast.push({ message: t('unidades.saved'), tone: 'success' });
       } else {
-        await createUnit(name.trim(), scope, abbreviation.trim());
+        await createUnit(name.trim(), scope, abbreviation.trim(), centerId);
         toast.push({ message: t('unidades.created'), tone: 'success' });
       }
       setFormOpen(false);
       load();
+    } catch (e) {
+      toast.push({
+        message: e instanceof Error ? e.message : 'Error al guardar',
+        tone: 'error',
+      });
     } finally {
       setSaving(false);
     }
@@ -99,6 +111,10 @@ export function UnidadesPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
+      <Link to="/config" className="inline-flex items-center gap-1 text-caption text-muted hover:text-primary-700">
+        <CaretLeft size={14} aria-hidden="true" /> Volver a Configuración
+      </Link>
+
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('unidades.title')}</h1>
         <Button onClick={openNew}>

@@ -1,25 +1,33 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PencilSimple, Plus, Package, Trash, Warning } from '@phosphor-icons/react';
-import { fetchProducts, fetchCategories, fetchUnits, deleteProduct, restoreProduct, type Product, type Category, type Unit } from '../../lib/db';
+import { DotsThree, FileArrowDown, PencilSimple, Plus, Package, Trash, UploadSimple, Warning } from '@phosphor-icons/react';
+import { fetchProducts, fetchCategories, fetchUnits, deleteProduct, restoreProduct, importProductsFromRows, type Product, type Category, type Unit } from '../../lib/db';
 import { searchWith } from '../../lib/search';
 import { categoriasFor, unitsFor } from '../../lib/catalog';
+import { parseProductFile } from '../../lib/parseCsv';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
+import { Dropdown } from '../../components/ui/Dropdown';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { ImportDialog, type ImportDialogConfig, type ParsedImportRow } from '../../components/ui/ImportDialog';
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { ProductFormModal } from './ProductFormModal';
 
+const PRODUCTS_TEMPLATE = 'producto;categoria;cantidad;unidad\nArroz 1 kg;Alimentos;25;bolsa\nLeche entera;Lácteos;40;caja\n';
+
 export function ProductosListPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { user, centerId } = useAuth();
 
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [importOpen, setImportOpen] = useState(false);
 
   const reload = async () => {
     const [p, c, u] = await Promise.all([fetchProducts(), fetchCategories(), fetchUnits()]);
@@ -72,14 +80,76 @@ export function ProductosListPage() {
   const openNew = () => { setEditing(null); setFormOpen(true); };
   const openEdit = (p: Product) => { setEditing(p); setFormOpen(true); };
 
+  const downloadProductsTemplate = () => {
+    const blob = new Blob([PRODUCTS_TEMPLATE], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'plantilla-productos.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importConfig: ImportDialogConfig = {
+    scope: 'products',
+    onImport: async (rows) => {
+      const data = rows.map((r) => ({
+        product: String(r.product ?? ''),
+        category: String(r.category ?? ''),
+        qty: Number(r.qty ?? 0),
+        unit: r.unit ? String(r.unit) : undefined,
+      }));
+      const stats = await importProductsFromRows(data, user?.id, centerId ?? undefined);
+      toast.push({ message: `Importación completada: ${stats.ok} productos`, tone: 'success' });
+      void reload();
+      return stats as { ok: number; [k: string]: unknown };
+    },
+    templateFilename: 'plantilla-productos.csv',
+    templateContent: PRODUCTS_TEMPLATE,
+    parseFile: (text) => parseProductFile(text) as unknown as ParsedImportRow[],
+    validateRow: (r) => {
+      if (!r.product) return { ok: false, reason: 'Falta nombre del producto' };
+      if (!r.category) return { ok: false, reason: 'Falta categoría' };
+      if (typeof r.qty !== 'number' || !Number.isFinite(r.qty) || r.qty < 0) {
+        return { ok: false, reason: 'Cantidad inválida' };
+      }
+      return { ok: true };
+    },
+  };
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('productos.list.title')}</h1>
-        <Button onClick={openNew}>
-          <Plus size={18} aria-hidden="true" />
-          {t('productos.new')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Dropdown
+            ariaLabel="Más acciones"
+            align="right"
+            trigger={
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-fg hover:bg-neutral-100 dark:hover:bg-neutral-100">
+                <DotsThree size={20} weight="bold" aria-hidden="true" />
+              </span>
+            }
+            items={[
+              {
+                key: 'import',
+                label: 'Importar archivo',
+                icon: <UploadSimple size={16} aria-hidden="true" />,
+                onClick: () => setImportOpen(true),
+              },
+              {
+                key: 'template',
+                label: 'Descargar plantilla',
+                icon: <FileArrowDown size={16} aria-hidden="true" />,
+                onClick: () => downloadProductsTemplate(),
+              },
+            ]}
+          />
+          <Button onClick={openNew}>
+            <Plus size={18} aria-hidden="true" />
+            {t('productos.new')}
+          </Button>
+        </div>
       </header>
 
       <SearchInput
@@ -98,8 +168,8 @@ export function ProductosListPage() {
           role="tab"
           aria-selected={catFilter === null}
           onClick={() => setCatFilter(null)}
-          className={`shrink-0 rounded-full px-3 py-1.5 text-caption font-semibold ${
-            catFilter === null ? 'bg-primary-600 text-inverse' : 'bg-card text-muted border border-border'
+          className={`shrink-0 rounded-full px-3 py-1.5 text-caption font-semibold transition-colors ${
+            catFilter === null ? 'bg-primary-600 text-inverse' : 'bg-card text-muted border border-border hover:border-primary-300'
           }`}
         >
           {t('productos.list.all')}
@@ -110,8 +180,8 @@ export function ProductosListPage() {
             role="tab"
             aria-selected={catFilter === c.id}
             onClick={() => setCatFilter(catFilter === c.id ? null : c.id)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-caption font-semibold ${
-              catFilter === c.id ? 'bg-primary-600 text-inverse' : 'bg-card text-muted border border-border'
+            className={`shrink-0 rounded-full px-3 py-1.5 text-caption font-semibold transition-colors ${
+              catFilter === c.id ? 'bg-primary-600 text-inverse' : 'bg-card text-muted border border-border hover:border-primary-300'
             }`}
           >
             {c.name}
@@ -192,6 +262,12 @@ export function ProductosListPage() {
         product={editing}
         categories={cats}
         units={unis}
+      />
+
+      <ImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        config={importConfig}
       />
 
       <Modal open={deleting !== null} onClose={() => setDeleting(null)} title={t('productos.delete.title')}>

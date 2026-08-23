@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PencilSimple, Plus, Trash } from '@phosphor-icons/react';
+import { Link } from 'react-router-dom';
+import { CaretLeft, PencilSimple, Plus, Trash } from '@phosphor-icons/react';
 import { fetchCategories, fetchProducts, fetchMedications, createCategory, updateCategory, deleteCategory, type Category, type Scope } from '../../lib/db';
 import { categoriasFor } from '../../lib/catalog';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -10,18 +12,19 @@ import { Segmented } from '../../components/ui/Segmented';
 import { useToast } from '../../components/ui/Toast';
 
 const COLOR_OPTIONS = [
-  'primary-600',
-  'secondary-600',
-  'success-700',
-  'warning-700',
-  'danger-700',
-  'info-700',
-  'neutral-500',
-];
+  { value: 'primary-600', cls: 'bg-primary-600' },
+  { value: 'secondary-600', cls: 'bg-secondary-600' },
+  { value: 'success-700', cls: 'bg-success-700' },
+  { value: 'warning-700', cls: 'bg-warning-700' },
+  { value: 'danger-700', cls: 'bg-danger-700' },
+  { value: 'info-700', cls: 'bg-info-700' },
+  { value: 'neutral-500', cls: 'bg-neutral-500' },
+] as const;
 
 export function CategoriasPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [scope, setScope] = useState<Scope>('product');
   const [categories, setCategories] = useState<Category[]>([]);
@@ -48,15 +51,17 @@ export function CategoriasPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
   const [name, setName] = useState('');
-  const [color, setColor] = useState(COLOR_OPTIONS[0]);
+  const [color, setColor] = useState<string>(COLOR_OPTIONS[0].value);
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<Category | null>(null);
 
+  const colorClass = (c: string) => COLOR_OPTIONS.find((o) => o.value === c)?.cls ?? 'bg-primary-600';
+
   const openNew = () => {
     setEditing(null);
     setName('');
-    setColor(COLOR_OPTIONS[0]);
+    setColor(COLOR_OPTIONS[0].value);
     setError(undefined);
     setFormOpen(true);
   };
@@ -75,6 +80,10 @@ export function CategoriasPage() {
       setError(t('common.required'));
       return;
     }
+    if (!centerId) {
+      setError('No hay centro activo');
+      return;
+    }
     setSaving(true);
     try {
       if (editing) {
@@ -84,11 +93,16 @@ export function CategoriasPage() {
         });
         toast.push({ message: t('categorias.saved'), tone: 'success' });
       } else {
-        await createCategory(trimmed, scope, scope === 'medication' ? 'pills' : 'box', visible.length, color);
+        await createCategory(trimmed, scope, scope === 'medication' ? 'pills' : 'box', visible.length, color, centerId);
         toast.push({ message: t('categorias.created'), tone: 'success' });
       }
       setFormOpen(false);
       load();
+    } catch (e) {
+      toast.push({
+        message: e instanceof Error ? e.message : 'Error al guardar',
+        tone: 'error',
+      });
     } finally {
       setSaving(false);
     }
@@ -104,6 +118,10 @@ export function CategoriasPage() {
 
   return (
     <div className="flex flex-col gap-4 p-4">
+      <Link to="/config" className="inline-flex items-center gap-1 text-caption text-muted hover:text-primary-700">
+        <CaretLeft size={14} aria-hidden="true" /> Volver a Configuración
+      </Link>
+
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('categorias.title')}</h1>
         <Button onClick={openNew}>
@@ -129,7 +147,7 @@ export function CategoriasPage() {
             className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
           >
             <span
-              className={`h-3 w-3 shrink-0 rounded-full bg-${c.color}`}
+              className={`h-3 w-3 shrink-0 rounded-full ${colorClass(c.color)}`}
               aria-hidden="true"
             />
             <span className="flex-1 truncate text-body font-medium">{c.name}</span>
@@ -169,14 +187,15 @@ export function CategoriasPage() {
           <div className="flex flex-col gap-1.5">
             <span className="text-label text-fg">{t('categorias.form.color')}</span>
             <div className="flex flex-wrap gap-2">
-              {COLOR_OPTIONS.map((c) => (
+              {COLOR_OPTIONS.map((o) => (
                 <button
-                  key={c}
+                  key={o.value}
                   type="button"
-                  aria-label={c}
-                  onClick={() => setColor(c)}
-                  className={`h-8 w-8 rounded-full bg-${c} ${
-                    color === c ? 'ring-2 ring-offset-2 ring-primary-600 dark:ring-offset-card' : ''
+                  aria-label={o.value}
+                  aria-pressed={color === o.value}
+                  onClick={() => setColor(o.value)}
+                  className={`h-8 w-8 rounded-full transition-transform ${o.cls} ${
+                    color === o.value ? 'ring-2 ring-offset-2 ring-primary-600 scale-110 dark:ring-offset-card' : ''
                   }`}
                 />
               ))}

@@ -4,6 +4,7 @@ import { buildKit, deliverKit } from '../../lib/kitOps';
 import { StockError } from '../../lib/movements';
 import { formatNumber } from '../../lib/format';
 import type { Kit, Product } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { Field } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -22,6 +23,7 @@ interface Props {
 export function KitActionModal({ mode, kit, open, onClose, components, productMap }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
 
@@ -45,13 +47,14 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
 
   const run = async () => {
     if (!kit || busy) return;
+    if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
     setBusy(true);
     try {
       if (isBuild) {
-        await buildKit(kit.id, qty);
+        await buildKit(kit.id, qty, centerId);
         toast.push({ message: t('kits.built', { qty: String(qty), name: kit.name }), tone: 'success' });
       } else {
-        await deliverKit(kit.id, qty);
+        await deliverKit(kit.id, qty, centerId);
         toast.push({ message: t('kits.delivered', { qty: String(qty), name: kit.name }), tone: 'neutral' });
       }
       onClose();

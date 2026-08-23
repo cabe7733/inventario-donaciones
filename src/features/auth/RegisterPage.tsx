@@ -14,7 +14,7 @@ const registerSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
   confirmPassword: z.string(),
-  doc_type: z.enum(['cedula', 'nit', 'pasaporte']),
+  doc_type: z.enum(['cc', 'ce', 'ti', 'nit', 'pasaporte']),
   doc_number: z.string().min(1, 'Número de documento requerido'),
   birth_date: z.string().min(1, 'Fecha de nacimiento requerida'),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -24,10 +24,12 @@ const registerSchema = z.object({
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-type DocType = 'cedula' | 'nit' | 'pasaporte';
+type DocType = 'cc' | 'ce' | 'ti' | 'nit' | 'pasaporte';
 
 const DOC_TYPE_OPTIONS: { value: DocType; label: string }[] = [
-  { value: 'cedula', label: 'Cédula' },
+  { value: 'cc', label: 'C.C.' },
+  { value: 'ce', label: 'C.E.' },
+  { value: 'ti', label: 'T.I.' },
   { value: 'nit', label: 'NIT' },
   { value: 'pasaporte', label: 'Pasaporte' },
 ];
@@ -40,7 +42,7 @@ export function RegisterPage() {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      doc_type: 'cedula',
+      doc_type: 'cc',
     },
   });
 
@@ -158,6 +160,7 @@ export function RegisterPage() {
           <Field id="doc_number" label="Número de documento" required error={errors.doc_number?.message}>
             <input
               id="doc_number"
+              placeholder={docType === 'nit' ? 'Ej.: 900123456-7' : 'Ej.: 1234567890'}
               {...register('doc_number')}
               className={inputWithError(errors.doc_number)}
             />

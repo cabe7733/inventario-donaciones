@@ -23,7 +23,7 @@ export function OnboardingPage() {
             </div>
             <div>
               <h2 className="font-medium text-fg">Crear un centro de acopio</h2>
-              <p className="text-caption text-muted">Creo y administro un nuevo centro</p>
+              <p className="text-caption text-muted">Crear y administrar un nuevo centro</p>
             </div>
           </Link>
 

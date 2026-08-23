@@ -80,8 +80,10 @@ export function DataTable<T extends { id?: string | number }>({
               >
                 <span className="inline-flex items-center gap-1">
                   {col.header}
-                  {col.sortable && sortKey === col.key && (
-                    sortDir === 'asc' ? <CaretUp size={14} /> : <CaretDown size={14} />
+                  {col.sortable && (
+                    sortKey === col.key
+                      ? (sortDir === 'asc' ? <CaretUp size={14} className="text-primary-700" /> : <CaretDown size={14} className="text-primary-700" />)
+                      : <CaretDown size={14} className="opacity-30" />
                   )}
                 </span>
               </th>

@@ -7,6 +7,7 @@ import { newId } from '../../lib/ids';
 import { registerProductMovement, StockError } from '../../lib/movements';
 import { todayKey } from '../../lib/format';
 import type { MovementKind } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputClass } from '../../components/ui/Field';
@@ -22,6 +23,7 @@ function combineDate(dateKey: string): string {
 export function MovimientoPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
   const [params] = useSearchParams();
   const initial = params.get('tipo') === 'salida' ? 'salida' : 'entrada';
 
@@ -48,8 +50,9 @@ export function MovimientoPage() {
   const selected = useMemo(() => products.find((p) => p.id === productId) ?? null, [products, productId]);
 
   const createNewProduct = async (label: string) => {
+    if (!centerId) throw new Error('No hay centro activo');
     const id = newId();
-    await createProduct({ id, name: label, aliases: [], category_id: null, unit_id: '', min_stock: null, total_stock: 0, is_active: true });
+    await createProduct({ id, name: label, aliases: [], category_id: null, unit_id: '', min_stock: null, total_stock: 0, is_active: true, center_id: centerId });
     setProducts(await fetchProducts());
     return id;
   };
@@ -57,10 +60,11 @@ export function MovimientoPage() {
   const save = async () => {
     setError(undefined);
     if (!productId) { setError(t('movimientos.error.product')); return; }
+    if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
     try {
       const qtyNum = Number.parseInt(qty, 10);
       if (!(qtyNum >= 1)) { setError(t('movimientos.error.qty')); return; }
-      await registerProductMovement({ kind, itemType: 'product', itemId: productId, qty: qtyNum, fecha: combineDate(dateKey), nota });
+      await registerProductMovement({ kind, itemType: 'product', itemId: productId, qty: qtyNum, fecha: combineDate(dateKey), nota, centerId });
       const p = products.find((x) => x.id === productId);
       toast.push({ message: kind === 'entrada' ? t('movimientos.entradaOk', { name: p?.name ?? '', qty }) : t('movimientos.salidaOk', { name: p?.name ?? '', qty }), tone: kind === 'entrada' ? 'success' : 'neutral' });
       setQty('1');

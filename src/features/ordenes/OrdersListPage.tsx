@@ -41,6 +41,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
       key: 'vehicle_plate',
       header: 'Vehículo',
       render: (r) => r.vehicle_plate ?? '-',
+      className: 'hidden sm:table-cell',
     },
     {
       key: 'notes',

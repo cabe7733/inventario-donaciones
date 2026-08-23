@@ -4,6 +4,7 @@ import { fefoPlan, salidaFefo } from '../../lib/medicationOps';
 import { StockError } from '../../lib/movements';
 import { todayKey } from '../../lib/format';
 import type { Medication } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { Field, inputClass } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -24,6 +25,7 @@ interface Props {
 export function SalidaModal({ medication, open, onClose }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [qty, setQty] = useState('1');
   const [qtyError, setQtyError] = useState<string>();
@@ -63,9 +65,15 @@ export function SalidaModal({ medication, open, onClose }: Props) {
     const qtyNum = Number.parseInt(qty, 10);
     if (!(qtyNum >= 1)) { setQtyError(t('movimientos.error.qty')); return; }
     if (insufficient) return;
+    if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
     setSaving(true);
     try {
-      const consumed = await salidaFefo({ medicationId: medication.id, qty: qtyNum, fecha: `${fecha}T12:00:00` });
+      const consumed = await salidaFefo({
+        medicationId: medication.id,
+        qty: qtyNum,
+        fecha: `${fecha}T12:00:00`,
+        centerId,
+      });
       const names = consumed.map((c) => `${c.lote} (${c.qty})`).join(', ');
       toast.push({ message: t('medicamentos.salidaOk', { qty: String(qtyNum), name: medication.name, lotes: names }), tone: 'neutral' });
       onClose();

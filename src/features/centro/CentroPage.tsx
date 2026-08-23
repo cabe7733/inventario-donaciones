@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Buildings, UserPlus } from '@phosphor-icons/react';
+import { Buildings, UserPlus, PencilSimple } from '@phosphor-icons/react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../components/auth/AuthProvider';
+import { Button } from '../../components/ui/Button';
 
 interface Center {
   id: string;
@@ -48,22 +49,32 @@ export function CentroPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 lg:p-6">
-      <header className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 text-primary-700">
-          <Buildings size={24} aria-hidden="true" />
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 text-primary-700">
+            <Buildings size={24} aria-hidden="true" />
+          </div>
+          <div>
+            <h1 className="text-h2">{center.name}</h1>
+            <p className="text-caption text-muted">Tu centro de acopio</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-h2">{center.name}</h1>
-          <p className="text-caption text-muted">Tu centro de acopio</p>
-        </div>
+        {role === 'super_admin' && (
+          <Link to="/centro/editar">
+            <Button variant="secondary" size="sm">
+              <PencilSimple size={16} aria-hidden="true" />
+              Editar
+            </Button>
+          </Link>
+        )}
       </header>
 
       <section className="rounded-xl border border-border bg-card p-4">
         <h2 className="text-h3 mb-3">Información general</h2>
         <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Info label="Dirección" value={center.address} />
-          <Info label="Ciudad" value={center.city} />
-          <Info label="Estado / Provincia" value={center.state} />
+          <Info label="Municipio" value={center.city} />
+          <Info label="Departamento" value={center.state} />
           <Info label="Teléfono" value={center.phone} />
           <Info label="Email" value={center.email} />
           <Info
@@ -75,7 +86,7 @@ export function CentroPage() {
             value={center.entity_name}
           />
           <Info
-            label={center.entity_type === 'entity' ? 'NIT / RFC' : 'Cédula'}
+            label={center.entity_type === 'entity' ? 'NIT' : 'Cédula'}
             value={center.entity_rfc}
           />
           {center.entity_type === 'entity' && (

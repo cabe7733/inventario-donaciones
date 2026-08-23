@@ -4,6 +4,7 @@ import { Clock, Package, Plus, Trash, WarningCircle } from '@phosphor-icons/reac
 import { fetchLots, deleteLot, type Medication, type MedicationLot } from '../../lib/db';
 import { addLot, lotExpired, lotExpiresSoon } from '../../lib/medicationOps';
 import { todayKey } from '../../lib/format';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -19,6 +20,7 @@ interface Props {
 export function LotesModal({ medication, open, onClose }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [lots, setLots] = useState<MedicationLot[]>([]);
   const [lote, setLote] = useState('');
@@ -45,17 +47,28 @@ export function LotesModal({ medication, open, onClose }: Props) {
   const saveLot = async () => {
     if (!medication) return;
     if (!lote.trim()) { setError(t('common.required')); return; }
+    if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
     setSaving(true);
     try {
-      await addLot({ medicationId: medication.id, lote: lote.trim(), fechaVencimiento: vencimiento || null, stockIn, fecha: new Date().toISOString() });
+      await addLot({
+        medicationId: medication.id,
+        lote: lote.trim(),
+        fechaVencimiento: vencimiento || null,
+        stockIn,
+        fecha: new Date().toISOString(),
+        centerId,
+      });
       toast.push({ message: t('medicamentos.lote.created'), tone: 'success' });
       setLote('');
       setVencimiento('');
       setStockIn(1);
       setError(undefined);
       void reload();
-    } catch {
-      toast.push({ message: t('common.error'), tone: 'error' });
+    } catch (e) {
+      toast.push({
+        message: e instanceof Error ? e.message : t('common.error'),
+        tone: 'error',
+      });
     } finally {
       setSaving(false);
     }

@@ -260,5 +260,10 @@
     "title": "Importar medicamentos",
     "subtitle": "Carga masiva de medicamentos desde un archivo plano (CSV o TXT)",
     "help": "Columnas: medicamento, categoria, cantidad, unidad, presentacion, lote, vencimiento. Separador ; o ,. La primera fila puede tener encabezados. Si la categoría o el medicamento no existen, se crean automáticamente. Si se provee lote, se crea o actualiza el stock del lote."
+  },
+  "importVol": {
+    "title": "Importar voluntarios",
+    "subtitle": "Carga un archivo CSV con los datos de tus voluntarios",
+    "help": "Columnas: nombre, telefono, email, documento, habilidades, disponibilidad. Separador ; o ,. La primera fila puede tener encabezados."
   }
 }

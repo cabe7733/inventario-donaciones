@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { newId } from '../../lib/ids';
 import { addCategory, addUnit } from '../../lib/catalog';
 import { createMedication, updateMedication, type Category, type Medication, type Unit } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
@@ -25,6 +26,7 @@ interface Errors {
 export function MedicationFormModal({ open, onClose, medication, categories, units }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
+  const { centerId } = useAuth();
 
   const [name, setName] = useState('');
   const [presentacion, setPresentacion] = useState('');
@@ -51,14 +53,24 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
     [units],
   );
 
-  const createCategory = (label: string) => addCategory(label, 'medication', 'pills', categories.length);
-  const createUnit = (label: string) => addUnit(label, 'medication');
+  const createCategory = async (label: string) => {
+    if (!centerId) throw new Error('No hay centro activo');
+    return addCategory(label, 'medication', 'pills', categories.length, 'primary-600', centerId);
+  };
+  const createUnit = async (label: string) => {
+    if (!centerId) throw new Error('No hay centro activo');
+    return addUnit(label, 'medication', undefined, centerId);
+  };
 
   const save = async () => {
     const next: Errors = {};
     if (!name.trim()) next.name = t('common.required');
     if (!unitId) next.unit = t('common.required');
     if (Object.keys(next).length) { setErrors(next); return; }
+    if (!centerId) {
+      toast.push({ message: 'No hay centro activo', tone: 'error' });
+      return;
+    }
     setSaving(true);
     try {
       const data = { name: name.trim(), presentacion: presentacion.trim(), categoria_id: categoriaId, unit_id: unitId! };
@@ -66,10 +78,15 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
         await updateMedication(medication.id, { ...data });
         toast.push({ message: t('medicamentos.saved'), tone: 'success' });
       } else {
-        await createMedication({ id: newId(), ...data, is_active: true });
+        await createMedication({ id: newId(), ...data, is_active: true, center_id: centerId });
         toast.push({ message: t('medicamentos.created'), tone: 'success' });
       }
       onClose();
+    } catch (e) {
+      toast.push({
+        message: e instanceof Error ? e.message : 'Error al guardar',
+        tone: 'error',
+      });
     } finally {
       setSaving(false);
     }

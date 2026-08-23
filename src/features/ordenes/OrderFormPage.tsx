@@ -156,11 +156,11 @@ export function OrderFormPage() {
               <input id="donor_full_name" {...register('donor_full_name')} className={inputWithError(errors.donor_full_name)} />
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field id="donor_id_number" label="Cédula/RFC" error={errors.donor_id_number?.message}>
-                <input id="donor_id_number" {...register('donor_id_number')} className={inputWithError(errors.donor_id_number)} />
+              <Field id="donor_id_number" label="Cédula o NIT" error={errors.donor_id_number?.message}>
+                <input id="donor_id_number" placeholder="Ej.: 1234567890 o 900123456-7" {...register('donor_id_number')} className={inputWithError(errors.donor_id_number)} />
               </Field>
               <Field id="donor_phone" label="Teléfono" error={errors.donor_phone?.message}>
-                <input id="donor_phone" {...register('donor_phone')} className={inputWithError(errors.donor_phone)} />
+                <input id="donor_phone" type="tel" placeholder="300 123 4567" {...register('donor_phone')} className={inputWithError(errors.donor_phone)} />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -179,11 +179,11 @@ export function OrderFormPage() {
               <input id="recipient_full_name" {...register('recipient_full_name')} className={inputWithError(errors.recipient_full_name)} />
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field id="recipient_id_number" label="Cédula/RFC" error={errors.recipient_id_number?.message}>
-                <input id="recipient_id_number" {...register('recipient_id_number')} className={inputWithError(errors.recipient_id_number)} />
+              <Field id="recipient_id_number" label="Cédula o NIT" error={errors.recipient_id_number?.message}>
+                <input id="recipient_id_number" placeholder="Ej.: 1234567890 o 900123456-7" {...register('recipient_id_number')} className={inputWithError(errors.recipient_id_number)} />
               </Field>
               <Field id="recipient_phone" label="Teléfono" error={errors.recipient_phone?.message}>
-                <input id="recipient_phone" {...register('recipient_phone')} className={inputWithError(errors.recipient_phone)} />
+                <input id="recipient_phone" type="tel" placeholder="300 123 4567" {...register('recipient_phone')} className={inputWithError(errors.recipient_phone)} />
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-4">
