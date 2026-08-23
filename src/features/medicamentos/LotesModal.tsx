@@ -62,7 +62,7 @@ export function LotesModal({ medication, open, onClose }: Props) {
   };
 
   const removeLot = async (lot: MedicationLot) => {
-    await deleteLot(lot.id, lot.version);
+    await deleteLot(lot.id);
     void reload();
   };
 

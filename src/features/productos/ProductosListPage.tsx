@@ -53,14 +53,14 @@ export function ProductosListPage() {
   const remove = async () => {
     if (!deleting) return;
     const item = deleting;
-    await deleteProduct(item.id, item.version);
+    await deleteProduct(item.id);
     toast.push({
       message: t('productos.deleted'),
       tone: 'success',
       action: {
         label: t('common.undo'),
         onClick: async () => {
-          await restoreProduct(item.id, item.version + 1);
+          await restoreProduct(item.id);
           void reload();
         },
       },

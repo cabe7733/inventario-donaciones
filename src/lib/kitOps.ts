@@ -31,7 +31,6 @@ export async function buildKit(kitId: string, qty: number): Promise<void> {
     }
     await updateProduct(p.id, {
       total_stock: round2(p.total_stock - need),
-      version: p.version + 1,
     });
     await createMovement({
       kind: 'salida',
@@ -47,10 +46,9 @@ export async function buildKit(kitId: string, qty: number): Promise<void> {
 
   await updateKit(kit.id, {
     total_stock: round2(kit.total_stock + qty),
-    version: kit.version + 1,
   });
 
-  await createKitBuild(kit.id, qty, fecha);
+  await createKitBuild(kit.id, qty, fecha, kit.center_id ?? '');
 
   await createMovement({
     kind: 'entrada',
@@ -80,10 +78,9 @@ export async function deliverKit(kitId: string, qty: number): Promise<void> {
 
   await updateKit(kit.id, {
     total_stock: next,
-    version: kit.version + 1,
   });
 
-  await createKitDelivery(kit.id, qty, fecha);
+  await createKitDelivery(kit.id, qty, fecha, kit.center_id ?? '');
 
   await createMovement({
     kind: 'salida',

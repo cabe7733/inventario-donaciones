@@ -30,6 +30,11 @@
     "productos": "Productos",
     "medicamentos": "Medicamentos",
     "kits": "Kits",
+    "entradas": "Entradas",
+    "salidas": "Salidas",
+    "voluntarios": "Voluntarios",
+    "centro": "Mi Centro",
+    "config": "Configuración",
     "mas": "Más"
   },
 

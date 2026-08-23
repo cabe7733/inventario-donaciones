@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { newId, nowISO, deviceId } from './ids';
+import { newId, nowISO } from './ids';
 
 // ---------- Types ----------
 
@@ -15,10 +15,8 @@ export interface Category {
   order: number;
   scope: Scope;
   is_active: boolean;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -29,10 +27,8 @@ export interface Unit {
   abbreviation: string;
   scope: Scope;
   is_active: boolean;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -46,10 +42,8 @@ export interface Product {
   min_stock: number | null;
   total_stock: number;
   is_active: boolean;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -61,10 +55,8 @@ export interface Medication {
   categoria_id: string | null;
   unit_id: string;
   is_active: boolean;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -75,10 +67,8 @@ export interface MedicationLot {
   lote: string;
   fecha_vencimiento: string | null;
   stock: number;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -94,10 +84,8 @@ export interface Movement {
   fecha: string;
   operador_id: string | null;
   nota: string;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -109,10 +97,8 @@ export interface Kit {
   unit_id: string;
   total_stock: number;
   is_active: boolean;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -133,10 +119,8 @@ export interface KitBuild {
   fecha: string;
   operador_id: string | null;
   nota: string;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -148,10 +132,8 @@ export interface KitDelivery {
   fecha: string;
   operador_id: string | null;
   nota: string;
-  device_id: string;
-  client_uuid: string;
-  version: number;
   deleted: boolean;
+  center_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -160,26 +142,19 @@ export interface Operador {
   id: string;
   name: string;
   is_active: boolean;
+  center_id?: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 // ---------- Helpers ----------
 
-const dv = () => deviceId();
-
-function syncMeta() {
+function insertMeta() {
   return {
-    device_id: dv(),
-    client_uuid: newId(),
-    version: 1,
     deleted: false,
     created_at: nowISO(),
     updated_at: nowISO(),
   };
-}
-
-function softDeletePatch(version: number) {
-  return { deleted: true, version: version + 1, updated_at: nowISO() };
 }
 
 // ---------- Categories ----------
@@ -198,6 +173,7 @@ export async function createCategory(
   iconKey: string,
   order: number,
   color = 'primary-600',
+  centerId?: string,
 ): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('categories').insert({
@@ -208,7 +184,8 @@ export async function createCategory(
     order,
     scope,
     is_active: true,
-    ...syncMeta(),
+    center_id: centerId,
+    ...insertMeta(),
   });
   if (error) throw error;
   return id;
@@ -216,7 +193,7 @@ export async function createCategory(
 
 export async function updateCategory(
   id: string,
-  data: Partial<Pick<Category, 'name' | 'color' | 'icon_key' | 'order' | 'is_active'>> & { version: number },
+  data: Partial<Pick<Category, 'name' | 'color' | 'icon_key' | 'order' | 'is_active'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('categories')
@@ -225,10 +202,10 @@ export async function updateCategory(
   if (error) throw error;
 }
 
-export async function deleteCategory(id: string, version: number): Promise<void> {
+export async function deleteCategory(id: string): Promise<void> {
   const { error } = await supabase
     .from('categories')
-    .update(softDeletePatch(version))
+    .update({ deleted: true, updated_at: nowISO() })
     .eq('id', id);
   if (error) throw error;
 }
@@ -247,6 +224,7 @@ export async function createUnit(
   name: string,
   scope: Scope,
   abbreviation?: string,
+  centerId?: string,
 ): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('units').insert({
@@ -255,7 +233,8 @@ export async function createUnit(
     scope,
     abbreviation: abbreviation ?? name.toLowerCase().slice(0, 4),
     is_active: true,
-    ...syncMeta(),
+    center_id: centerId ?? null,
+    ...insertMeta(),
   });
   if (error) throw error;
   return id;
@@ -263,7 +242,7 @@ export async function createUnit(
 
 export async function updateUnit(
   id: string,
-  data: Partial<Pick<Unit, 'name' | 'abbreviation' | 'is_active'>> & { version: number },
+  data: Partial<Pick<Unit, 'name' | 'abbreviation' | 'is_active'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('units')
@@ -272,10 +251,10 @@ export async function updateUnit(
   if (error) throw error;
 }
 
-export async function deleteUnit(id: string, version: number): Promise<void> {
+export async function deleteUnit(id: string): Promise<void> {
   const { error } = await supabase
     .from('units')
-    .update(softDeletePatch(version))
+    .update({ deleted: true, updated_at: nowISO() })
     .eq('id', id);
   if (error) throw error;
 }
@@ -303,12 +282,12 @@ export async function fetchProduct(id: string): Promise<Product | null> {
 }
 
 export async function createProduct(
-  data: Omit<Product, 'device_id' | 'client_uuid' | 'version' | 'deleted' | 'created_at' | 'updated_at'>,
+  data: Omit<Product, 'deleted' | 'created_at' | 'updated_at'>,
 ): Promise<string> {
   const { error } = await supabase.from('products').insert({
     ...data,
     is_active: true,
-    ...syncMeta(),
+    ...insertMeta(),
   });
   if (error) throw error;
   return data.id;
@@ -316,7 +295,7 @@ export async function createProduct(
 
 export async function updateProduct(
   id: string,
-  data: Partial<Omit<Product, 'id' | 'device_id' | 'client_uuid' | 'created_at'>> & { version: number },
+  data: Partial<Omit<Product, 'id' | 'created_at'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('products')
@@ -325,18 +304,18 @@ export async function updateProduct(
   if (error) throw error;
 }
 
-export async function deleteProduct(id: string, version: number): Promise<void> {
+export async function deleteProduct(id: string): Promise<void> {
   const { error } = await supabase
     .from('products')
-    .update(softDeletePatch(version))
+    .update({ deleted: true, updated_at: nowISO() })
     .eq('id', id);
   if (error) throw error;
 }
 
-export async function restoreProduct(id: string, version: number): Promise<void> {
+export async function restoreProduct(id: string): Promise<void> {
   const { error } = await supabase
     .from('products')
-    .update({ deleted: false, version: version + 1, updated_at: nowISO() })
+    .update({ deleted: false, updated_at: nowISO() })
     .eq('id', id);
   if (error) throw error;
 }
@@ -364,12 +343,12 @@ export async function fetchMedication(id: string): Promise<Medication | null> {
 }
 
 export async function createMedication(
-  data: Omit<Medication, 'device_id' | 'client_uuid' | 'version' | 'deleted' | 'created_at' | 'updated_at'>,
+  data: Omit<Medication, 'deleted' | 'created_at' | 'updated_at'>,
 ): Promise<string> {
   const { error } = await supabase.from('medications').insert({
     ...data,
     is_active: true,
-    ...syncMeta(),
+    ...insertMeta(),
   });
   if (error) throw error;
   return data.id;
@@ -377,7 +356,7 @@ export async function createMedication(
 
 export async function updateMedication(
   id: string,
-  data: Partial<Omit<Medication, 'id' | 'device_id' | 'client_uuid' | 'created_at'>> & { version: number },
+  data: Partial<Omit<Medication, 'id' | 'created_at'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('medications')
@@ -386,10 +365,10 @@ export async function updateMedication(
   if (error) throw error;
 }
 
-export async function deleteMedication(id: string, version: number): Promise<void> {
+export async function deleteMedication(id: string): Promise<void> {
   const { error } = await supabase
     .from('medications')
-    .update(softDeletePatch(version))
+    .update({ deleted: true, updated_at: nowISO() })
     .eq('id', id);
   if (error) throw error;
 }
@@ -418,11 +397,11 @@ export async function fetchLot(id: string): Promise<MedicationLot | null> {
 }
 
 export async function createLot(
-  data: Omit<MedicationLot, 'device_id' | 'client_uuid' | 'version' | 'deleted' | 'created_at' | 'updated_at'>,
+  data: Omit<MedicationLot, 'deleted' | 'created_at' | 'updated_at'>,
 ): Promise<string> {
   const { error } = await supabase.from('medication_lots').insert({
     ...data,
-    ...syncMeta(),
+    ...insertMeta(),
   });
   if (error) throw error;
   return data.id;
@@ -430,7 +409,7 @@ export async function createLot(
 
 export async function updateLot(
   id: string,
-  data: Partial<Omit<MedicationLot, 'id' | 'device_id' | 'client_uuid' | 'created_at'>> & { version: number },
+  data: Partial<Omit<MedicationLot, 'id' | 'created_at'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('medication_lots')
@@ -439,10 +418,10 @@ export async function updateLot(
   if (error) throw error;
 }
 
-export async function deleteLot(id: string, version: number): Promise<void> {
+export async function deleteLot(id: string): Promise<void> {
   const { error } = await supabase
     .from('medication_lots')
-    .update(softDeletePatch(version))
+    .update({ deleted: true, updated_at: nowISO() })
     .eq('id', id);
   if (error) throw error;
 }
@@ -458,13 +437,14 @@ export async function createMovement(row: {
   lote_id: string | null;
   fecha: string;
   nota: string;
+  center_id?: string;
 }): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('movements').insert({
     id,
     ...row,
     operador_id: null,
-    ...syncMeta(),
+    ...insertMeta(),
   });
   if (error) throw error;
   return id;
@@ -511,12 +491,12 @@ export async function fetchKit(id: string): Promise<Kit | null> {
 }
 
 export async function createKit(
-  data: Omit<Kit, 'device_id' | 'client_uuid' | 'version' | 'deleted' | 'created_at' | 'updated_at'>,
+  data: Omit<Kit, 'deleted' | 'created_at' | 'updated_at'>,
 ): Promise<string> {
   const { error } = await supabase.from('kits').insert({
     ...data,
     is_active: true,
-    ...syncMeta(),
+    ...insertMeta(),
   });
   if (error) throw error;
   return data.id;
@@ -524,7 +504,7 @@ export async function createKit(
 
 export async function updateKit(
   id: string,
-  data: Partial<Omit<Kit, 'id' | 'device_id' | 'client_uuid' | 'created_at'>> & { version: number },
+  data: Partial<Omit<Kit, 'id' | 'created_at'>>,
 ): Promise<void> {
   const { error } = await supabase
     .from('kits')
@@ -533,10 +513,10 @@ export async function updateKit(
   if (error) throw error;
 }
 
-export async function deleteKit(id: string, version: number): Promise<void> {
+export async function deleteKit(id: string): Promise<void> {
   const { error } = await supabase
     .from('kits')
-    .update(softDeletePatch(version))
+    .update({ deleted: true, updated_at: nowISO() })
     .eq('id', id);
   if (error) throw error;
 }
@@ -583,7 +563,7 @@ export async function clearKitComponents(kitId: string): Promise<void> {
 
 // ---------- Kit Builds & Deliveries ----------
 
-export async function createKitBuild(kitId: string, qty: number, fecha: string): Promise<string> {
+export async function createKitBuild(kitId: string, qty: number, fecha: string, centerId: string): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('kit_builds').insert({
     id,
@@ -592,13 +572,14 @@ export async function createKitBuild(kitId: string, qty: number, fecha: string):
     fecha,
     operador_id: null,
     nota: '',
-    ...syncMeta(),
+    center_id: centerId,
+    ...insertMeta(),
   });
   if (error) throw error;
   return id;
 }
 
-export async function createKitDelivery(kitId: string, qty: number, fecha: string): Promise<string> {
+export async function createKitDelivery(kitId: string, qty: number, fecha: string, centerId: string): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('kit_deliveries').insert({
     id,
@@ -607,7 +588,8 @@ export async function createKitDelivery(kitId: string, qty: number, fecha: strin
     fecha,
     operador_id: null,
     nota: '',
-    ...syncMeta(),
+    center_id: centerId,
+    ...insertMeta(),
   });
   if (error) throw error;
   return id;
@@ -651,14 +633,13 @@ export async function fetchOperadores(): Promise<Operador[]> {
 
 export async function importProductsFromRows(
   rows: Array<{ product: string; category: string; qty: number; unit?: string }>,
+  userId?: string,
+  centerId?: string,
 ): Promise<{ ok: number; createdCats: number; createdUnits: number; productsCreated: number; productsUpdated: number }> {
-  const payload = rows.map((r) => ({
-    ...r,
-    client_uuid: newId(),
-  }));
   const { data, error } = await supabase.rpc('import_products_from_rows', {
-    p_rows: payload,
-    p_device_id: dv(),
+    p_rows: rows,
+    p_user_id: userId ?? null,
+    p_center_id: centerId ?? null,
   });
   if (error) throw error;
   return data;
@@ -674,6 +655,8 @@ export async function importMedicationsFromRows(
     lot?: string;
     expiry?: string;
   }>,
+  userId?: string,
+  centerId?: string,
 ): Promise<{
   ok: number;
   createdCats: number;
@@ -682,13 +665,31 @@ export async function importMedicationsFromRows(
   medsUpdated: number;
   lotsCreated: number;
 }> {
-  const payload = rows.map((r) => ({
-    ...r,
-    client_uuid: newId(),
-  }));
   const { data, error } = await supabase.rpc('import_medications_from_rows', {
-    p_rows: payload,
-    p_device_id: dv(),
+    p_rows: rows,
+    p_user_id: userId ?? null,
+    p_center_id: centerId ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+// ---------- Import Volunteers ----------
+
+export async function importVolunteersFromRows(
+  rows: Array<{
+    full_name: string;
+    phone?: string;
+    email?: string;
+    id_number?: string;
+    skills?: string;
+    availability?: string;
+  }>,
+  centerId: string,
+): Promise<{ ok: number; created: number; skipped: number }> {
+  const { data, error } = await supabase.rpc('import_volunteers_from_rows', {
+    p_rows: rows,
+    p_center_id: centerId,
   });
   if (error) throw error;
   return data;

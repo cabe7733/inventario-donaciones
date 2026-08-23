@@ -84,7 +84,6 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
           category_id: parsed.data.category_id,
           unit_id: parsed.data.unit_id,
           min_stock: parsed.data.min_stock,
-          version: product.version + 1,
         });
         toast.push({ message: t('productos.saved'), tone: 'success' });
       } else {

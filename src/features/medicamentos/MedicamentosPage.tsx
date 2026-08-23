@@ -62,7 +62,7 @@ export function MedicamentosPage() {
 
   const remove = async () => {
     if (!deleting) return;
-    await deleteMedication(deleting.id, deleting.version);
+    await deleteMedication(deleting.id);
     toast.push({ message: t('medicamentos.deleted'), tone: 'success' });
     setDeleting(null);
     void reload();

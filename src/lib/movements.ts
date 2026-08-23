@@ -50,7 +50,6 @@ export async function registerProductMovement(input: MovementInput): Promise<voi
 
   await updateProduct(p.id, {
     total_stock: round2(next),
-    version: p.version + 1,
   });
 
   await _createMovement({

@@ -81,7 +81,6 @@ export function CategoriasPage() {
         await updateCategory(editing.id, {
           name: trimmed,
           color,
-          version: editing.version + 1,
         });
         toast.push({ message: t('categorias.saved'), tone: 'success' });
       } else {
@@ -97,7 +96,7 @@ export function CategoriasPage() {
 
   const remove = async () => {
     if (!deleting) return;
-    await deleteCategory(deleting.id, deleting.version);
+    await deleteCategory(deleting.id);
     toast.push({ message: t('categorias.deleted'), tone: 'success' });
     setDeleting(null);
     load();

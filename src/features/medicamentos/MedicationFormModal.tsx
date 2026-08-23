@@ -63,7 +63,7 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
     try {
       const data = { name: name.trim(), presentacion: presentacion.trim(), categoria_id: categoriaId, unit_id: unitId! };
       if (medication) {
-        await updateMedication(medication.id, { ...data, version: medication.version + 1 });
+        await updateMedication(medication.id, { ...data });
         toast.push({ message: t('medicamentos.saved'), tone: 'success' });
       } else {
         await createMedication({ id: newId(), ...data, is_active: true });

@@ -1,0 +1,119 @@
+import { supabase } from './supabase';
+
+export interface Order {
+  id: string;
+  center_id: string;
+  order_type: 'entrada' | 'salida';
+  donor_full_name: string | null;
+  donor_id_number: string | null;
+  donor_phone: string | null;
+  donor_email: string | null;
+  donor_entity_name: string | null;
+  vehicle_plate: string | null;
+  vehicle_type: string | null;
+  recipient_full_name: string | null;
+  recipient_id_number: string | null;
+  recipient_phone: string | null;
+  recipient_entity_name: string | null;
+  recipient_type: string | null;
+  created_by: string;
+  order_date: string;
+  notes: string;
+  created_at: string;
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  item_type: 'product' | 'medication' | 'kit';
+  item_id: string;
+  qty: number;
+  unit_id: string | null;
+  lote_id: string | null;
+  notes: string;
+}
+
+export interface OrderWithItems extends Order {
+  order_items: OrderItem[];
+}
+
+export async function fetchOrders(type?: 'entrada' | 'salida'): Promise<Order[]> {
+  let q = supabase
+    .from('orders')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (type) {
+    q = q.eq('order_type', type);
+  }
+
+  const { data, error } = await q;
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchOrderWithItems(orderId: string): Promise<OrderWithItems> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select('*, order_items(*)')
+    .eq('id', orderId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export interface CreateOrderInput {
+  order_type: 'entrada' | 'salida';
+  donor_full_name?: string;
+  donor_id_number?: string;
+  donor_phone?: string;
+  donor_email?: string;
+  donor_entity_name?: string;
+  donor_entity_rfc?: string;
+  vehicle_plate?: string;
+  vehicle_type?: string;
+  vehicle_color?: string;
+  recipient_full_name?: string;
+  recipient_id_number?: string;
+  recipient_phone?: string;
+  recipient_email?: string;
+  recipient_entity_name?: string;
+  recipient_entity_rfc?: string;
+  recipient_type?: 'person' | 'entity';
+  items: Array<{
+    item_type: 'product' | 'medication' | 'kit';
+    item_id: string;
+    qty: number;
+    unit_id?: string;
+    lote_id?: string;
+    notes?: string;
+  }>;
+  notes?: string;
+}
+
+export async function createOrder(input: CreateOrderInput): Promise<string> {
+  const { data, error } = await supabase.rpc('create_order', {
+    p_order_type: input.order_type,
+    p_items: input.items,
+    p_donor_full_name: input.donor_full_name,
+    p_donor_id_number: input.donor_id_number,
+    p_donor_phone: input.donor_phone,
+    p_donor_email: input.donor_email,
+    p_donor_entity_name: input.donor_entity_name,
+    p_donor_entity_rfc: input.donor_entity_rfc,
+    p_vehicle_plate: input.vehicle_plate,
+    p_vehicle_type: input.vehicle_type,
+    p_vehicle_color: input.vehicle_color,
+    p_recipient_full_name: input.recipient_full_name,
+    p_recipient_id_number: input.recipient_id_number,
+    p_recipient_phone: input.recipient_phone,
+    p_recipient_email: input.recipient_email,
+    p_recipient_entity_name: input.recipient_entity_name,
+    p_recipient_entity_rfc: input.recipient_entity_rfc,
+    p_recipient_type: input.recipient_type,
+    p_notes: input.notes,
+  });
+
+  if (error) throw error;
+  return data;
+}

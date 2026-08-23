@@ -8,7 +8,9 @@
 create or replace function import_products_from_rows(
   p_rows jsonb,            -- [{product, category, qty, unit, client_uuid}, ...]
   p_device_id text,        -- device_id del navegador (Dexie ya lo genera)
-  p_movement_note text default 'Importación inicial'
+  p_movement_note text default 'Importación inicial',
+  p_user_id uuid default null,
+  p_center_id uuid default null
 ) returns jsonb
 language plpgsql
 security invoker
@@ -123,10 +125,10 @@ begin
     if v_qty > 0 then
       v_movement_client_uuid := gen_random_uuid();
       insert into movements (id, kind, item_type, item_id, qty, unit_id,
-                             lote_id, operador_id, nota,
+                             lote_id, operador_id, nota, center_id,
                              device_id, client_uuid, version, deleted)
       values (gen_random_uuid(), 'entrada', 'product', v_product_id, v_qty,
-              v_unit_id, null, null, p_movement_note,
+              v_unit_id, null, p_user_id, p_movement_note, p_center_id,
               p_device_id, v_movement_client_uuid, 1, false);
     end if;
 

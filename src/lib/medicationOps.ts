@@ -76,7 +76,6 @@ export async function registerMedicationEntrada(args: {
 
   await updateLot(lot.id, {
     stock: round2(lot.stock + qty),
-    version: lot.version + 1,
   });
 
   await createMovement({
@@ -123,7 +122,6 @@ export async function salidaFefo(args: {
     const lot = lots.find((l) => l.id === p.loteId)!;
     await updateLot(lot.id, {
       stock: round2(lot.stock - p.qty),
-      version: lot.version + 1,
     });
     await createMovement({
       kind: 'salida',

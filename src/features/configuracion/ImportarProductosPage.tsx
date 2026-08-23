@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { CheckCircle, WarningCircle, XCircle } from '@phosphor-icons/react';
 import { importProductsFromRows } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../components/ui/Toast';
 
@@ -57,7 +58,10 @@ function isHeaderRow(cells: string[]): boolean {
   if (cells.length < 3) return false;
   const first = cells[0].toLowerCase();
   if (first === 'producto' || first === 'product' || first === 'nombre' || first === 'name') {
-    return cells.some((c) => c.toLowerCase().includes('cant'));
+    return cells.some((c) => {
+      const lc = c.toLowerCase();
+      return lc.includes('cant') || lc === 'qty' || lc === 'stock';
+    });
   }
   return false;
 }
@@ -98,6 +102,7 @@ function parseFile(text: string): ParsedRow[] {
 export function ImportarProductosPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { user, centerId } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [rows, setRows] = useState<PreviewRow[]>([]);
@@ -150,7 +155,7 @@ export function ImportarProductosPage() {
         category: r.category,
         qty: r.qty,
         unit: r.unit ?? undefined,
-      })));
+      })), user?.id, centerId ?? undefined);
       setResult(stats);
       toast.push({ message: t('import.done', { count: stats.ok }), tone: 'success' });
     } catch (e) {

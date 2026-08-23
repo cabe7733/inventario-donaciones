@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { CheckCircle, WarningCircle, XCircle } from '@phosphor-icons/react';
 import { importMedicationsFromRows } from '../../lib/db';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { useToast } from '../../components/ui/Toast';
 
@@ -108,6 +109,7 @@ function parseFile(text: string): ParsedRow[] {
 export function ImportarMedicamentosPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const { user, centerId } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [rows, setRows] = useState<PreviewRow[]>([]);
@@ -163,7 +165,7 @@ export function ImportarMedicamentosPage() {
         presentation: r.presentation ?? undefined,
         lot: r.lot ?? undefined,
         expiry: r.expiry ?? undefined,
-      })));
+      })), user?.id, centerId ?? undefined);
       setResult(stats);
       toast.push({ message: `Importación completada: ${stats.ok} medicamentos`, tone: 'success' });
     } catch (e) {

@@ -101,7 +101,6 @@ export function KitFormModal({ open, onClose, kit, categories, units, products, 
           name: name.trim(),
           category_id: categoryId,
           unit_id: unitId!,
-          version: kit.version + 1,
         });
         await clearKitComponents(kit.id);
         for (let i = 0; i < rows.length; i++) {

@@ -70,7 +70,6 @@ export function UnidadesPage() {
         await updateUnit(editing.id, {
           name: name.trim(),
           abbreviation: abbreviation.trim(),
-          version: editing.version + 1,
         });
         toast.push({ message: t('unidades.saved'), tone: 'success' });
       } else {
@@ -92,7 +91,7 @@ export function UnidadesPage() {
       setDeleting(null);
       return;
     }
-    await deleteUnit(deleting.id, deleting.version);
+    await deleteUnit(deleting.id);
     toast.push({ message: t('unidades.deleted'), tone: 'success' });
     setDeleting(null);
     load();
