@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { newId, nowISO } from './ids';
+import { getDeviceId, newId, nowISO } from './ids';
 
 // ---------- Types ----------
 
@@ -149,8 +149,14 @@ export interface Operador {
 
 // ---------- Helpers ----------
 
-function insertMeta() {
+// ponytail: schema requires device_id/client_uuid/version NOT NULL. The id (also a
+// client-generated UUID) is reused as client_uuid so the unique (device_id, client_uuid)
+// constraint doesn't collide between rows on the same device.
+function insertMeta(id: string) {
   return {
+    device_id: getDeviceId(),
+    client_uuid: id,
+    version: 1,
     deleted: false,
     created_at: nowISO(),
     updated_at: nowISO(),
@@ -172,8 +178,8 @@ export async function createCategory(
   scope: Scope,
   iconKey: string,
   order: number,
-  color = 'primary-600',
-  centerId?: string,
+  color: string,
+  centerId: string,
 ): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('categories').insert({
@@ -185,7 +191,7 @@ export async function createCategory(
     scope,
     is_active: true,
     center_id: centerId,
-    ...insertMeta(),
+    ...insertMeta(id),
   });
   if (error) throw error;
   return id;
@@ -223,8 +229,8 @@ export async function fetchUnits(scope?: Scope): Promise<Unit[]> {
 export async function createUnit(
   name: string,
   scope: Scope,
-  abbreviation?: string,
-  centerId?: string,
+  abbreviation: string | undefined,
+  centerId: string,
 ): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('units').insert({
@@ -233,8 +239,8 @@ export async function createUnit(
     scope,
     abbreviation: abbreviation ?? name.toLowerCase().slice(0, 4),
     is_active: true,
-    center_id: centerId ?? null,
-    ...insertMeta(),
+    center_id: centerId,
+    ...insertMeta(id),
   });
   if (error) throw error;
   return id;
@@ -287,7 +293,7 @@ export async function createProduct(
   const { error } = await supabase.from('products').insert({
     ...data,
     is_active: true,
-    ...insertMeta(),
+    ...insertMeta(data.id),
   });
   if (error) throw error;
   return data.id;
@@ -348,7 +354,7 @@ export async function createMedication(
   const { error } = await supabase.from('medications').insert({
     ...data,
     is_active: true,
-    ...insertMeta(),
+    ...insertMeta(data.id),
   });
   if (error) throw error;
   return data.id;
@@ -401,7 +407,7 @@ export async function createLot(
 ): Promise<string> {
   const { error } = await supabase.from('medication_lots').insert({
     ...data,
-    ...insertMeta(),
+    ...insertMeta(data.id),
   });
   if (error) throw error;
   return data.id;
@@ -437,14 +443,14 @@ export async function createMovement(row: {
   lote_id: string | null;
   fecha: string;
   nota: string;
-  center_id?: string;
+  center_id: string;
 }): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('movements').insert({
     id,
     ...row,
     operador_id: null,
-    ...insertMeta(),
+    ...insertMeta(id),
   });
   if (error) throw error;
   return id;
@@ -496,7 +502,7 @@ export async function createKit(
   const { error } = await supabase.from('kits').insert({
     ...data,
     is_active: true,
-    ...insertMeta(),
+    ...insertMeta(data.id),
   });
   if (error) throw error;
   return data.id;
@@ -573,7 +579,7 @@ export async function createKitBuild(kitId: string, qty: number, fecha: string, 
     operador_id: null,
     nota: '',
     center_id: centerId,
-    ...insertMeta(),
+    ...insertMeta(id),
   });
   if (error) throw error;
   return id;
@@ -589,7 +595,7 @@ export async function createKitDelivery(kitId: string, qty: number, fecha: strin
     operador_id: null,
     nota: '',
     center_id: centerId,
-    ...insertMeta(),
+    ...insertMeta(id),
   });
   if (error) throw error;
   return id;

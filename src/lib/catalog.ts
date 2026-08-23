@@ -29,15 +29,17 @@ export async function addCategory(
   scope: Scope,
   iconKey: string,
   order: number,
-  color = 'primary-600',
+  color: string,
+  centerId: string,
 ): Promise<string> {
-  return _createCategory(name, scope, iconKey, order, color);
+  return _createCategory(name, scope, iconKey, order, color, centerId);
 }
 
 export async function addUnit(
   name: string,
   scope: Scope,
-  abbreviation?: string,
+  abbreviation: string | undefined,
+  centerId: string,
 ): Promise<string> {
-  return _createUnit(name, scope, abbreviation);
+  return _createUnit(name, scope, abbreviation, centerId);
 }

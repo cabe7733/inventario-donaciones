@@ -12,7 +12,7 @@ import { nowISO } from './ids';
 import { round2, StockError } from './movements';
 
 // Ensambla `qty` kits: descuenta componentes, suma stock del kit.
-export async function buildKit(kitId: string, qty: number): Promise<void> {
+export async function buildKit(kitId: string, qty: number, centerId: string): Promise<void> {
   if (!(qty > 0)) throw new StockError('qty inválida');
   const fecha = nowISO();
 
@@ -41,6 +41,7 @@ export async function buildKit(kitId: string, qty: number): Promise<void> {
       lote_id: null,
       fecha,
       nota: `Ensamblado en kit "${kit.name}" (${qty})`,
+      center_id: centerId,
     });
   }
 
@@ -48,7 +49,7 @@ export async function buildKit(kitId: string, qty: number): Promise<void> {
     total_stock: round2(kit.total_stock + qty),
   });
 
-  await createKitBuild(kit.id, qty, fecha, kit.center_id ?? '');
+  await createKitBuild(kit.id, qty, fecha, centerId);
 
   await createMovement({
     kind: 'entrada',
@@ -59,11 +60,12 @@ export async function buildKit(kitId: string, qty: number): Promise<void> {
     lote_id: null,
     fecha,
     nota: '',
+    center_id: centerId,
   });
 }
 
 // Entrega `qty` kits.
-export async function deliverKit(kitId: string, qty: number): Promise<void> {
+export async function deliverKit(kitId: string, qty: number, centerId: string): Promise<void> {
   if (!(qty > 0)) throw new StockError('qty inválida');
   const fecha = nowISO();
 
@@ -80,7 +82,7 @@ export async function deliverKit(kitId: string, qty: number): Promise<void> {
     total_stock: next,
   });
 
-  await createKitDelivery(kit.id, qty, fecha, kit.center_id ?? '');
+  await createKitDelivery(kit.id, qty, fecha, centerId);
 
   await createMovement({
     kind: 'salida',
@@ -91,5 +93,6 @@ export async function deliverKit(kitId: string, qty: number): Promise<void> {
     lote_id: null,
     fecha,
     nota: '',
+    center_id: centerId,
   });
 }

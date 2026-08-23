@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Copy, UserPlus, X } from '@phosphor-icons/react';
+import { Copy, EnvelopeSimple, UserPlus, X } from '@phosphor-icons/react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
@@ -9,6 +9,11 @@ import { Segmented } from '../../components/ui/Segmented';
 import { useToast } from '../../components/ui/Toast';
 
 type Role = 'super_admin' | 'admin' | 'visualizer';
+
+interface Center {
+  id: string;
+  name: string;
+}
 
 interface Member {
   user_id: string;
@@ -39,10 +44,11 @@ const ROLE_LABELS: Record<Role, string> = {
 };
 
 export function MembersPage() {
-  const { role } = useAuth();
+  const { role, centerId } = useAuth();
   const toast = useToast();
   const [members, setMembers] = useState<Member[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [center, setCenter] = useState<Center | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -51,12 +57,13 @@ export function MembersPage() {
   const [inviteError, setInviteError] = useState<string>();
   const [inviting, setInviting] = useState(false);
   const [lastInviteCode, setLastInviteCode] = useState<string | null>(null);
+  const [lastInviteEmailSent, setLastInviteEmailSent] = useState<boolean | null>(null);
 
   const canManage = role === 'super_admin';
 
   const load = async () => {
     setLoading(true);
-    const [membersRes, invitesRes] = await Promise.all([
+    const [membersRes, invitesRes, centerRes] = await Promise.all([
       supabase
         .from('center_members')
         .select('user_id, role, is_active, created_at, profile:profiles(full_name, first_name, last_name)')
@@ -66,6 +73,9 @@ export function MembersPage() {
         .select('id, email, role, expires_at, accepted_at, created_at')
         .is('accepted_at', null)
         .order('created_at', { ascending: false }),
+      centerId
+        ? supabase.from('centers').select('id, name').eq('id', centerId).single()
+        : Promise.resolve({ data: null } as { data: Center | null }),
     ]);
 
     if (!membersRes.error) {
@@ -81,6 +91,7 @@ export function MembersPage() {
       );
     }
     if (!invitesRes.error) setInvitations((invitesRes.data ?? []) as Invitation[]);
+    if (centerRes?.data) setCenter(centerRes.data as Center);
     setLoading(false);
   };
 
@@ -112,7 +123,27 @@ export function MembersPage() {
         return;
       }
       setLastInviteCode(data ?? null);
-      toast.push({ message: 'Invitación enviada', tone: 'success' });
+      setLastInviteEmailSent(null);
+
+      const { data: sent } = await supabase.functions.invoke<{ sent: boolean; reason?: string }>(
+        'send-invitation',
+        {
+          body: {
+            invitation_id: data,
+            email: trimmed,
+            role: inviteRole,
+            center_name: center?.name ?? 'tu centro',
+            accept_url: `${window.location.origin}/onboarding/unirse-centro`,
+          },
+        },
+      );
+      const ok = sent?.sent === true;
+      setLastInviteEmailSent(ok);
+
+      toast.push({
+        message: ok ? 'Invitación enviada por correo' : 'Invitación creada. Comparte el código.',
+        tone: ok ? 'success' : 'neutral',
+      });
       load();
     } finally {
       setInviting(false);
@@ -208,7 +239,7 @@ export function MembersPage() {
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-body font-medium text-fg">{inv.email}</p>
                     <p className="text-caption text-muted">
-                      {ROLE_LABELS[inv.role]} · Expira {new Date(inv.expires_at).toLocaleDateString()}
+                      {ROLE_LABELS[inv.role]} · {inv.expires_at ? `Expira ${new Date(inv.expires_at).toLocaleDateString('es-CO')}` : 'Sin expiración'}
                     </p>
                   </div>
                   <button
@@ -238,8 +269,16 @@ export function MembersPage() {
         <div className="flex flex-col gap-4">
           {lastInviteCode ? (
             <>
+              <div className="flex items-center gap-2 rounded-lg border border-success-500/40 bg-success-500/10 p-3 text-caption text-success-700">
+                <EnvelopeSimple size={16} aria-hidden="true" />
+                {lastInviteEmailSent === true
+                  ? 'Invitación enviada por correo.'
+                  : lastInviteEmailSent === false
+                    ? 'No se pudo enviar el correo. Comparte el código con la persona.'
+                    : 'Invitación creada.'}
+              </div>
               <p className="text-body text-fg">
-                Invitación creada. Comparte este código con la persona para que pueda unirse:
+                Comparte este código con la persona para que pueda unirse:
               </p>
               <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-3">
                 <code className="flex-1 break-all text-caption font-mono text-fg">

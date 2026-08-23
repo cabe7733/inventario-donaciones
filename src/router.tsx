@@ -1,5 +1,5 @@
 import { Suspense, lazy, type ReactNode } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, NavLink, Outlet } from 'react-router-dom';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { RoleGuard } from './components/auth/RoleGuard';
 import { AppShellDesktop } from './components/layout/AppShellDesktop';
@@ -10,11 +10,13 @@ import { OnboardingPage } from './features/centros/OnboardingPage';
 import { CreateCenterPage } from './features/centros/CreateCenterPage';
 import { JoinCenterPage } from './features/centros/JoinCenterPage';
 import { CentroPage } from './features/centro/CentroPage';
+import { EditCenterPage } from './features/centro/EditCenterPage';
 import { MembersPage } from './features/centro/MembersPage';
 import { CategoriasPage } from './features/configuracion/CategoriasPage';
 import { UnidadesPage } from './features/configuracion/UnidadesPage';
 import { KitsListPage } from './features/kits/KitsListPage';
 import { KitDetailPage } from './features/kits/KitDetailPage';
+import { MovimientosPage } from './features/movimientos/MovimientosPage';
 import { VoluntariosListPage } from './features/voluntarios/VoluntariosListPage';
 import { OrdersListPage } from './features/ordenes/OrdersListPage';
 import { OrderFormPage } from './features/ordenes/OrderFormPage';
@@ -29,18 +31,6 @@ const ProductosList = lazy(() =>
 
 const MedicamentosList = lazy(() =>
   import('./features/medicamentos/MedicamentosPage').then((m) => ({ default: m.MedicamentosPage })),
-);
-
-const ImportarProductosPage = lazy(() =>
-  import('./features/configuracion/ImportarProductosPage').then((m) => ({ default: m.ImportarProductosPage })),
-);
-
-const ImportarMedicamentosPage = lazy(() =>
-  import('./features/configuracion/ImportarMedicamentosPage').then((m) => ({ default: m.ImportarMedicamentosPage })),
-);
-
-const ImportarVoluntariosPage = lazy(() =>
-  import('./features/configuracion/ImportarVoluntariosPage').then((m) => ({ default: m.ImportarVoluntariosPage })),
 );
 
 export const router = createBrowserRouter([
@@ -58,10 +48,11 @@ export const router = createBrowserRouter([
     path: '/onboarding',
     element: (
       <ProtectedRoute requireCenter={false}>
-        <OnboardingPage />
+        <Outlet />
       </ProtectedRoute>
     ),
     children: [
+      { index: true, element: <OnboardingPage /> },
       { path: 'crear-centro', element: <CreateCenterPage /> },
       { path: 'unirse-centro', element: <JoinCenterPage /> },
     ],
@@ -95,6 +86,7 @@ export const router = createBrowserRouter([
       },
       { path: 'kits', element: <KitsListPage /> },
       { path: 'kits/:id', element: <KitDetailPage /> },
+      { path: 'mas/movimientos', element: <MovimientosPage /> },
       // Orders
       { path: 'entradas', element: <OrdersListPage type="entrada" /> },
       { path: 'entradas/nueva', element: <OrderFormPage /> },
@@ -112,6 +104,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'centro/editar',
+        element: (
+          <RoleGuard roles={['super_admin', 'admin']}>
+            <EditCenterPage />
+          </RoleGuard>
+        ),
+      },
+      {
         path: 'centro/miembros',
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
@@ -124,44 +124,34 @@ export const router = createBrowserRouter([
         path: 'config',
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
-            <div className="flex flex-col gap-4 p-4 lg:p-6">
-              <h1 className="text-h2">Configuración</h1>
-              <div className="flex flex-col gap-2">
-                <a href="/config/categorias" className="text-primary-600 hover:text-primary-700">Categorías</a>
-                <a href="/config/unidades" className="text-primary-600 hover:text-primary-700">Unidades</a>
-                <a href="/config/importar-productos" className="text-primary-600 hover:text-primary-700">Importar Productos</a>
-                <a href="/config/importar-medicamentos" className="text-primary-600 hover:text-primary-700">Importar Medicamentos</a>
-              </div>
-            </div>
+            <Outlet />
           </RoleGuard>
         ),
         children: [
+          {
+            index: true,
+            element: (
+              <div className="flex flex-col gap-4 p-4 lg:p-6">
+                <h1 className="text-h2">Configuración</h1>
+                <div className="flex flex-col gap-1">
+                  {[
+                    { to: '/config/categorias', label: 'Categorías' },
+                    { to: '/config/unidades', label: 'Unidades' },
+                  ].map(({ to, label }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      className="rounded-lg px-3 py-2 text-body text-primary-700 hover:bg-primary-50"
+                    >
+                      {label}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            ),
+          },
           { path: 'categorias', element: <CategoriasPage /> },
           { path: 'unidades', element: <UnidadesPage /> },
-          {
-            path: 'importar-productos',
-            element: (
-              <SuspenseBoundary>
-                <ImportarProductosPage />
-              </SuspenseBoundary>
-            ),
-          },
-          {
-            path: 'importar-medicamentos',
-            element: (
-              <SuspenseBoundary>
-                <ImportarMedicamentosPage />
-              </SuspenseBoundary>
-            ),
-          },
-          {
-            path: 'importar-voluntarios',
-            element: (
-              <SuspenseBoundary>
-                <ImportarVoluntariosPage />
-              </SuspenseBoundary>
-            ),
-          },
         ],
       },
     ],

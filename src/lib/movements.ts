@@ -14,6 +14,7 @@ export interface MovementInput {
   itemId: string;
   qty: number;
   fecha: string;
+  centerId: string;
   loteId?: string | null;
   nota?: string;
 }
@@ -31,6 +32,7 @@ export async function addMovement(row: {
   lote_id: string | null;
   fecha: string;
   nota: string;
+  center_id: string;
 }): Promise<void> {
   await _createMovement(row);
 }
@@ -61,5 +63,6 @@ export async function registerProductMovement(input: MovementInput): Promise<voi
     lote_id: input.loteId ?? null,
     fecha: input.fecha,
     nota: input.nota ?? '',
+    center_id: input.centerId,
   });
 }

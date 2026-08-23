@@ -8,9 +8,7 @@ import {
   Ruler,
   Package,
   Archive,
-  UploadSimple,
-  Pill,
-  Users,
+  Gear,
 } from '@phosphor-icons/react';
 import { useTheme } from '../../lib/theme/ThemeProvider';
 
@@ -32,7 +30,7 @@ export function MasPage() {
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link
-          to="/mas/categorias"
+          to="/config/categorias"
           className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
         >
           <Tag size={20} className="text-muted" aria-hidden="true" />
@@ -40,7 +38,7 @@ export function MasPage() {
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link
-          to="/mas/unidades"
+          to="/config/unidades"
           className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
         >
           <Ruler size={20} className="text-muted" aria-hidden="true" />
@@ -48,27 +46,11 @@ export function MasPage() {
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link
-          to="/mas/importar"
+          to="/config"
           className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
         >
-          <UploadSimple size={20} className="text-muted" aria-hidden="true" />
-          <span className="flex-1">{t('mas.importar')}</span>
-          <CaretRight size={16} className="text-muted" aria-hidden="true" />
-        </Link>
-        <Link
-          to="/mas/importar-medicamentos"
-          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
-        >
-          <Pill size={20} className="text-muted" aria-hidden="true" />
-          <span className="flex-1">{t('mas.importarMedicamentos')}</span>
-          <CaretRight size={16} className="text-muted" aria-hidden="true" />
-        </Link>
-        <Link
-          to="/mas/importar-voluntarios"
-          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
-        >
-          <Users size={20} className="text-muted" aria-hidden="true" />
-          <span className="flex-1">Importar Voluntarios</span>
+          <Gear size={20} className="text-muted" aria-hidden="true" />
+          <span className="flex-1">Configuración</span>
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link

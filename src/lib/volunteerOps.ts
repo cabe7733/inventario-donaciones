@@ -24,6 +24,25 @@ export async function fetchVolunteers(): Promise<Volunteer[]> {
   return data ?? [];
 }
 
+export async function importVolunteersFromRows(
+  rows: Array<{
+    full_name: string;
+    phone?: string;
+    email?: string;
+    id_number?: string;
+    skills?: string;
+    availability?: string;
+  }>,
+  centerId: string,
+): Promise<{ ok: number; created: number; skipped: number }> {
+  const { data, error } = await supabase.rpc('import_volunteers_from_rows', {
+    p_rows: rows,
+    p_center_id: centerId,
+  });
+  if (error) throw error;
+  return data as { ok: number; created: number; skipped: number };
+}
+
 export async function createVolunteer(volunteer: Omit<Volunteer, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
   const { data, error } = await supabase
     .from('volunteers')

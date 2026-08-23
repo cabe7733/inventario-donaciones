@@ -30,6 +30,7 @@ export async function addLot(args: {
   fechaVencimiento: string | null;
   stockIn: number;
   fecha: string;
+  centerId: string;
   nota?: string;
 }): Promise<string> {
   const med = await fetchMedication(args.medicationId);
@@ -42,6 +43,7 @@ export async function addLot(args: {
     lote: args.lote.trim() || 's/n',
     fecha_vencimiento: args.fechaVencimiento,
     stock: round2(args.stockIn),
+    center_id: args.centerId,
   });
 
   await createMovement({
@@ -53,6 +55,7 @@ export async function addLot(args: {
     lote_id: id,
     fecha: args.fecha,
     nota: args.nota ?? `Lote ${args.lote}`,
+    center_id: args.centerId,
   });
 
   return id;
@@ -64,6 +67,7 @@ export async function registerMedicationEntrada(args: {
   loteId: string;
   qty: number;
   fecha: string;
+  centerId: string;
   nota?: string;
 }): Promise<void> {
   const qty = round2(args.qty);
@@ -87,6 +91,7 @@ export async function registerMedicationEntrada(args: {
     lote_id: lot.id,
     fecha: args.fecha,
     nota: args.nota ?? `Lote ${lot.lote}`,
+    center_id: args.centerId,
   });
 }
 
@@ -95,6 +100,7 @@ export async function salidaFefo(args: {
   medicationId: string;
   qty: number;
   fecha: string;
+  centerId: string;
   nota?: string;
 }): Promise<Array<{ loteId: string; lote: string; qty: number }>> {
   const qty = round2(args.qty);
@@ -132,6 +138,7 @@ export async function salidaFefo(args: {
       lote_id: p.loteId,
       fecha: args.fecha,
       nota: args.nota ?? `Lote ${p.lote}`,
+      center_id: args.centerId,
     });
   }
   return plan;
