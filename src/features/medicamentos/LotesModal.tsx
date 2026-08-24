@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { Stepper } from '../../components/ui/Stepper';
+import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
 import { useToast } from '../../components/ui/Toast';
 
 interface Props {
@@ -26,6 +27,7 @@ export function LotesModal({ medication, open, onClose }: Props) {
   const [lote, setLote] = useState('');
   const [vencimiento, setVencimiento] = useState('');
   const [stockIn, setStockIn] = useState(1);
+  const [warehouseId, setWarehouseId] = useState('');
   const [error, setError] = useState<string>();
   const [saving, setSaving] = useState(false);
 
@@ -39,6 +41,7 @@ export function LotesModal({ medication, open, onClose }: Props) {
       setLote('');
       setVencimiento('');
       setStockIn(1);
+      setWarehouseId('');
       setError(undefined);
       void reload();
     }
@@ -48,6 +51,7 @@ export function LotesModal({ medication, open, onClose }: Props) {
     if (!medication) return;
     if (!lote.trim()) { setError(t('common.required')); return; }
     if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
+    if (!warehouseId) { toast.push({ message: 'Selecciona una bodega', tone: 'error' }); return; }
     setSaving(true);
     try {
       await addLot({
@@ -57,6 +61,7 @@ export function LotesModal({ medication, open, onClose }: Props) {
         stockIn,
         fecha: new Date().toISOString(),
         centerId,
+        warehouseId,
       });
       toast.push({ message: t('medicamentos.lote.created'), tone: 'success' });
       setLote('');
@@ -97,6 +102,7 @@ export function LotesModal({ medication, open, onClose }: Props) {
               <Stepper value={stockIn} onChange={setStockIn} min={0} />
             </Field>
           </div>
+          <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
           <Button onClick={() => void saveLot()} disabled={saving} size="sm">
             <Plus size={16} aria-hidden="true" />
             {t('medicamentos.lote.save')}

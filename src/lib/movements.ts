@@ -15,26 +15,13 @@ export interface MovementInput {
   qty: number;
   fecha: string;
   centerId: string;
+  warehouseId: string;
   loteId?: string | null;
   nota?: string;
 }
 
 export function round2(n: number): number {
   return Math.round(n * 100) / 100;
-}
-
-export async function addMovement(row: {
-  kind: MovementKind;
-  item_type: ItemType;
-  item_id: string;
-  qty: number;
-  unit_id: string;
-  lote_id: string | null;
-  fecha: string;
-  nota: string;
-  center_id: string;
-}): Promise<void> {
-  await _createMovement(row);
 }
 
 // Registra un movimiento de PRODUCTO. Salidas validadas contra stock disponible.
@@ -64,5 +51,6 @@ export async function registerProductMovement(input: MovementInput): Promise<voi
     fecha: input.fecha,
     nota: input.nota ?? '',
     center_id: input.centerId,
+    warehouse_id: input.warehouseId,
   });
 }

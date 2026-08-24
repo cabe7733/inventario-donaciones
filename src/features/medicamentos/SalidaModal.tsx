@@ -8,6 +8,8 @@ import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { Field, inputClass } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
+import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
+import { QuickPartySelect } from '../../components/ui/QuickPartySelect';
 import { useToast } from '../../components/ui/Toast';
 
 interface FeFoSeg {
@@ -30,6 +32,9 @@ export function SalidaModal({ medication, open, onClose }: Props) {
   const [qty, setQty] = useState('1');
   const [qtyError, setQtyError] = useState<string>();
   const [fecha, setFecha] = useState(todayKey());
+  const [warehouseId, setWarehouseId] = useState('');
+  const [recipientId, setRecipientId] = useState<string | null>(null);
+  const [recipientName, setRecipientName] = useState<string | null>(null);
   const [plan, setPlan] = useState<FeFoSeg[]>([]);
   const [insufficient, setInsufficient] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,6 +44,9 @@ export function SalidaModal({ medication, open, onClose }: Props) {
     setQty('1');
     setQtyError(undefined);
     setFecha(todayKey());
+    setWarehouseId('');
+    setRecipientId(null);
+    setRecipientName(null);
     void updatePlan(1);
   }, [open, medication]);
 
@@ -66,6 +74,7 @@ export function SalidaModal({ medication, open, onClose }: Props) {
     if (!(qtyNum >= 1)) { setQtyError(t('movimientos.error.qty')); return; }
     if (insufficient) return;
     if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
+    if (!warehouseId) { toast.push({ message: 'Selecciona una bodega', tone: 'error' }); return; }
     setSaving(true);
     try {
       const consumed = await salidaFefo({
@@ -73,6 +82,9 @@ export function SalidaModal({ medication, open, onClose }: Props) {
         qty: qtyNum,
         fecha: `${fecha}T12:00:00`,
         centerId,
+        warehouseId,
+        recipientId,
+        recipientName,
       });
       const names = consumed.map((c) => `${c.lote} (${c.qty})`).join(', ');
       toast.push({ message: t('medicamentos.salidaOk', { qty: String(qtyNum), name: medication.name, lotes: names }), tone: 'neutral' });
@@ -89,12 +101,26 @@ export function SalidaModal({ medication, open, onClose }: Props) {
     <Modal open={open} onClose={onClose} title={t('medicamentos.salida')}>
       <div className="flex flex-col gap-4">
         <p className="text-body text-muted">{t('medicamentos.salida.hint')}</p>
+        <QuickPartySelect kind="recipient" value={recipientId} onChange={(id) => {
+          setRecipientId(id);
+          if (id) {
+            import('../../lib/donorOps').then(({ fetchParties }) =>
+              fetchParties('recipient').then((ps) => {
+                const p = ps.find((x) => x.id === id);
+                setRecipientName(p?.full_name ?? null);
+              })
+            );
+          } else {
+            setRecipientName(null);
+          }
+        }} />
         <Field id="sa-qty" label={t('medicamentos.cantidad')} error={qtyError}>
           <input id="sa-qty" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" className={inputClass} value={qty} onChange={(e) => changeQty(e.target.value)} onKeyDown={(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault(); }} />
         </Field>
         <Field id="sa-fecha" label={t('movimientos.fecha')}>
           <input id="sa-fecha" type="date" className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg" value={fecha} onChange={(e) => setFecha(e.target.value)} />
         </Field>
+        <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
         {plan.length > 0 && (
           <div className="rounded-lg bg-primary-50 p-3">
             <p className="text-label mb-1 text-primary-700">{t('medicamentos.fefo.plan')}</p>

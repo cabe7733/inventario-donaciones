@@ -9,6 +9,8 @@ import { AutocompleteOrCreate, type AocItem } from '../../components/ui/Autocomp
 import { Button } from '../../components/ui/Button';
 import { Field, inputClass } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
+import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
+import { QuickPartySelect } from '../../components/ui/QuickPartySelect';
 import { useToast } from '../../components/ui/Toast';
 
 interface Props {
@@ -28,6 +30,9 @@ export function EntradaModal({ medication, open, onClose }: Props) {
   const [error, setError] = useState<string>();
   const [qtyError, setQtyError] = useState<string>();
   const [fecha, setFecha] = useState(todayKey());
+  const [warehouseId, setWarehouseId] = useState('');
+  const [donorId, setDonorId] = useState<string | null>(null);
+  const [donorName, setDonorName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -37,6 +42,9 @@ export function EntradaModal({ medication, open, onClose }: Props) {
       setError(undefined);
       setQtyError(undefined);
       setFecha(todayKey());
+      setWarehouseId('');
+      setDonorId(null);
+      setDonorName(null);
       void lotsFor(medication.id).then(setLots);
     }
   }, [open, medication]);
@@ -56,6 +64,7 @@ export function EntradaModal({ medication, open, onClose }: Props) {
     setQtyError(undefined);
     if (!loteId) { setError(t('common.required')); return; }
     if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
+    if (!warehouseId) { toast.push({ message: 'Selecciona una bodega', tone: 'error' }); return; }
     const qtyNum = Number.parseInt(qty, 10);
     if (!(qtyNum >= 1)) { setQtyError(t('movimientos.error.qty')); return; }
     setSaving(true);
@@ -66,6 +75,9 @@ export function EntradaModal({ medication, open, onClose }: Props) {
         qty: qtyNum,
         fecha: `${fecha}T12:00:00`,
         centerId,
+        warehouseId,
+        donorId,
+        donorName,
       });
       toast.push({ message: t('medicamentos.entradaOk', { qty: String(qtyNum), name: medication.name }), tone: 'success' });
       onClose();
@@ -80,6 +92,20 @@ export function EntradaModal({ medication, open, onClose }: Props) {
   return (
     <Modal open={open} onClose={onClose} title={t('medicamentos.entrada')}>
       <div className="flex flex-col gap-4">
+        <QuickPartySelect kind="donor" value={donorId} onChange={(id) => {
+          setDonorId(id);
+          // Resolve name from parties list
+          if (id) {
+            import('../../lib/donorOps').then(({ fetchParties }) =>
+              fetchParties('donor').then((ps) => {
+                const p = ps.find((x) => x.id === id);
+                setDonorName(p?.full_name ?? null);
+              })
+            );
+          } else {
+            setDonorName(null);
+          }
+        }} />
         <AutocompleteOrCreate id="en-lote" label={t('medicamentos.lote.select')} required value={loteId} onChange={setLoteId} items={lotItems} error={error} hint={lotItems.length === 0 ? t('medicamentos.entrada.noLotes') : undefined} />
         <Field id="en-qty" label={t('medicamentos.cantidad')} error={qtyError}>
           <input id="en-qty" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" className={inputClass} value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))} onKeyDown={(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault(); }} />
@@ -87,6 +113,7 @@ export function EntradaModal({ medication, open, onClose }: Props) {
         <Field id="en-fecha" label={t('movimientos.fecha')}>
           <input id="en-fecha" type="date" className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg" value={fecha} onChange={(e) => setFecha(e.target.value)} />
         </Field>
+        <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={() => void save()} disabled={saving}>{t('medicamentos.entrada.save')}</Button>

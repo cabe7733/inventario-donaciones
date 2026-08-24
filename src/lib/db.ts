@@ -86,6 +86,7 @@ export interface Movement {
   nota: string;
   deleted: boolean;
   center_id?: string | null;
+  warehouse_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -442,11 +443,17 @@ export async function createMovement(row: {
   fecha: string;
   nota: string;
   center_id: string;
+  warehouse_id: string;
+  donor_id?: string | null;
+  recipient_id?: string | null;
 }): Promise<string> {
   const id = newId();
+  const { donor_id, recipient_id, ...rest } = row;
   const { error } = await supabase.from('movements').insert({
     id,
-    ...row,
+    ...rest,
+    donor_id: donor_id ?? null,
+    recipient_id: recipient_id ?? null,
     operador_id: null,
     ...insertMeta(),
   });
@@ -458,6 +465,7 @@ export async function fetchMovements(opts?: {
   limit?: number;
   itemType?: ItemType;
   since?: string;
+  warehouseId?: string;
 }): Promise<Movement[]> {
   let q = supabase
     .from('movements')
@@ -465,6 +473,7 @@ export async function fetchMovements(opts?: {
     .eq('deleted', false)
     .order('fecha', { ascending: false });
   if (opts?.itemType) q = q.eq('item_type', opts.itemType);
+  if (opts?.warehouseId) q = q.eq('warehouse_id', opts.warehouseId);
   if (opts?.since) q = q.gte('fecha', opts.since);
   if (opts?.limit) q = q.limit(opts.limit);
   const { data, error } = await q;
@@ -583,7 +592,13 @@ export async function createKitBuild(kitId: string, qty: number, fecha: string, 
   return id;
 }
 
-export async function createKitDelivery(kitId: string, qty: number, fecha: string, centerId: string): Promise<string> {
+export async function createKitDelivery(
+  kitId: string,
+  qty: number,
+  fecha: string,
+  centerId: string,
+  recipientId: string,
+): Promise<string> {
   const id = newId();
   const { error } = await supabase.from('kit_deliveries').insert({
     id,
@@ -593,6 +608,7 @@ export async function createKitDelivery(kitId: string, qty: number, fecha: strin
     operador_id: null,
     nota: '',
     center_id: centerId,
+    recipient_id: recipientId,
     ...insertMeta(),
   });
   if (error) throw error;
@@ -636,10 +652,17 @@ export async function fetchOperadores(): Promise<Operador[]> {
 // ---------- Import RPCs ----------
 
 export async function importProductsFromRows(
-  rows: Array<{ product: string; category: string; qty: number; unit?: string }>,
+  rows: Array<{
+    product: string;
+    category: string;
+    qty: number;
+    unit?: string;
+    warehouse?: string;
+    donor_id_number?: string;
+  }>,
   userId?: string,
   centerId?: string,
-): Promise<{ ok: number; createdCats: number; createdUnits: number; productsCreated: number; productsUpdated: number }> {
+): Promise<{ ok: number; createdCats: number; createdUnits: number; productsCreated: number; productsUpdated: number; donorMissing?: number; warehouseMissing?: number }> {
   const { data, error } = await supabase.rpc('import_products_from_rows', {
     p_rows: rows,
     p_user_id: userId ?? null,

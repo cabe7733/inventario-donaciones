@@ -8,6 +8,9 @@ import {
   Ruler,
   Package,
   Archive,
+  Warehouse,
+  UserCircle,
+  ChartBar,
   Gear,
 } from '@phosphor-icons/react';
 import { useTheme } from '../../lib/theme/ThemeProvider';
@@ -27,6 +30,38 @@ export function MasPage() {
         >
           <Package size={20} className="text-muted" aria-hidden="true" />
           <span className="flex-1">{t('mas.movimientos')}</span>
+          <CaretRight size={16} className="text-muted" aria-hidden="true" />
+        </Link>
+        <Link
+          to="/bodegas"
+          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
+        >
+          <Warehouse size={20} className="text-muted" aria-hidden="true" />
+          <span className="flex-1">Bodegas</span>
+          <CaretRight size={16} className="text-muted" aria-hidden="true" />
+        </Link>
+        <Link
+          to="/donantes"
+          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
+        >
+          <UserCircle size={20} className="text-muted" aria-hidden="true" />
+          <span className="flex-1">Donantes</span>
+          <CaretRight size={16} className="text-muted" aria-hidden="true" />
+        </Link>
+        <Link
+          to="/beneficiarios"
+          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
+        >
+          <UserCircle size={20} className="text-muted" aria-hidden="true" />
+          <span className="flex-1">Beneficiarios</span>
+          <CaretRight size={16} className="text-muted" aria-hidden="true" />
+        </Link>
+        <Link
+          to="/informes/bodega"
+          className="flex items-center gap-3 rounded-lg px-3 py-3 text-body hover:bg-neutral-100 dark:hover:bg-neutral-100"
+        >
+          <ChartBar size={20} className="text-muted" aria-hidden="true" />
+          <span className="flex-1">Informe por Bodega</span>
           <CaretRight size={16} className="text-muted" aria-hidden="true" />
         </Link>
         <Link

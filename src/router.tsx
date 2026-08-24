@@ -20,6 +20,14 @@ import { MovimientosPage } from './features/movimientos/MovimientosPage';
 import { VoluntariosListPage } from './features/voluntarios/VoluntariosListPage';
 import { OrdersListPage } from './features/ordenes/OrdersListPage';
 import { OrderFormPage } from './features/ordenes/OrderFormPage';
+import { BodegasListPage } from './features/bodegas/BodegasListPage';
+import { TrasladosPage } from './features/bodegas/TrasladosPage';
+import { PersonasListPage } from './features/personas/PersonasListPage';
+import { InformeBodegaPage } from './features/informes/InformeBodegaPage';
+import { InformesIndexPage } from './features/informes/InformesIndexPage';
+import { InformeDonacionesPage } from './features/informes/InformeDonacionesPage';
+import { InformeGeneralPage } from './features/informes/InformeGeneralPage';
+import { InformeProductosPorBodegaPage } from './features/informes/InformeProductosPorBodegaPage';
 
 function SuspenseBoundary({ children }: { children: ReactNode }) {
   return <Suspense fallback={null}>{children}</Suspense>;
@@ -94,6 +102,42 @@ export const router = createBrowserRouter([
       { path: 'salidas/nueva', element: <OrderFormPage /> },
       // Volunteers
       { path: 'voluntarios', element: <VoluntariosListPage /> },
+      // Warehouses
+      {
+        path: 'bodegas',
+        element: (
+          <RoleGuard roles={['super_admin', 'admin']}>
+            <BodegasListPage />
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'bodegas/traslados',
+        element: (
+          <RoleGuard roles={['super_admin', 'admin']}>
+            <TrasladosPage />
+          </RoleGuard>
+        ),
+      },
+      // Donors / Recipients
+      { path: 'donantes', element: <PersonasListPage kind="donor" /> },
+      { path: 'beneficiarios', element: <PersonasListPage kind="recipient" /> },
+      // Reports
+      {
+        path: 'informes',
+        element: (
+          <RoleGuard roles={['super_admin', 'admin']}>
+            <Outlet />
+          </RoleGuard>
+        ),
+        children: [
+          { index: true, element: <InformesIndexPage /> },
+          { path: 'bodega', element: <InformeBodegaPage /> },
+          { path: 'bodega/donaciones', element: <InformeDonacionesPage /> },
+          { path: 'general', element: <InformeGeneralPage /> },
+          { path: 'productos', element: <InformeProductosPorBodegaPage /> },
+        ],
+      },
       // Center
       {
         path: 'centro',

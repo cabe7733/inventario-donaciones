@@ -53,7 +53,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const { error: authError } = await supabase.auth.signUp({
+      const { data: signUpData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -75,7 +75,17 @@ export function RegisterPage() {
         return;
       }
 
-      navigate('/onboarding', { replace: true });
+      // ponytail: signup abre sesión automática; la cerramos para que el
+      // flujo pedido sea registro -> login. Confirm email debe estar OFF
+      // en Supabase (Auth > Providers > Email).
+      if (signUpData.session) {
+        await supabase.auth.signOut();
+      }
+
+      navigate('/auth/login', {
+        replace: true,
+        state: { registered: true },
+      });
     } catch {
       setError('Error al crear la cuenta');
     } finally {

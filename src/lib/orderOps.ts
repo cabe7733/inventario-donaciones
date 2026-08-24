@@ -3,7 +3,10 @@ import { supabase } from './supabase';
 export interface Order {
   id: string;
   center_id: string;
+  warehouse_id: string;
   order_type: 'entrada' | 'salida';
+  donor_id: string | null;
+  recipient_id: string | null;
   donor_full_name: string | null;
   donor_id_number: string | null;
   donor_phone: string | null;
@@ -37,19 +40,31 @@ export interface OrderWithItems extends Order {
   order_items: OrderItem[];
 }
 
-export async function fetchOrders(type?: 'entrada' | 'salida'): Promise<Order[]> {
+export interface OrderWithRefs extends Order {
+  warehouses: { name: string } | null;
+  donors: { full_name: string } | null;
+  recipients: { full_name: string } | null;
+}
+
+export async function fetchOrders(
+  type?: 'entrada' | 'salida',
+  opts?: { warehouseId?: string },
+): Promise<OrderWithRefs[]> {
   let q = supabase
     .from('orders')
-    .select('*')
+    .select('*, warehouses(name), donors(full_name), recipients(full_name)')
     .order('created_at', { ascending: false });
 
   if (type) {
     q = q.eq('order_type', type);
   }
+  if (opts?.warehouseId) {
+    q = q.eq('warehouse_id', opts.warehouseId);
+  }
 
   const { data, error } = await q;
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as OrderWithRefs[];
 }
 
 export async function fetchOrderWithItems(orderId: string): Promise<OrderWithItems> {
@@ -64,6 +79,9 @@ export async function fetchOrderWithItems(orderId: string): Promise<OrderWithIte
 
 export interface CreateOrderInput {
   order_type: 'entrada' | 'salida';
+  warehouse_id: string;
+  donor_id?: string;
+  recipient_id?: string;
   donor_full_name?: string;
   donor_id_number?: string;
   donor_phone?: string;
@@ -94,7 +112,10 @@ export interface CreateOrderInput {
 export async function createOrder(input: CreateOrderInput): Promise<string> {
   const { data, error } = await supabase.rpc('create_order', {
     p_order_type: input.order_type,
+    p_warehouse_id: input.warehouse_id,
     p_items: input.items,
+    p_donor_id: input.donor_id ?? null,
+    p_recipient_id: input.recipient_id ?? null,
     p_donor_full_name: input.donor_full_name,
     p_donor_id_number: input.donor_id_number,
     p_donor_phone: input.donor_phone,

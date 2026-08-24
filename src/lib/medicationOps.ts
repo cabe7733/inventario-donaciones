@@ -31,6 +31,7 @@ export async function addLot(args: {
   stockIn: number;
   fecha: string;
   centerId: string;
+  warehouseId: string;
   nota?: string;
 }): Promise<string> {
   const med = await fetchMedication(args.medicationId);
@@ -56,6 +57,7 @@ export async function addLot(args: {
     fecha: args.fecha,
     nota: args.nota ?? `Lote ${args.lote}`,
     center_id: args.centerId,
+    warehouse_id: args.warehouseId,
   });
 
   return id;
@@ -68,7 +70,10 @@ export async function registerMedicationEntrada(args: {
   qty: number;
   fecha: string;
   centerId: string;
+  warehouseId: string;
   nota?: string;
+  donorId?: string | null;
+  donorName?: string | null;
 }): Promise<void> {
   const qty = round2(args.qty);
   if (!(qty > 0)) throw new StockError('qty inválida');
@@ -82,6 +87,9 @@ export async function registerMedicationEntrada(args: {
     stock: round2(lot.stock + qty),
   });
 
+  const nota = args.nota
+    || (args.donorName ? `Donante: ${args.donorName}` : `Lote ${lot.lote}`);
+
   await createMovement({
     kind: 'entrada',
     item_type: 'medication',
@@ -90,8 +98,10 @@ export async function registerMedicationEntrada(args: {
     unit_id: med.unit_id,
     lote_id: lot.id,
     fecha: args.fecha,
-    nota: args.nota ?? `Lote ${lot.lote}`,
+    nota,
     center_id: args.centerId,
+    warehouse_id: args.warehouseId,
+    donor_id: args.donorId ?? null,
   });
 }
 
@@ -101,7 +111,10 @@ export async function salidaFefo(args: {
   qty: number;
   fecha: string;
   centerId: string;
+  warehouseId: string;
   nota?: string;
+  recipientId?: string | null;
+  recipientName?: string | null;
 }): Promise<Array<{ loteId: string; lote: string; qty: number }>> {
   const qty = round2(args.qty);
   if (!(qty > 0)) throw new StockError('qty inválida');
@@ -124,6 +137,9 @@ export async function salidaFefo(args: {
     remaining = round2(remaining - take);
   }
 
+  const baseNota = args.nota
+    || (args.recipientName ? `Beneficiario: ${args.recipientName}` : '');
+
   for (const p of plan) {
     const lot = lots.find((l) => l.id === p.loteId)!;
     await updateLot(lot.id, {
@@ -137,8 +153,10 @@ export async function salidaFefo(args: {
       unit_id: med.unit_id,
       lote_id: p.loteId,
       fecha: args.fecha,
-      nota: args.nota ?? `Lote ${p.lote}`,
+      nota: baseNota || `Lote ${p.lote}`,
       center_id: args.centerId,
+      warehouse_id: args.warehouseId,
+      recipient_id: args.recipientId ?? null,
     });
   }
   return plan;

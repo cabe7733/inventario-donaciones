@@ -35,6 +35,8 @@ export interface ParsedProductRow {
   category: string;
   qty: number;
   unit: string | null;
+  warehouse: string | null;
+  donor_id_number: string | null;
   lineNo: number;
 }
 
@@ -64,21 +66,26 @@ export function parseProductFile(text: string): ParsedProductRow[] {
   const rows: ParsedProductRow[] = [];
   for (let i = headerIdx; i < lines.length; i++) {
     const cells = split(lines[i]);
-    let product = '', category = '', qtyStr = '', unit: string | null = null;
+    let product = '', category = '', qtyStr = '', unit: string | null = null,
+        warehouse: string | null = null, donor_id_number: string | null = null;
     if (headerCols) {
       const get = (...names: string[]) => { for (const n of names) { const idx = headerCols!.indexOf(n); if (idx >= 0) return cells[idx] ?? ''; } return ''; };
       product = get('producto', 'product', 'nombre', 'name');
       category = get('categoria', 'categoría', 'category');
       qtyStr = get('cantidad', 'qty', 'stock', 'cantidad en stock');
       unit = get('unidad', 'unit') || null;
+      warehouse = get('bodega', 'warehouse') || null;
+      donor_id_number = get('cedula', 'cédula', 'donor_id_number', 'documento_donante', 'doc_donante') || null;
     } else {
       product = cells[0] ?? '';
       category = cells[1] ?? '';
       qtyStr = cells[2] ?? '';
       unit = cells[3] || null;
+      warehouse = cells[4] || null;
+      donor_id_number = cells[5] || null;
     }
     const qty = Number.parseInt(qtyStr, 10);
-    rows.push({ raw: cells, product: product.trim(), category: category.trim(), qty: Number.isFinite(qty) ? qty : NaN, unit: unit?.trim() || null, lineNo: i + 1 });
+    rows.push({ raw: cells, product: product.trim(), category: category.trim(), qty: Number.isFinite(qty) ? qty : NaN, unit: unit?.trim() || null, warehouse: warehouse?.trim() || null, donor_id_number: donor_id_number?.trim() || null, lineNo: i + 1 });
   }
   return rows;
 }
