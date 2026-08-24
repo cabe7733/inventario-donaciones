@@ -15,6 +15,7 @@ import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { Segmented } from '../../components/ui/Segmented';
+import { PageContainer } from '../../components/layout/PageContainer';
 import { MedicationFormModal } from './MedicationFormModal';
 import { LotesModal } from './LotesModal';
 import { EntradaModal } from './EntradaModal';
@@ -198,7 +199,7 @@ export function MedicamentosPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <PageContainer>
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('medicamentos.list.title')}</h1>
         {vista === 'inventario' && (
@@ -263,7 +264,7 @@ export function MedicamentosPage() {
           }
         />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="grid grid-cols-1 gap-2 sm:gap-3 lg:grid-cols-2">
           {[...medications]
             .sort((a, b) => a.name.localeCompare(b.name, 'es'))
             .map((m) => {
@@ -312,22 +313,24 @@ export function MedicamentosPage() {
                       {t('medicamentos.lotesBtn')}
                     </Button>
                     <span className="flex-1" />
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       aria-label={`${t('common.edit')} ${m.name}`}
                       onClick={() => { setEditing(m); setFormOpen(true); }}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+                      className="h-11 w-11 px-0"
                     >
                       <PencilSimple size={18} aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       aria-label={`${t('common.delete')} ${m.name}`}
                       onClick={() => setDeleting(m)}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
+                      className="h-11 w-11 px-0 hover:bg-danger-500/10 hover:text-danger-700"
                     >
                       <Trash size={18} aria-hidden="true" />
-                    </button>
+                    </Button>
                   </div>
                 </li>
               );
@@ -350,6 +353,6 @@ export function MedicamentosPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </PageContainer>
   );
 }

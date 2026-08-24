@@ -152,22 +152,24 @@ export function CategoriasPage() {
             />
             <span className="flex-1 truncate text-body font-medium">{c.name}</span>
             <span className="text-caption text-muted">{counts.get(c.id) ?? 0}</span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               aria-label={`${t('common.edit')} ${c.name}`}
               onClick={() => openEdit(c)}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+              className="h-11 w-11 px-0"
             >
               <PencilSimple size={18} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               aria-label={`${t('common.delete')} ${c.name}`}
               onClick={() => setDeleting(c)}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
+              className="h-11 w-11 px-0 hover:bg-danger-500/10 hover:text-danger-700"
             >
               <Trash size={18} aria-hidden="true" />
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

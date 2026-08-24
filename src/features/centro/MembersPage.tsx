@@ -242,22 +242,24 @@ export function MembersPage() {
                       {ROLE_LABELS[inv.role]} · {inv.expires_at ? `Expira ${new Date(inv.expires_at).toLocaleDateString('es-CO')}` : 'Sin expiración'}
                     </p>
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     aria-label="Copiar código"
                     onClick={() => copyCode(inv.id)}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100"
+                    className="h-11 w-11 px-0"
                   >
                     <Copy size={18} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     aria-label="Cancelar invitación"
                     onClick={() => void cancelInvitation(inv.id)}
-                    className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
+                    className="h-11 w-11 px-0 hover:bg-danger-500/10 hover:text-danger-700"
                   >
                     <X size={18} aria-hidden="true" />
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>

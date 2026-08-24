@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from '@phosphor-icons/react';
-import { fetchOrders, type Order } from '../../lib/orderOps';
+import { fetchOrders, type OrderWithRefs } from '../../lib/orderOps';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
+import { PageContainer } from '../../components/layout/PageContainer';
 import { useAuth } from '../../components/auth/AuthProvider';
 
 interface OrdersListPageProps {
@@ -20,7 +21,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
     queryFn: () => fetchOrders(type),
   });
 
-  const columns: Column<Order>[] = [
+  const columns: Column<OrderWithRefs>[] = [
     {
       key: 'created_at',
       header: 'Fecha',
@@ -29,18 +30,18 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
     },
     {
       key: 'donor_full_name',
-      header: type === 'entrada' ? 'Donante' : 'Destinatario',
+      header: type === 'entrada' ? 'Donante' : 'Beneficiario',
       render: (r) => {
         if (type === 'entrada') {
-          return r.donor_entity_name ?? r.donor_full_name ?? '-';
+          return r.donors?.full_name ?? r.donor_full_name ?? '-';
         }
-        return r.recipient_entity_name ?? r.recipient_full_name ?? '-';
+        return r.recipients?.full_name ?? r.recipient_full_name ?? '-';
       },
     },
     {
-      key: 'vehicle_plate',
-      header: 'Vehículo',
-      render: (r) => r.vehicle_plate ?? '-',
+      key: 'warehouse_id',
+      header: 'Bodega',
+      render: (r) => r.warehouses?.name ?? '-',
       className: 'hidden sm:table-cell',
     },
     {
@@ -50,15 +51,10 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
         <span className="max-w-[200px] truncate block">{r.notes || '-'}</span>
       ),
     },
-    {
-      key: 'created_by',
-      header: 'Registrado por',
-      render: (r) => r.created_by.slice(0, 8) + '...',
-    },
   ];
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
+    <PageContainer>
       <header className="flex items-center justify-between">
         <h1 className="text-h2">
           {type === 'entrada' ? 'Entradas' : 'Salidas'}
@@ -66,7 +62,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
         {canEdit && (
           <Button onClick={() => navigate(`/entradas/nueva?tipo=${type}`)}>
             <Plus size={18} className="mr-1" />
-            Nueva {type === 'entrada' ? 'entrada' : 'salida'}
+            Nueva
           </Button>
         )}
       </header>
@@ -77,6 +73,6 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
         loading={isLoading}
         emptyMessage={`No hay ${type === 'entrada' ? 'entradas' : 'salidas'} registradas`}
       />
-    </div>
+    </PageContainer>
   );
 }

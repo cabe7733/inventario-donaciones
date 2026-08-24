@@ -6,6 +6,7 @@ import { fetchKits, fetchCategories, fetchUnits, fetchProducts, fetchAllKitCompo
 import { formatNumber } from '../../lib/format';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { PageContainer } from '../../components/layout/PageContainer';
 import { KitFormModal } from './KitFormModal';
 import { KitActionModal } from './KitActionModal';
 
@@ -51,7 +52,7 @@ export function KitsListPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <PageContainer>
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('kits.list.title')}</h1>
         <Button
@@ -83,7 +84,7 @@ export function KitsListPage() {
           }
         />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="grid grid-cols-1 gap-2 sm:gap-3 lg:grid-cols-2">
           {[...kits]
             .sort((a, b) => a.name.localeCompare(b.name, 'es'))
             .map((k) => {
@@ -109,22 +110,23 @@ export function KitsListPage() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <span className="text-numeric-lg text-primary-700">
                         {formatNumber(k.total_stock)}
                         <span className="ml-1 text-caption text-muted">{unitBy.get(k.unit_id) ?? ''}</span>
                       </span>
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         aria-label={`${t('common.edit')} ${k.name}`}
                         onClick={() => {
                           setEditing(k);
                           setFormOpen(true);
                         }}
-                        className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+                        className="h-11 w-11 px-0"
                       >
                         <PencilSimple size={18} aria-hidden="true" />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                   <div className="mt-2 flex gap-2">
@@ -161,6 +163,6 @@ export function KitsListPage() {
         components={action ? compsByKit.get(action.kit.id) ?? [] : []}
         productMap={productById}
       />
-    </div>
+    </PageContainer>
   );
 }

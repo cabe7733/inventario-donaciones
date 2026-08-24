@@ -14,9 +14,10 @@ import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { SearchInput } from '../../components/ui/SearchInput';
+import { PageContainer } from '../../components/layout/PageContainer';
 import { ProductFormModal } from './ProductFormModal';
 
-const PRODUCTS_TEMPLATE = 'producto;categoria;cantidad;unidad\nArroz 1 kg;Alimentos;25;bolsa\nLeche entera;Lácteos;40;caja\n';
+const PRODUCTS_TEMPLATE = 'producto;categoria;cantidad;unidad;bodega;cedula\nArroz 1 kg;Alimentos;25;bolsa;PRINCIPAL;1234567890\nLeche entera;Lácteos;40;caja;PRINCIPAL;0987654321\n';
 
 export function ProductosListPage() {
   const { t } = useTranslation();
@@ -93,14 +94,24 @@ export function ProductosListPage() {
   const importConfig: ImportDialogConfig = {
     scope: 'products',
     onImport: async (rows) => {
-      const data = rows.map((r) => ({
+      const data = (rows as any[]).map((r) => ({
         product: String(r.product ?? ''),
         category: String(r.category ?? ''),
         qty: Number(r.qty ?? 0),
         unit: r.unit ? String(r.unit) : undefined,
+        warehouse: r.warehouse ? String(r.warehouse) : undefined,
+        donor_id_number: r.donor_id_number ? String(r.donor_id_number) : undefined,
       }));
       const stats = await importProductsFromRows(data, user?.id, centerId ?? undefined);
-      toast.push({ message: `Importación completada: ${stats.ok} productos`, tone: 'success' });
+      const donorMissing = (stats as any).donorMissing ?? 0;
+      if (donorMissing > 0) {
+        toast.push({
+          message: `Importación: ${stats.ok} OK, ${donorMissing} rechazadas (cédula sin donante registrado)`,
+          tone: 'error',
+        });
+      } else {
+        toast.push({ message: `Importación completada: ${stats.ok} productos`, tone: 'success' });
+      }
       void reload();
       return stats as { ok: number; [k: string]: unknown };
     },
@@ -113,12 +124,15 @@ export function ProductosListPage() {
       if (typeof r.qty !== 'number' || !Number.isFinite(r.qty) || r.qty < 0) {
         return { ok: false, reason: 'Cantidad inválida' };
       }
+      if (!('donor_id_number' in r) || !r.donor_id_number) {
+        return { ok: false, reason: 'Falta cédula del donante' };
+      }
       return { ok: true };
     },
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <PageContainer>
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('productos.list.title')}</h1>
         <div className="flex items-center gap-2">
@@ -204,7 +218,7 @@ export function ProductosListPage() {
           }
         />
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="grid grid-cols-1 gap-2 sm:gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {visible.map((p) => {
             const unit = unitBy.get(p.unit_id);
             const low = p.min_stock != null && p.total_stock <= p.min_stock;
@@ -227,27 +241,29 @@ export function ProductosListPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <span className="text-numeric-lg text-primary-700">
                       {p.total_stock}
                       <span className="ml-1 text-caption text-muted">{unit?.abbreviation ?? ''}</span>
                     </span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       aria-label={`${t('common.edit')} ${p.name}`}
                       onClick={() => openEdit(p)}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+                      className="h-11 w-11 px-0"
                     >
                       <PencilSimple size={18} aria-hidden="true" />
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       aria-label={`${t('common.delete')} ${p.name}`}
                       onClick={() => setDeleting(p)}
-                      className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-danger-500/10 hover:text-danger-700"
+                      className="h-11 w-11 px-0 hover:bg-danger-500/10 hover:text-danger-700"
                     >
                       <Trash size={18} aria-hidden="true" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </li>
@@ -279,6 +295,6 @@ export function ProductosListPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </PageContainer>
   );
 }

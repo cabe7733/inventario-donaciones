@@ -3,9 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowDownRight, ArrowUpRight } from '@phosphor-icons/react';
 import { fetchMovements, fetchProducts, fetchMedications, fetchKits, fetchUnits, type Movement, type ItemType } from '../../lib/db';
+import { fetchWarehouses } from '../../lib/warehouseOps';
 import { formatNumber, formatTime, formatDateShort, toLocalDateKey, todayKey } from '../../lib/format';
+import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
 import { Segmented } from '../../components/ui/Segmented';
 import { SkeletonList } from '../../components/ui/Skeleton';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { PageContainer } from '../../components/layout/PageContainer';
 
 const ITEM_NAV_KEY: Record<ItemType, string> = {
   product: 'nav.productos',
@@ -25,11 +29,20 @@ export function MovimientosPage() {
   const [movements, setMovements] = useState<Movement[]>([]);
   const [maps, setMaps] = useState<{ product: Map<string, string>; medication: Map<string, string>; kit: Map<string, string> }>({ product: new Map(), medication: new Map(), kit: new Map() });
   const [unitBy, setUnitBy] = useState<Map<string, string>>(new Map());
+  const [warehouseMap, setWarehouseMap] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [warehouseId, setWarehouseId] = useState('');
 
   useEffect(() => {
     void (async () => {
-      const [movs, prods, meds, kits, units] = await Promise.all([fetchMovements({ limit: 200 }), fetchProducts(), fetchMedications(), fetchKits(), fetchUnits()]);
+      const [movs, prods, meds, kits, units, warehouses] = await Promise.all([
+        fetchMovements({ limit: 200, warehouseId: warehouseId || undefined }),
+        fetchProducts(),
+        fetchMedications(),
+        fetchKits(),
+        fetchUnits(),
+        fetchWarehouses(),
+      ]);
       setMovements(movs);
       setMaps({
         product: new Map(prods.map((p) => [p.id, p.name])),
@@ -37,9 +50,10 @@ export function MovimientosPage() {
         kit: new Map(kits.map((k) => [k.id, k.name])),
       });
       setUnitBy(new Map(units.map((u) => [u.id, u.abbreviation])));
+      setWarehouseMap(new Map(warehouses.map((w) => [w.id, w.name])));
       setLoading(false);
     })();
-  }, []);
+  }, [warehouseId]);
 
   const scoped = useMemo(() => {
     if (scope === 'product') return movements.filter((m) => m.item_type !== 'medication');
@@ -70,13 +84,16 @@ export function MovimientosPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <PageContainer>
       <h1 className="text-h2">{t('movimientos.historial')}</h1>
-      <Segmented value={scope} onChange={setScope} ariaLabel={t('movimientos.scope')} options={[{ value: 'all', label: t('movimientos.scope.all') }, { value: 'product', label: t('movimientos.scope.products') }, { value: 'medication', label: t('movimientos.scope.medications') }]} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <WarehouseSelect value={warehouseId} onChange={setWarehouseId} />
+        <Segmented value={scope} onChange={setScope} ariaLabel={t('movimientos.scope')} options={[{ value: 'all', label: t('movimientos.scope.all') }, { value: 'product', label: t('movimientos.scope.products') }, { value: 'medication', label: t('movimientos.scope.medications') }]} />
+      </div>
       {loading ? (
         <SkeletonList />
       ) : scoped.length === 0 ? (
-        <p className="text-body text-muted">{t('movimientos.historial.empty')}</p>
+        <EmptyState title={t('movimientos.historial.empty')} />
       ) : (
         grouped.map(([key, list]) => {
           const label = key === todayKey() ? t('movimientos.hoy') : key === yesterdayKey() ? t('movimientos.ayer') : formatDateShort(key);
@@ -91,7 +108,12 @@ export function MovimientosPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-body font-medium">{itemName(m.item_type, m.item_id, maps)}</p>
-                      <p className="truncate text-caption text-muted">{m.nota || t(ITEM_NAV_KEY[m.item_type])}</p>
+                      <p className="truncate text-caption text-muted">
+                        {m.warehouse_id && warehouseMap.has(m.warehouse_id)
+                          ? `${warehouseMap.get(m.warehouse_id)} · `
+                          : ''}
+                        {m.nota || t(ITEM_NAV_KEY[m.item_type])}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className={`text-numeric font-semibold ${m.kind === 'entrada' ? 'text-success-700' : 'text-secondary-700'}`}>
@@ -106,6 +128,6 @@ export function MovimientosPage() {
           );
         })
       )}
-    </div>
+    </PageContainer>
   );
 }

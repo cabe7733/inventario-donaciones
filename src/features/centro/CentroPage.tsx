@@ -4,6 +4,8 @@ import { Buildings, UserPlus, PencilSimple } from '@phosphor-icons/react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
+import { Skeleton } from '../../components/ui/Skeleton';
+import { PageContainer } from '../../components/layout/PageContainer';
 
 interface Center {
   id: string;
@@ -40,15 +42,24 @@ export function CentroPage() {
   }, [centerId]);
 
   if (loading) {
-    return <div className="p-4 lg:p-6">Cargando...</div>;
+    return (
+      <PageContainer>
+        <Skeleton className="h-12 w-64" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+      </PageContainer>
+    );
   }
 
   if (!center) {
-    return <div className="p-4 lg:p-6">Centro no encontrado</div>;
+    return (
+      <PageContainer>
+        <p className="text-body text-muted">Centro no encontrado</p>
+      </PageContainer>
+    );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
+    <PageContainer>
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 text-primary-700">
@@ -111,7 +122,7 @@ export function CentroPage() {
           </div>
         </Link>
       )}
-    </div>
+    </PageContainer>
   );
 }
 

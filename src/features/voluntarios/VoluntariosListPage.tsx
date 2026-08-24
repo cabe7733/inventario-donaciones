@@ -8,6 +8,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { ImportDialog, type ImportDialogConfig, type ParsedImportRow } from '../../components/ui/ImportDialog';
+import { PageContainer } from '../../components/layout/PageContainer';
 import { VoluntarioFormModal } from './VoluntarioFormModal';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { useToast } from '../../components/ui/Toast';
@@ -82,7 +83,7 @@ export function VoluntariosListPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
+    <PageContainer>
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">Voluntarios</h1>
         {canEdit && (
@@ -140,6 +141,6 @@ export function VoluntariosListPage() {
           config={importConfig}
         />
       )}
-    </div>
+    </PageContainer>
   );
 }

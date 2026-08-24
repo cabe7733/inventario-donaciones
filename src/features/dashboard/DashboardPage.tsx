@@ -6,6 +6,7 @@ import { fetchProducts, fetchMedications, fetchMovements, fetchLots, type Produc
 import { formatNumber, formatTime, startOfTodayISO } from '../../lib/format';
 import { lotExpired } from '../../lib/medicationOps';
 import { MovementsWidget } from '../movimientos/MovementsWidget';
+import { PageContainer } from '../../components/layout/PageContainer';
 import { Skeleton } from '../../components/ui/Skeleton';
 
 export function DashboardPage() {
@@ -49,19 +50,90 @@ export function DashboardPage() {
   const medSalidaHoy = todayMovements.filter((m) => m.item_type === 'medication' && m.kind === 'salida').reduce((acc, m) => acc + m.qty, 0);
 
   const kpis = [
-    { label: t('dashboard.kpis.entradasHoy'), value: entradaHoy, icon: ArrowDownRight },
-    { label: t('dashboard.kpis.salidasHoy'), value: salidaHoy, icon: ArrowUpRight },
-    { label: t('dashboard.kpis.alertas'), value: lowStock.length + expiredLots, icon: Warning },
-    { label: t('dashboard.kpis.productos'), value: products.length, icon: Stack },
+    { label: t('dashboard.kpis.entradasHoy'), value: entradaHoy, icon: ArrowDownRight, tone: 'success' as const },
+    { label: t('dashboard.kpis.salidasHoy'), value: salidaHoy, icon: ArrowUpRight, tone: 'secondary' as const },
+    { label: t('dashboard.kpis.alertas'), value: lowStock.length + expiredLots, icon: Warning, tone: 'warning' as const },
+    { label: t('dashboard.kpis.productos'), value: products.length, icon: Stack, tone: 'primary' as const },
   ];
 
+  const toneStyles: Record<string, { bg: string; text: string }> = {
+    success: { bg: 'bg-success-500/15', text: 'text-success-700' },
+    secondary: { bg: 'bg-secondary-500/15', text: 'text-secondary-700' },
+    warning: { bg: 'bg-warning-500/15', text: 'text-warning-700' },
+    primary: { bg: 'bg-primary-500/15', text: 'text-primary-700' },
+  };
+
+  const sidebar = (
+    <>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-h3">Acciones rápidas</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {loading ? (
+            <>
+              <Skeleton className="min-h-[88px] rounded-lg" />
+              <Skeleton className="min-h-[88px] rounded-lg" />
+            </>
+          ) : (
+            <>
+              <Link
+                to="/entradas/nueva?tipo=entrada"
+                className="bg-primary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95"
+              >
+                <ArrowDownRight size={28} aria-hidden="true" />
+                <span className="text-caption font-semibold">{t('dashboard.quick.entrada')}</span>
+              </Link>
+              <Link
+                to="/salidas/nueva?tipo=salida"
+                className="bg-secondary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95"
+              >
+                <ArrowUpRight size={28} aria-hidden="true" />
+                <span className="text-caption font-semibold">{t('dashboard.quick.salida')}</span>
+              </Link>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+        <h2 className="text-h3">Indicadores</h2>
+        {loading ? (
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-16" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {kpis.map(({ label, value, icon: Icon, tone }) => {
+              const s = toneStyles[tone];
+              return (
+                <li key={label} className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-body-sm text-muted">
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.bg} ${s.text}`}>
+                      <Icon size={16} aria-hidden="true" />
+                    </span>
+                    {label}
+                  </span>
+                  <span className="text-numeric-lg text-fg">{formatNumber(value)}</span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </>
+  );
+
   return (
-    <div className="flex flex-col gap-6 p-4 lg:p-6">
+    <PageContainer sidebar={sidebar}>
       <header>
         <h1 className="text-h2">{t('dashboard.title')}</h1>
       </header>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
         {loading
           ? Array.from({ length: 4 }, (_, i) => (
               <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
@@ -79,7 +151,7 @@ export function DashboardPage() {
             ))}
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
+      <section className="grid grid-cols-2 gap-3 lg:hidden">
         {loading ? (
           <>
             <Skeleton className="min-h-[88px] rounded-lg" />
@@ -176,6 +248,6 @@ export function DashboardPage() {
           </div>
         </section>
       )}
-    </div>
+    </PageContainer>
   );
 }
