@@ -1,10 +1,12 @@
--- Donario v3: Import products with warehouse + donor support.
--- - p_rows entries can now include 'warehouse' (code) and 'donor_id_number' (cédula).
--- - Warehouse is optional: if missing, falls back to 'PRINCIPAL' for the center.
--- - donor_id_number is required for traceability (the inventory's reason for being).
---   If donor is missing, the row is SKIPPED (not imported) and reported in
---   'donorMissing' so the caller can show a clear error to the user.
--- - Movement note now reads "Importación · Donante: <name>" when a donor is found.
+-- Donario: Fix import_products_from_rows bugs introduced by 0025.
+-- 0025 used `deleted = false` and `name` on donors/warehouses, but those
+-- tables use `is_active` and donors.full_name. Restore the proven body from
+-- 0019 (which used the right columns), only flipping operador_id back to
+-- NULL to fix the FK violation against operadores(id).
+--
+-- Column truth:
+--   warehouses, donors, recipients, voluntarios  -> is_active
+--   categories, units, products, medications, medication_lots -> deleted
 
 CREATE OR REPLACE FUNCTION import_products_from_rows(
   p_rows jsonb,
@@ -35,7 +37,6 @@ DECLARE
   v_warehouse_id uuid;
   v_donor_id uuid;
   v_donor_name text;
-  v_new_stock numeric;
   v_products_created int := 0;
   v_products_updated int := 0;
   v_cats_created int := 0;
@@ -48,15 +49,14 @@ BEGIN
   LOOP
     v_product := r->>'product';
     v_category := r->>'category';
-    v_unit := COALESCE(r->>'unit', 'Unidad');
-    v_qty := (r->>'qty')::numeric;
-    v_warehouse_code := NULLIF(TRIM(COALESCE(r->>'warehouse', '')), '');
-    v_donor_id_number := NULLIF(TRIM(COALESCE(r->>'donor_id_number', '')), '');
+    v_unit := COALESCE(NULLIF(r->>'unit', ''), 'unidad');
+    v_qty := COALESCE((r->>'qty')::numeric, 0);
+    v_warehouse_code := NULLIF(r->>'warehouse', '');
+    v_donor_id_number := NULLIF(r->>'donor_id_number', '');
 
     -- Resolve warehouse: explicit code wins, otherwise default to PRINCIPAL.
     IF v_warehouse_code IS NOT NULL THEN
-      SELECT id, code INTO v_existing_warehouse
-      FROM warehouses
+      SELECT id INTO v_existing_warehouse FROM warehouses
       WHERE center_id = p_center_id AND lower(code) = lower(v_warehouse_code) AND is_active = true
       LIMIT 1;
       IF v_existing_warehouse.id IS NULL THEN
@@ -65,8 +65,7 @@ BEGIN
       END IF;
       v_warehouse_id := v_existing_warehouse.id;
     ELSE
-      SELECT id INTO v_existing_warehouse
-      FROM warehouses
+      SELECT id INTO v_existing_warehouse FROM warehouses
       WHERE center_id = p_center_id AND code = 'PRINCIPAL' AND is_active = true
       LIMIT 1;
       IF v_existing_warehouse.id IS NULL THEN
@@ -76,31 +75,31 @@ BEGIN
       v_warehouse_id := v_existing_warehouse.id;
     END IF;
 
-    -- Resolve donor by id_number (cédula). Required — skip the row if not found.
-    v_donor_id := NULL;
-    v_donor_name := NULL;
-    IF v_donor_id_number IS NOT NULL THEN
-      SELECT id, full_name INTO v_existing_donor
-      FROM donors
-      WHERE center_id = p_center_id AND id_number = v_donor_id_number AND is_active = true
-      LIMIT 1;
-      IF v_existing_donor.id IS NULL THEN
-        v_skipped_donor := v_skipped_donor + 1;
-        CONTINUE;
-      END IF;
-      v_donor_id := v_existing_donor.id;
-      v_donor_name := v_existing_donor.full_name;
-    ELSE
+    -- Resolve donor by id_number (REQUIRED — skip row if not found).
+    IF v_donor_id_number IS NULL THEN
       v_skipped_donor := v_skipped_donor + 1;
       CONTINUE;
     END IF;
 
-    -- Find or create category
-    SELECT id INTO v_existing_cat
-    FROM categories
-    WHERE lower(name) = lower(v_category) AND scope = 'product' AND deleted = false
+    SELECT id, full_name INTO v_existing_donor FROM donors
+    WHERE center_id = p_center_id AND id_number = v_donor_id_number AND is_active = true
     LIMIT 1;
 
+    IF v_existing_donor.id IS NULL THEN
+      v_skipped_donor := v_skipped_donor + 1;
+      CONTINUE;
+    END IF;
+    v_donor_id := v_existing_donor.id;
+    v_donor_name := v_existing_donor.full_name;
+
+    IF v_product IS NULL OR v_qty <= 0 THEN
+      CONTINUE;
+    END IF;
+
+    -- Category
+    SELECT id INTO v_existing_cat FROM categories
+    WHERE lower(name) = lower(v_category) AND scope = 'product' AND deleted = false
+    LIMIT 1;
     IF v_existing_cat.id IS NULL THEN
       v_cat_id := gen_random_uuid();
       INSERT INTO categories (id, name, color, icon_key, "order", scope, center_id)
@@ -110,12 +109,10 @@ BEGIN
       v_cat_id := v_existing_cat.id;
     END IF;
 
-    -- Find or create unit
-    SELECT id INTO v_existing_unit
-    FROM units
+    -- Unit
+    SELECT id INTO v_existing_unit FROM units
     WHERE lower(name) = lower(v_unit) AND scope = 'product' AND deleted = false
     LIMIT 1;
-
     IF v_existing_unit.id IS NULL THEN
       v_unit_id := gen_random_uuid();
       INSERT INTO units (id, name, abbreviation, scope, center_id)
@@ -125,9 +122,8 @@ BEGIN
       v_unit_id := v_existing_unit.id;
     END IF;
 
-    -- Find or create product
-    SELECT id, total_stock INTO v_existing_product
-    FROM products
+    -- Product
+    SELECT id, total_stock INTO v_existing_product FROM products
     WHERE lower(name) = lower(v_product) AND deleted = false
     LIMIT 1;
 
@@ -146,7 +142,6 @@ BEGIN
       v_products_updated := v_products_updated + 1;
     END IF;
 
-    -- Log movement
     IF v_qty > 0 THEN
       INSERT INTO movements (kind, item_type, item_id, qty, unit_id, lote_id, operador_id, nota, center_id, warehouse_id, donor_id)
       VALUES ('entrada', 'product', v_product_id, v_qty, v_unit_id, NULL, NULL,
