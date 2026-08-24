@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fetchWarehouses, transferStock, warehouseStock } from '../../lib/warehouseOps';
+import { fetchWarehouses, transferStock, warehouseStocksBulk } from '../../lib/warehouseOps';
 import { fetchProducts, fetchMedications, fetchKits } from '../../lib/db';
 import type { Product, Medication, Kit } from '../../lib/db';
 import { StockError } from '../../lib/movements';
@@ -9,6 +9,7 @@ import { formatNumber } from '../../lib/format';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
+import { AutocompleteOrCreate } from '../../components/ui/AutocompleteOrCreate';
 import { useToast } from '../../components/ui/Toast';
 
 type ItemType = 'product' | 'medication' | 'kit';
@@ -42,23 +43,38 @@ export function TrasladosPage() {
   const [toWarehouse, setToWarehouse] = useState('');
   const [items, setItems] = useState<TransferItem[]>([{ item_type: 'product', item_id: '', qty: 1 }]);
   const [busy, setBusy] = useState(false);
-  const [itemStocks, setItemStocks] = useState<Map<string, number>>(new Map());
+  const [stocks, setStocks] = useState<Map<string, number>>(new Map());
 
-  // Load stocks for fromWarehouse
+  // Bulk stock per (item_type, item_id) for the selected from-warehouse.
   useEffect(() => {
-    if (!fromWarehouse) { setItemStocks(new Map()); return; }
+    if (!fromWarehouse) { setStocks(new Map()); return; }
     let cancelled = false;
-    (async () => {
-      const entries: [string, number][] = [];
-      for (const it of items) {
-        if (!it.item_id) continue;
-        const stock = await warehouseStock(fromWarehouse, it.item_type, it.item_id);
-        entries.push([it.item_id, stock]);
-      }
-      if (!cancelled) setItemStocks(new Map(entries));
-    })();
+    warehouseStocksBulk(fromWarehouse)
+      .then((m) => { if (!cancelled) setStocks(m); })
+      .catch(() => { if (!cancelled) setStocks(new Map()); });
     return () => { cancelled = true; };
-  }, [fromWarehouse, items]);
+  }, [fromWarehouse]);
+
+  const itemOptions = useMemo(() => {
+    const make = <T extends { id: string; name: string }>(rows: T[], type: ItemType) =>
+      rows.map((r) => {
+        const stock = stocks.get(`${type}:${r.id}`) ?? 0;
+        return {
+          id: r.id,
+          label: r.name,
+          sublabel: fromWarehouse
+            ? stock > 0
+              ? `Stock en bodega: ${formatNumber(stock)}`
+              : 'Sin stock en esta bodega'
+            : undefined,
+        };
+      });
+    return {
+      product: make(products, 'product'),
+      medication: make(medications, 'medication'),
+      kit: make(kits, 'kit'),
+    };
+  }, [products, medications, kits, stocks, fromWarehouse]);
 
   const getItem = (type: ItemType, id: string): Product | Medication | Kit | undefined => {
     const map = { product: products, medication: medications, kit: kits } as Record<string, Array<Product | Medication | Kit>>;
@@ -152,25 +168,14 @@ export function TrasladosPage() {
                 </Field>
               </div>
               <div className="flex-1">
-                <Field id={`t-item-${i}`} label={i === 0 ? 'Item' : ''} error={!it.item_id && items.length > 1 ? undefined : undefined}>
-                  <select
-                    id={`t-item-${i}`}
-                    value={it.item_id}
-                    onChange={(e) => updateItem(i, 'item_id', e.target.value)}
-                    className={inputWithError(undefined)}
-                  >
-                    <option value="">Seleccionar...</option>
-                    {it.item_type === 'product' && products.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                    {it.item_type === 'medication' && medications.map((m) => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                    {it.item_type === 'kit' && kits.map((k) => (
-                      <option key={k.id} value={k.id}>{k.name}</option>
-                    ))}
-                  </select>
-                </Field>
+                <AutocompleteOrCreate
+                  id={`t-item-${i}`}
+                  label={i === 0 ? 'Item' : ''}
+                  placeholder="Buscar item..."
+                  value={it.item_id || null}
+                  onChange={(id) => updateItem(i, 'item_id', id ?? '')}
+                  items={itemOptions[it.item_type]}
+                />
               </div>
               <div className="w-28">
                 <Field id={`t-qty-${i}`} label={i === 0 ? 'Cantidad' : ''}>
@@ -184,11 +189,21 @@ export function TrasladosPage() {
                   />
                 </Field>
               </div>
-              {it.item_id && fromWarehouse && (
-                <div className="text-caption text-muted">
-                  Stock: {formatNumber(itemStocks.get(it.item_id) ?? 0)}
-                </div>
-              )}
+              {it.item_id && fromWarehouse && (() => {
+                const stock = stocks.get(`${it.item_type}:${it.item_id}`) ?? 0;
+                if (stock <= 0) {
+                  return (
+                    <p className="text-caption text-danger-700 sm:max-w-[14rem]">
+                      Este item no tiene stock en la bodega de origen.
+                    </p>
+                  );
+                }
+                return (
+                  <p className="text-caption text-muted sm:self-center">
+                    Stock disponible: {formatNumber(stock)}
+                  </p>
+                );
+              })()}
               <button
                 type="button"
                 onClick={() => removeItem(i)}

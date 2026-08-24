@@ -1,15 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash } from '@phosphor-icons/react';
 import { fetchProducts } from '../../lib/db';
 import { createOrder } from '../../lib/orderOps';
+import { warehouseStocksBulk } from '../../lib/warehouseOps';
+import { formatNumber } from '../../lib/format';
 import type { PartyKind } from '../../lib/donorOps';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Button } from '../../components/ui/Button';
 import { Segmented } from '../../components/ui/Segmented';
 import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
 import { QuickPartySelect } from '../../components/ui/QuickPartySelect';
+import { AutocompleteOrCreate } from '../../components/ui/AutocompleteOrCreate';
 import { useToast } from '../../components/ui/Toast';
 
 interface OrderItem {
@@ -30,8 +33,6 @@ export function OrderFormPage() {
     queryFn: fetchProducts,
   });
 
-  const partyKind: PartyKind = initialType === 'entrada' ? 'donor' : 'recipient';
-
   const [orderType, setOrderType] = useState<'entrada' | 'salida'>(initialType);
   const [warehouseId, setWarehouseId] = useState('');
   const [partyId, setPartyId] = useState<string | null>(null);
@@ -42,10 +43,24 @@ export function OrderFormPage() {
     { item_type: 'product', item_id: '', qty: 1 },
   ]);
 
+  const partyKind: PartyKind = orderType === 'entrada' ? 'donor' : 'recipient';
+
   const productOptions = useMemo(
     () => products.filter((p) => p.is_active).map((p) => ({ id: p.id, name: p.name })),
     [products],
   );
+
+  const [stocks, setStocks] = useState<Map<string, number>>(new Map());
+  useEffect(() => {
+    if (!warehouseId) { setStocks(new Map()); return; }
+    let cancelled = false;
+    warehouseStocksBulk(warehouseId)
+      .then((m) => { if (!cancelled) setStocks(m); })
+      .catch(() => { if (!cancelled) setStocks(new Map()); });
+    return () => { cancelled = true; };
+  }, [warehouseId]);
+
+  const stockByItem = (itemId: string) => stocks.get(`product:${itemId}`) ?? 0;
 
   const addItem = () => {
     setItems([...items, { item_type: 'product', item_id: '', qty: 1 }]);
@@ -162,45 +177,62 @@ export function OrderFormPage() {
             </Button>
           </div>
 
-          {items.map((item, index) => (
-            <div key={index} className="flex items-end gap-3">
-              <div className="flex-1">
-                <Field id={`item-${index}`} label={index === 0 ? 'Producto' : ''} error={undefined}>
-                  <select
+          {items.map((item, index) => {
+            const stock = item.item_id ? stockByItem(item.item_id) : 0;
+            return (
+              <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <AutocompleteOrCreate
                     id={`item-${index}`}
-                    value={item.item_id}
-                    onChange={(e) => updateItem(index, 'item_id', e.target.value)}
-                    className={inputWithError(undefined)}
-                  >
-                    <option value="">Seleccionar...</option>
-                    {productOptions.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
-                </Field>
-              </div>
-              <div className="w-24">
-                <Field id={`qty-${index}`} label={index === 0 ? 'Cantidad' : ''} error={undefined}>
-                  <input
-                    id={`qty-${index}`}
-                    type="number"
-                    min="1"
-                    value={item.qty}
-                    onChange={(e) => updateItem(index, 'qty', parseInt(e.target.value, 10) || 1)}
-                    className={inputWithError(undefined)}
+                    label={index === 0 ? 'Producto' : ''}
+                    placeholder="Buscar producto..."
+                    value={item.item_id || null}
+                    onChange={(id) => updateItem(index, 'item_id', id ?? '')}
+                    items={productOptions.map((p) => ({
+                      id: p.id,
+                      label: p.name,
+                      sublabel: warehouseId
+                        ? (stocks.get(`product:${p.id}`) ?? 0) > 0
+                          ? `Stock en bodega: ${formatNumber(stocks.get(`product:${p.id}`) ?? 0)}`
+                          : 'Sin stock en esta bodega'
+                        : undefined,
+                    }))}
                   />
-                </Field>
+                </div>
+                <div className="w-24">
+                  <Field id={`qty-${index}`} label={index === 0 ? 'Cantidad' : ''} error={undefined}>
+                    <input
+                      id={`qty-${index}`}
+                      type="number"
+                      min="1"
+                      value={item.qty}
+                      onChange={(e) => updateItem(index, 'qty', parseInt(e.target.value, 10) || 1)}
+                      className={inputWithError(undefined)}
+                    />
+                  </Field>
+                </div>
+                {item.item_id && warehouseId && (
+                  stock <= 0 ? (
+                    <p className="text-caption text-danger-700 sm:max-w-[14rem] sm:self-center">
+                      Este producto no tiene stock en la bodega seleccionada.
+                    </p>
+                  ) : (
+                    <p className="text-caption text-muted sm:self-center">
+                      Stock disponible: {formatNumber(stock)}
+                    </p>
+                  )
+                )}
+                <button
+                  type="button"
+                  onClick={() => removeItem(index)}
+                  className="mb-0.5 flex h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-danger-50 hover:text-danger-700"
+                  aria-label="Eliminar item"
+                >
+                  <Trash size={18} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => removeItem(index)}
-                className="mb-0.5 flex h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-danger-50 hover:text-danger-700"
-                aria-label="Eliminar item"
-              >
-                <Trash size={18} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </section>
 
         {/* Actions */}

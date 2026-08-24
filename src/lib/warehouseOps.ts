@@ -47,15 +47,16 @@ export async function fetchWarehouseByCode(
 }
 
 export async function createWarehouse(
-  row: Pick<Warehouse, 'center_id' | 'name' | 'code'> & { address?: string },
-): Promise<string> {
+  row: Pick<Warehouse, 'center_id' | 'name'> & { code?: string; address?: string },
+): Promise<Warehouse> {
+  const code = row.code ?? (await nextWarehouseCode(row.center_id));
   const { data, error } = await supabase
     .from('warehouses')
-    .insert({ ...row, code: row.code.trim().toUpperCase() })
-    .select('id')
+    .insert({ ...row, code: code.trim().toUpperCase() })
+    .select('*')
     .single();
   if (error) throw error;
-  return data.id;
+  return data as Warehouse;
 }
 
 export async function updateWarehouse(
@@ -72,6 +73,22 @@ export async function updateWarehouse(
 // ponytail: baja lógica; borrar bodegas con movimientos rompería FKs de orders/movements.
 export async function deactivateWarehouse(id: string): Promise<void> {
   await updateWarehouse(id, { is_active: false });
+}
+
+export async function nextWarehouseCode(centerId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('next_warehouse_code', {
+    p_center_id: centerId,
+  });
+  if (error) throw error;
+  return (data as string) ?? 'BOD-01';
+}
+
+export async function toggleWarehouseActive(id: string, active: boolean): Promise<void> {
+  const { error } = await supabase.rpc('toggle_warehouse_active', {
+    p_warehouse_id: id,
+    p_active: active,
+  });
+  if (error) throw error;
 }
 
 export async function fetchWarehouseReport(
@@ -112,6 +129,26 @@ export async function warehouseStock(
     total += m.kind === 'entrada' ? m.qty : -m.qty;
   }
   return round2(total);
+}
+
+// Stock en bodega por todos los ítems. Una sola query (sum agregada) en vez de N+1.
+// Devuelve Map keyed por `${item_type}:${item_id}`. Items sin movimientos no aparecen.
+export async function warehouseStocksBulk(
+  warehouseId: string,
+): Promise<Map<string, number>> {
+  const { data, error } = await supabase
+    .from('movements')
+    .select('item_type, item_id, kind, qty')
+    .eq('warehouse_id', warehouseId)
+    .eq('deleted', false);
+  if (error) throw error;
+  const acc = new Map<string, number>();
+  for (const m of data ?? []) {
+    const key = `${m.item_type}:${m.item_id}`;
+    const delta = m.kind === 'entrada' ? m.qty : -m.qty;
+    acc.set(key, round2((acc.get(key) ?? 0) + delta));
+  }
+  return acc;
 }
 
 // Stock en bodega por un ítem con sus lotes (medicamentos). Devuelve stock por lote.

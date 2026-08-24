@@ -44,6 +44,7 @@ export interface OrderWithRefs extends Order {
   warehouses: { name: string } | null;
   donors: { full_name: string } | null;
   recipients: { full_name: string } | null;
+  order_items: OrderItem[];
 }
 
 export async function fetchOrders(
@@ -52,7 +53,7 @@ export async function fetchOrders(
 ): Promise<OrderWithRefs[]> {
   let q = supabase
     .from('orders')
-    .select('*, warehouses(name), donors(full_name), recipients(full_name)')
+    .select('*, warehouses(name), donors(full_name), recipients(full_name), order_items(*)')
     .order('created_at', { ascending: false });
 
   if (type) {
