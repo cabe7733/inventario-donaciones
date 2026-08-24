@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Button } from '../../components/ui/Button';
 
@@ -17,6 +18,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { refresh } = useAuth();
   const justRegistered = (location.state as { registered?: boolean } | null)?.registered === true;
   const [error, setError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +44,10 @@ export function LoginPage() {
         return;
       }
 
+      // ponytail: onAuthStateChange dispara loadAuth async, pero navigate
+      // ocurre antes; ProtectedRoute ve user=null y rebota a /auth/login.
+      // refresh() fuerza el setState antes de navegar.
+      await refresh();
       navigate('/inicio', { replace: true });
     } catch {
       setError('Error al iniciar sesión');

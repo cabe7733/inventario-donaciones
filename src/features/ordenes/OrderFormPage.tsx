@@ -97,6 +97,9 @@ export function OrderFormPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['medications'] });
+      queryClient.invalidateQueries({ queryKey: ['kits'] });
       toast.push({
         message: orderType === 'entrada' ? 'Entrada registrada exitosamente' : 'Salida registrada exitosamente',
         tone: 'success',

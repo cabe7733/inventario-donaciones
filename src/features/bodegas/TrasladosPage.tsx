@@ -117,6 +117,9 @@ export function TrasladosPage() {
       const toName = warehouses.find((w) => w.id === toWarehouse)?.name ?? '';
       toast.push({ message: `Traslado registrado: ${fromName} → ${toName}`, tone: 'success' });
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['medications'] });
+      queryClient.invalidateQueries({ queryKey: ['kits'] });
       // Reset form
       setFromWarehouse('');
       setToWarehouse('');

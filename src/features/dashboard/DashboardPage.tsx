@@ -94,34 +94,53 @@ export function DashboardPage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-        <h2 className="text-h3">Indicadores</h2>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-h3 hidden lg:block">Indicadores</h2>
         {loading ? (
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 4 }, (_, i) => (
-              <div key={i} className="flex flex-col gap-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-6 w-16" />
-              </div>
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
+              {Array.from({ length: 4 }, (_, i) => (
+                <Skeleton key={i} className="min-h-[88px] rounded-lg" />
+              ))}
+            </div>
+            <div className="hidden flex-col gap-3 rounded-lg border border-border bg-card p-4 lg:flex">
+              {Array.from({ length: 4 }, (_, i) => (
+                <div key={i} className="flex flex-col gap-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
-          <ul className="flex flex-col gap-3">
-            {kpis.map(({ label, value, icon: Icon, tone }) => {
-              const s = toneStyles[tone];
-              return (
-                <li key={label} className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-2 text-body-sm text-muted">
-                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.bg} ${s.text}`}>
-                      <Icon size={16} aria-hidden="true" />
-                    </span>
-                    {label}
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
+              {kpis.map(({ label, value, icon: Icon }) => (
+                <div key={label} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
+                  <span className="flex items-center gap-1.5 text-caption text-muted">
+                    <Icon size={14} aria-hidden="true" /> {label}
                   </span>
-                  <span className="text-numeric-lg text-fg">{formatNumber(value)}</span>
-                </li>
-              );
-            })}
-          </ul>
+                  <p className="text-numeric-lg text-fg">{formatNumber(value)}</p>
+                </div>
+              ))}
+            </div>
+            <ul className="hidden flex-col gap-3 rounded-lg border border-border bg-card p-4 lg:flex">
+              {kpis.map(({ label, value, icon: Icon, tone }) => {
+                const s = toneStyles[tone];
+                return (
+                  <li key={label} className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 text-body-sm text-muted">
+                      <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.bg} ${s.text}`}>
+                        <Icon size={16} aria-hidden="true" />
+                      </span>
+                      {label}
+                    </span>
+                    <span className="text-numeric-lg text-fg">{formatNumber(value)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </section>
     </>
@@ -132,44 +151,6 @@ export function DashboardPage() {
       <header>
         <h1 className="text-h2">{t('dashboard.title')}</h1>
       </header>
-
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
-        {loading
-          ? Array.from({ length: 4 }, (_, i) => (
-              <div key={i} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-7 w-14" />
-              </div>
-            ))
-          : kpis.map(({ label, value, icon: Icon }) => (
-              <div key={label} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
-                <span className="flex items-center gap-1.5 text-caption text-muted">
-                  <Icon size={14} aria-hidden="true" /> {label}
-                </span>
-                <p className="text-numeric-lg text-fg">{formatNumber(value)}</p>
-              </div>
-            ))}
-      </section>
-
-      <section className="grid grid-cols-2 gap-3 lg:hidden">
-        {loading ? (
-          <>
-            <Skeleton className="min-h-[88px] rounded-lg" />
-            <Skeleton className="min-h-[88px] rounded-lg" />
-          </>
-        ) : (
-          <>
-            <Link to="/entradas/nueva?tipo=entrada" className="bg-primary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
-              <ArrowDownRight size={28} aria-hidden="true" />
-              <span className="text-caption font-semibold">{t('dashboard.quick.entrada')}</span>
-            </Link>
-            <Link to="/salidas/nueva?tipo=salida" className="bg-secondary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95">
-              <ArrowUpRight size={28} aria-hidden="true" />
-              <span className="text-caption font-semibold">{t('dashboard.quick.salida')}</span>
-            </Link>
-          </>
-        )}
-      </section>
 
       <MovementsWidget />
 
