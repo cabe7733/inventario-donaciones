@@ -30,7 +30,7 @@ export function WarehouseSelect({ id = 'warehouse', value, onChange, required, e
         <option value="">Seleccionar bodega...</option>
         {warehouses.map((w) => (
           <option key={w.id} value={w.id}>
-            {w.name}
+            {w.code} — {w.name}
           </option>
         ))}
       </select>

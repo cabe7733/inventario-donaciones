@@ -17,7 +17,7 @@ import { SearchInput } from '../../components/ui/SearchInput';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { ProductFormModal } from './ProductFormModal';
 
-const PRODUCTS_TEMPLATE = 'producto;categoria;cantidad;unidad;bodega;cedula\nArroz 1 kg;Alimentos;25;bolsa;PRINCIPAL;1234567890\nLeche entera;Lácteos;40;caja;PRINCIPAL;0987654321\n';
+const PRODUCTS_TEMPLATE = '# bodega = código de la bodega (BOD-01, BOD-02, PRINCIPAL). Si está vacío, usa PRINCIPAL.\nproducto;categoria;cantidad;unidad;bodega;cedula\nArroz 1 kg;Alimentos;25;bolsa;PRINCIPAL;1234567890\nLeche entera;Lácteos;40;caja;PRINCIPAL;0987654321\n';
 
 export function ProductosListPage() {
   const { t } = useTranslation();
@@ -103,15 +103,18 @@ export function ProductosListPage() {
         donor_id_number: r.donor_id_number ? String(r.donor_id_number) : undefined,
       }));
       const stats = await importProductsFromRows(data, user?.id, centerId ?? undefined);
-      const donorMissing = (stats as any).donorMissing ?? 0;
-      if (donorMissing > 0) {
-        toast.push({
-          message: `Importación: ${stats.ok} OK, ${donorMissing} rechazadas (cédula sin donante registrado)`,
-          tone: 'error',
-        });
-      } else {
-        toast.push({ message: `Importación completada: ${stats.ok} productos`, tone: 'success' });
-      }
+      const s = stats as Record<string, number>;
+      const ok = s.ok ?? 0;
+      const donorMissing = s.donorMissing ?? 0;
+      const warehouseMissing = s.warehouseMissing ?? 0;
+      const parts: string[] = [`${ok} OK`];
+      if (donorMissing) parts.push(`${donorMissing} sin donante`);
+      if (warehouseMissing) parts.push(`${warehouseMissing} sin bodega`);
+      const summary = parts.join(', ');
+      toast.push({
+        message: ok === 0 ? `Importación falló: ${summary}` : `Importación: ${summary}`,
+        tone: ok === 0 || donorMissing || warehouseMissing ? 'error' : 'success',
+      });
       void reload();
       return stats as { ok: number; [k: string]: unknown };
     },

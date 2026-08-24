@@ -53,7 +53,11 @@ export function isProductHeaderRow(cells: string[]): boolean {
 }
 
 export function parseProductFile(text: string): ParsedProductRow[] {
-  const lines = text.replace(/\r\n/g, '\n').split('\n').map((l) => l.trim()).filter((l) => l.length > 0 && !l.startsWith('#'));
+  // ponytail: Excel/Numbers suelen anteponer BOM UTF-8 al guardar CSV;
+  // sin strip, isProductHeaderRow falla y la primera fila se interpreta por
+  // posición (lo cual enmascara el problema). Strip defensivo al inicio.
+  const stripped = text.replace(/^\uFEFF/, '');
+  const lines = stripped.replace(/\r\n/g, '\n').split('\n').map((l) => l.trim()).filter((l) => l.length > 0 && !l.startsWith('#'));
   if (lines.length === 0) return [];
   const sep = detectSeparator(lines);
   const split = (l: string) => (sep === '\t' ? l.split('\t') : splitCsvLine(l));
@@ -84,7 +88,9 @@ export function parseProductFile(text: string): ParsedProductRow[] {
       warehouse = cells[4] || null;
       donor_id_number = cells[5] || null;
     }
-    const qty = Number.parseInt(qtyStr, 10);
+    const qtyRaw = (qtyStr ?? '').trim();
+    const qtyNormalized = qtyRaw.includes(',') && !qtyRaw.includes('.') ? qtyRaw.replace(',', '.') : qtyRaw;
+    const qty = Number.parseInt(qtyNormalized, 10);
     rows.push({ raw: cells, product: product.trim(), category: category.trim(), qty: Number.isFinite(qty) ? qty : NaN, unit: unit?.trim() || null, warehouse: warehouse?.trim() || null, donor_id_number: donor_id_number?.trim() || null, lineNo: i + 1 });
   }
   return rows;
@@ -108,7 +114,8 @@ export function isVolunteerHeaderRow(cells: string[]): boolean {
 }
 
 export function parseVolunteerFile(text: string): ParsedVolunteerRow[] {
-  const lines = text.replace(/\r\n/g, '\n').split('\n').map((l) => l.trim()).filter((l) => l.length > 0 && !l.startsWith('#'));
+  const stripped = text.replace(/^\uFEFF/, '');
+  const lines = stripped.replace(/\r\n/g, '\n').split('\n').map((l) => l.trim()).filter((l) => l.length > 0 && !l.startsWith('#'));
   if (lines.length === 0) return [];
   const sep = detectSeparator(lines);
   const split = (l: string) => (sep === '\t' ? l.split('\t') : splitCsvLine(l));
