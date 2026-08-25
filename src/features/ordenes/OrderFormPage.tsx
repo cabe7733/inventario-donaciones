@@ -3,34 +3,47 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash } from '@phosphor-icons/react';
 import { fetchProducts } from '../../lib/db';
-import { createOrder } from '../../lib/orderOps';
+import { createOrder, replaceOrder, fetchOrderWithItems } from '../../lib/orderOps';
 import { warehouseStocksBulk } from '../../lib/warehouseOps';
 import { formatNumber } from '../../lib/format';
 import type { PartyKind } from '../../lib/donorOps';
+import type { AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Button } from '../../components/ui/Button';
 import { Segmented } from '../../components/ui/Segmented';
 import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
 import { QuickPartySelect } from '../../components/ui/QuickPartySelect';
-import { AutocompleteOrCreate } from '../../components/ui/AutocompleteOrCreate';
+import { QuickProductSelect } from '../../components/ui/QuickProductSelect';
+import { useAuth } from '../../components/auth/AuthProvider';
 import { useToast } from '../../components/ui/Toast';
 
 interface OrderItem {
   item_type: 'product' | 'medication' | 'kit';
   item_id: string;
-  qty: number;
+  // ponytail: qty como string para permitir vacío en el input.
+  // Se parsea al validar. '' = sin llenar.
+  qty: string;
 }
 
 export function OrderFormPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const initialType = (params.get('tipo') as 'entrada' | 'salida') ?? 'entrada';
+  const editingId = params.get('id');
+  const isEditing = !!editingId;
   const queryClient = useQueryClient();
   const toast = useToast();
+  const { role } = useAuth();
 
   const { data: products = [] } = useQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
+  });
+
+  const { data: existingOrder, isLoading: loadingOrder } = useQuery({
+    queryKey: ['order', editingId],
+    queryFn: () => fetchOrderWithItems(editingId!),
+    enabled: isEditing,
   });
 
   const [orderType, setOrderType] = useState<'entrada' | 'salida'>(initialType);
@@ -40,8 +53,25 @@ export function OrderFormPage() {
   const [vehicleType, setVehicleType] = useState('');
   const [vehicleColor, setVehicleColor] = useState('');
   const [items, setItems] = useState<OrderItem[]>([
-    { item_type: 'product', item_id: '', qty: 1 },
+    { item_type: 'product', item_id: '', qty: '' },
   ]);
+
+  // Cargar datos al editar.
+  useEffect(() => {
+    if (!existingOrder) return;
+    setOrderType(existingOrder.order_type);
+    setWarehouseId(existingOrder.warehouse_id);
+    setPartyId(existingOrder.donor_id ?? existingOrder.recipient_id ?? null);
+    setVehiclePlate(existingOrder.vehicle_plate ?? '');
+    setVehicleType(existingOrder.vehicle_type ?? '');
+    setVehicleColor(existingOrder.vehicle_color ?? '');
+    const loaded = (existingOrder.order_items ?? []).map((it) => ({
+      item_type: it.item_type,
+      item_id: it.item_id,
+      qty: String(it.qty),
+    }));
+    setItems(loaded.length > 0 ? loaded : [{ item_type: 'product', item_id: '', qty: '' }]);
+  }, [existingOrder]);
 
   const partyKind: PartyKind = orderType === 'entrada' ? 'donor' : 'recipient';
 
@@ -63,7 +93,7 @@ export function OrderFormPage() {
   const stockByItem = (itemId: string) => stocks.get(`product:${itemId}`) ?? 0;
 
   const addItem = () => {
-    setItems([...items, { item_type: 'product', item_id: '', qty: 1 }]);
+    setItems([...items, { item_type: 'product', item_id: '', qty: '' }]);
   };
 
   const removeItem = (index: number) => {
@@ -73,52 +103,110 @@ export function OrderFormPage() {
   };
 
   const updateItem = (index: number, field: keyof OrderItem, value: string | number) => {
+    if (field === 'item_id') {
+      const newId = String(value);
+      if (newId && items.some((it, i) => i !== index && it.item_id === newId)) {
+        toast.push({ message: 'Este producto ya fue agregado', tone: 'error' });
+        return;
+      }
+    }
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
   };
 
-  const createMutation = useMutation({
+  // ponytail: en modo edición, "sumar el stock disponible al que ya tenía la
+  // orden" — porque replace_order revierte los movements previos antes de
+  // aplicar los nuevos, así que al volver a enviar las mismas cantidades
+  // el saldo neto queda correcto sin "Stock insuficiente".
+  const effectiveStockByItem = (itemId: string): number => {
+    const base = stockByItem(itemId);
+    if (!isEditing || !existingOrder) return base;
+    const sameItem = existingOrder.order_items?.find(
+      (it) => it.item_type === 'product' && it.item_id === itemId,
+    );
+    return sameItem ? base + sameItem.qty : base;
+  };
+
+  const saveMutation = useMutation({
     mutationFn: async () => {
-      const validItems = items.filter((item) => item.item_id && item.qty > 0);
-      if (validItems.length === 0) throw new Error('Debe agregar al menos un item');
+      // Validar filas: cada item con producto seleccionado debe tener cantidad > 0.
+      const parsed: Array<{ item_type: 'product' | 'medication' | 'kit'; item_id: string; qty: number }> = [];
+      for (const it of items) {
+        if (!it.item_id) continue;
+        const qtyNum = Number.parseInt(it.qty, 10);
+        if (!(qtyNum >= 1)) {
+          throw new Error('La cantidad es obligatoria para todos los productos');
+        }
+        parsed.push({ item_type: it.item_type, item_id: it.item_id, qty: qtyNum });
+      }
+      if (parsed.length === 0) throw new Error('Debe agregar al menos un item');
       if (!warehouseId) throw new Error('Selecciona una bodega');
 
-      return createOrder({
-        order_type: orderType,
+      const baseInput = {
         warehouse_id: warehouseId,
         donor_id: orderType === 'entrada' ? partyId ?? undefined : undefined,
         recipient_id: orderType === 'salida' ? partyId ?? undefined : undefined,
         vehicle_plate: orderType === 'entrada' ? vehiclePlate || undefined : undefined,
         vehicle_type: orderType === 'entrada' ? vehicleType || undefined : undefined,
         vehicle_color: orderType === 'entrada' ? vehicleColor || undefined : undefined,
-        items: validItems,
-      });
+        items: parsed,
+      };
+
+      if (isEditing) {
+        await replaceOrder(editingId!, baseInput);
+        return 'updated' as const;
+      }
+      await createOrder({ order_type: orderType, ...baseInput });
+      return 'created' as const;
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order', editingId] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['medications'] });
       queryClient.invalidateQueries({ queryKey: ['kits'] });
       toast.push({
-        message: orderType === 'entrada' ? 'Entrada registrada exitosamente' : 'Salida registrada exitosamente',
+        message: result === 'updated'
+          ? 'Orden actualizada exitosamente'
+          : orderType === 'entrada' ? 'Entrada registrada exitosamente' : 'Salida registrada exitosamente',
         tone: 'success',
       });
       navigate(orderType === 'entrada' ? '/entradas' : '/salidas');
     },
     onError: (error) => {
       toast.push({
-        message: error instanceof Error ? error.message : 'Error al registrar',
+        message: error instanceof Error ? error.message : 'Error al guardar',
         tone: 'error',
       });
     },
   });
 
+  if (isEditing && role !== 'super_admin') {
+    return (
+      <div className="flex flex-col gap-4 p-4 lg:p-6">
+        <h1 className="text-h2">Editar orden</h1>
+        <p className="text-body text-muted">Solo el super admin puede editar órdenes.</p>
+      </div>
+    );
+  }
+
+  if (isEditing && loadingOrder) {
+    return (
+      <div className="flex flex-col gap-4 p-4 lg:p-6">
+        <h1 className="text-h2">Editar orden</h1>
+        <p className="text-body text-muted">Cargando…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 p-4 lg:p-6">
       <header>
         <h1 className="text-h2">
-          {orderType === 'entrada' ? 'Registrar Entrada' : 'Registrar Salida'}
+          {isEditing
+            ? `Editar ${orderType === 'entrada' ? 'entrada' : 'salida'}`
+            : (orderType === 'entrada' ? 'Registrar Entrada' : 'Registrar Salida')}
         </h1>
       </header>
 
@@ -181,25 +269,35 @@ export function OrderFormPage() {
           </div>
 
           {items.map((item, index) => {
-            const stock = item.item_id ? stockByItem(item.item_id) : 0;
+            const stock = item.item_id ? effectiveStockByItem(item.item_id) : 0;
+            const usedInOtherRow = (id: string) =>
+              items.some((it, i) => i !== index && it.item_id === id);
+            const itemOptions: AocItem[] = productOptions
+              .filter((p) => !usedInOtherRow(p.id))
+              .map((p) => {
+                const whStock = stocks.get(`product:${p.id}`) ?? 0;
+                return {
+                  id: p.id,
+                  label: p.name,
+                  sublabel: warehouseId
+                    ? whStock > 0
+                      ? `Stock en bodega: ${formatNumber(whStock)}`
+                      : 'Sin stock en esta bodega'
+                    : undefined,
+                };
+              });
             return (
               <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-end">
                 <div className="flex-1">
-                  <AutocompleteOrCreate
-                    id={`item-${index}`}
+                  <QuickProductSelect
                     label={index === 0 ? 'Producto' : ''}
-                    placeholder="Buscar producto..."
                     value={item.item_id || null}
                     onChange={(id) => updateItem(index, 'item_id', id ?? '')}
-                    items={productOptions.map((p) => ({
-                      id: p.id,
-                      label: p.name,
-                      sublabel: warehouseId
-                        ? (stocks.get(`product:${p.id}`) ?? 0) > 0
-                          ? `Stock en bodega: ${formatNumber(stocks.get(`product:${p.id}`) ?? 0)}`
-                          : 'Sin stock en esta bodega'
-                        : undefined,
-                    }))}
+                    items={itemOptions}
+                    onCreated={(newProduct) => {
+                      void queryClient.invalidateQueries({ queryKey: ['products'] });
+                      updateItem(index, 'item_id', newProduct.id);
+                    }}
                   />
                 </div>
                 <div className="w-24">
@@ -209,7 +307,10 @@ export function OrderFormPage() {
                       type="number"
                       min="1"
                       value={item.qty}
-                      onChange={(e) => updateItem(index, 'qty', parseInt(e.target.value, 10) || 1)}
+                      onChange={(e) =>
+                        updateItem(index, 'qty', e.target.value.replace(/[^0-9]/g, ''))
+                      }
+                      placeholder="Cantidad"
                       className={inputWithError(undefined)}
                     />
                   </Field>
@@ -245,10 +346,12 @@ export function OrderFormPage() {
           </Button>
           <Button
             type="button"
-            disabled={createMutation.isPending}
-            onClick={() => void createMutation.mutateAsync()}
+            disabled={saveMutation.isPending}
+            onClick={() => void saveMutation.mutateAsync()}
           >
-            {createMutation.isPending ? 'Registrando...' : `Registrar ${orderType === 'entrada' ? 'entrada' : 'salida'}`}
+            {saveMutation.isPending
+              ? (isEditing ? 'Guardando...' : 'Registrando...')
+              : (isEditing ? 'Guardar cambios' : `Registrar ${orderType === 'entrada' ? 'entrada' : 'salida'}`)}
           </Button>
         </div>
       </div>

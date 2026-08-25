@@ -1,13 +1,15 @@
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from '@phosphor-icons/react';
-import { fetchOrders, type OrderWithRefs, type OrderItem } from '../../lib/orderOps';
+import { PencilSimple, Plus, Trash } from '@phosphor-icons/react';
+import { deleteOrder, fetchOrders, type OrderWithRefs, type OrderItem } from '../../lib/orderOps';
 import { fetchProducts, fetchMedications, fetchKits } from '../../lib/db';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { useAuth } from '../../components/auth/AuthProvider';
+import { useToast } from '../../components/ui/Toast';
 
 interface OrdersListPageProps {
   type: 'entrada' | 'salida';
@@ -18,7 +20,12 @@ const MAX_VISIBLE_ITEMS = 3;
 export function OrdersListPage({ type }: OrdersListPageProps) {
   const navigate = useNavigate();
   const { role } = useAuth();
-  const canEdit = role === 'super_admin' || role === 'admin';
+  const canCreate = role === 'super_admin' || role === 'admin';
+  // ponytail: solo super_admin edita/elimina órdenes (RLS + RPC lo enforcen).
+  const canEdit = role === 'super_admin';
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', type],
@@ -41,6 +48,27 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
     const name = itemNameById.get(`${it.item_type}:${it.item_id}`) ?? 'Item';
     return `${name} ×${it.qty}`;
   };
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteOrder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['medications'] });
+      queryClient.invalidateQueries({ queryKey: ['kits'] });
+      toast.push({
+        message: type === 'entrada' ? 'Entrada eliminada y stock revertido' : 'Salida eliminada y stock revertido',
+        tone: 'success',
+      });
+      setDeletingId(null);
+    },
+    onError: (e) => {
+      toast.push({
+        message: e instanceof Error ? e.message : 'Error al eliminar',
+        tone: 'error',
+      });
+    },
+  });
 
   const columns: Column<OrderWithRefs>[] = [
     {
@@ -100,6 +128,38 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
       ),
       className: 'hidden md:table-cell',
     },
+    {
+      key: 'actions',
+      header: '',
+      className: 'w-px',
+      render: (r) =>
+        canEdit ? (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label={`Editar ${type}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/entradas/nueva?id=${r.id}`);
+              }}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-neutral-100 hover:text-fg dark:hover:bg-neutral-800"
+            >
+              <PencilSimple size={16} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              aria-label={`Eliminar ${type}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeletingId(r.id);
+              }}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-danger-700 hover:bg-danger-500/10"
+            >
+              <Trash size={16} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null,
+    },
   ];
 
   return (
@@ -108,7 +168,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
         <h1 className="text-h2">
           {type === 'entrada' ? 'Entradas' : 'Salidas'}
         </h1>
-        {canEdit && (
+        {canCreate && (
           <Button onClick={() => navigate(`/entradas/nueva?tipo=${type}`)}>
             <Plus size={18} className="mr-1" />
             Nueva
@@ -122,6 +182,36 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
         loading={isLoading}
         emptyMessage={`No hay ${type === 'entrada' ? 'entradas' : 'salidas'} registradas`}
       />
+
+      {deletingId && (
+        <Modal
+          open
+          onClose={() => { if (!deleteMutation.isPending) setDeletingId(null); }}
+          title={`Eliminar ${type}`}
+        >
+          <div className="flex flex-col gap-4">
+            <p className="text-body">
+              ¿Eliminar esta {type === 'entrada' ? 'entrada' : 'salida'}? El stock será revertido.
+              Esta acción no se puede deshacer.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setDeletingId(null)}
+                disabled={deleteMutation.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => deleteMutation.mutate(deletingId)}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </PageContainer>
   );
 }
