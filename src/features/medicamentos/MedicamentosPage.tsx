@@ -142,6 +142,27 @@ export function MedicamentosPage() {
   const [entradaMed, setEntradaMed] = useState<Medication | null>(null);
   const [salidaMed, setSalidaMed] = useState<Medication | null>(null);
   const [deleting, setDeleting] = useState<Medication | null>(null);
+  const [creatingForEntrada, setCreatingForEntrada] = useState(false);
+
+  const openFormForEntrada = () => {
+    setEditing(null);
+    setCreatingForEntrada(true);
+    setFormOpen(true);
+  };
+
+  // ponytail: detecta el medicamento recién creado comparando ids contra la
+  // lista previa. Si el modal estaba abierto en modo "crear para entrada",
+  // abre EntradaModal directamente con el nuevo medicamento.
+  const onFormCloseWithDetectedCreate = async (): Promise<Medication | null> => {
+    setFormOpen(false);
+    const prevIds = new Set(medications.map((m) => m.id));
+    await reload();
+    const refreshed = await fetchMedications();
+    const created = refreshed.find((m) => !prevIds.has(m.id) && m.is_active);
+    setCreatingForEntrada(false);
+    if (created && creatingForEntrada) setEntradaMed(created);
+    return created ?? null;
+  };
 
   const catBy = useMemo(() => new Map(cats.map((c) => [c.id, c.name])), [cats]);
   const unitBy = useMemo(() => new Map(unis.map((u) => [u.id, u.abbreviation])), [unis]);
@@ -227,6 +248,10 @@ export function MedicamentosPage() {
               },
             ]}
           />
+          <Button variant="secondary" onClick={openFormForEntrada}>
+            <ArrowDown size={18} aria-hidden="true" />
+            {t('medicamentos.quickNewEntrada')}
+          </Button>
           <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
             <Plus size={18} aria-hidden="true" />
             {t('medicamentos.new')}
@@ -257,10 +282,16 @@ export function MedicamentosPage() {
           title={t('medicamentos.list.empty')}
           description={t('medicamentos.list.emptyHint')}
           action={
-            <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
-              <Plus size={18} aria-hidden="true" />
-              {t('medicamentos.new')}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Button variant="secondary" onClick={openFormForEntrada}>
+                <ArrowDown size={18} aria-hidden="true" />
+                {t('medicamentos.quickNewEntrada')}
+              </Button>
+              <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
+                <Plus size={18} aria-hidden="true" />
+                {t('medicamentos.new')}
+              </Button>
+            </div>
           }
         />
       ) : (
@@ -338,7 +369,7 @@ export function MedicamentosPage() {
         </ul>
       )}
 
-      <MedicationFormModal open={formOpen} onClose={() => { setFormOpen(false); void reload(); }} medication={editing} categories={cats} units={unis} />
+      <MedicationFormModal open={formOpen} onClose={() => { void onFormCloseWithDetectedCreate(); }} medication={editing} categories={cats} units={unis} />
       <LotesModal medication={lotModal} open={lotModal !== null} onClose={() => { setLotModal(null); void reload(); }} />
       <EntradaModal medication={entradaMed} open={entradaMed !== null} onClose={() => { setEntradaMed(null); void reload(); }} />
       <SalidaModal medication={salidaMed} open={salidaMed !== null} onClose={() => { setSalidaMed(null); void reload(); }} />

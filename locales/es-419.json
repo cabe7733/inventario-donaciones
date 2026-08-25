@@ -99,6 +99,7 @@
     "list.all": "Todos",
     "list.cats": "Filtrar por categoría",
     "new": "Nuevo producto",
+    "quickNew": "Agregar producto nuevo",
     "form.title": "Nuevo producto",
     "form.editTitle": "Editar producto",
     "form.name": "Nombre",
@@ -122,6 +123,7 @@
     "list.empty": "No hay medicamentos registrados.",
     "list.emptyHint": "Registra medicamentos y manejá su stock por lote con control de vencimiento.",
     "new": "Nuevo medicamento",
+    "quickNewEntrada": "Entrada de medicamento nuevo",
     "created": "Medicamento creado",
     "saved": "Medicamento guardado",
     "deleted": "Medicamento eliminado",
@@ -190,6 +192,14 @@
     "form.addComponent.placeholder": "Busca un producto…",
     "form.needComponent": "Agrega al menos un componente",
     "form.alreadyAdded": "ya está en el kit",
+    "form.warehouse": "Bodega de origen",
+    "form.warehouseRequired": "Elegí la bodega de la que se va a sacar la mercancía",
+    "simulator.canBuild": "Podés armar {{count}} kit con esta bodega",
+    "simulator.canBuild_other": "Podés armar {{count}} kits con esta bodega",
+    "simulator.cannotBuild": "No hay stock suficiente en esta bodega para armar ningún kit.",
+    "simulator.generateAll": "Generar todos ({{count}})",
+    "simulator.generateAll_other": "Generar todos ({{count}})",
+    "simulator.saveFirst": "Guardá el kit para poder generar los ensambles.",
     "ensamblar": "Ensamblar",
     "entregar": "Entregar",
     "entregar.destinatario": "Beneficiario (destinatario)",
@@ -211,6 +221,10 @@
     "action.warehouseInsufficient": "Stock insuficiente en bodega. Disponible: {{stock}}",
     "action.maxBuildableWarehouse": "En esta bodega podés ensamblar hasta {{count}} kit",
     "action.maxBuildableWarehouse_other": "En esta bodega podés ensamblar hasta {{count}} kits",
+    "action.generateAll": "Generar todos ({{count}})",
+    "action.generateAll_other": "Generar todos ({{count}})",
+    "action.warehouseOrigin": "Bodega de origen",
+    "action.warehouseHint": "Elegí la bodega de la que se va a sacar la mercancía.",
     "stockActual": "Stock actual del kit: {{stock}}",
     "created": "Kit creado",
     "saved": "Kit guardado",
@@ -363,6 +377,10 @@
     "productos": {
       "desc": "Matriz con el stock actual de cada producto en cada bodega."
     },
+    "kitsTitulo": "Kits por Bodega",
+    "kits": {
+      "desc": "Matriz con el stock actual de cada kit en cada bodega."
+    },
     "donacionesTitulo": "Donaciones por Bodega",
     "donaciones": {
       "empty": "No hay donaciones registradas en esta bodega para el rango seleccionado"
@@ -406,6 +424,10 @@
         "title": "Productos por Bodega",
         "desc": "Matriz con el stock de cada producto en cada bodega."
       },
+      "kits": {
+        "title": "Kits por Bodega",
+        "desc": "Matriz con el stock de cada kit en cada bodega."
+      },
       "donaciones": {
         "title": "Donaciones por Bodega",
         "desc": "Listado detallado de cada entrada y salida con donante y beneficiario."
@@ -422,6 +444,7 @@
     "recipient": "Beneficiario",
     "searchOrCreateDonor": "Buscar o crear donante...",
     "searchOrCreateRecipient": "Buscar o crear beneficiario...",
+    "searchOrCreateProduct": "Buscar o crear producto...",
     "vehiculo": "Vehículo (opcional)",
     "placa": "Placa",
     "tipoVehiculo": "Tipo",
@@ -438,6 +461,8 @@
     "registradoSalida": "Salida registrada exitosamente",
     "errorRegistrar": "Error al registrar",
     "errorItems": "Debe agregar al menos un item",
-    "errorBodega": "Selecciona una bodega"
+    "errorBodega": "Selecciona una bodega",
+    "errorQtyRequired": "La cantidad es obligatoria para todos los productos",
+    "errorDuplicate": "Este producto ya fue agregado"
   }
 }

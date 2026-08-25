@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { ChartBar, CubeFocus, Truck, Package, FileText } from '@phosphor-icons/react';
+import { ChartBar, CubeFocus, Truck, Package, Cube, FileText } from '@phosphor-icons/react';
 import type { IconProps } from '@phosphor-icons/react';
 
 interface Card {
@@ -28,6 +28,12 @@ const CARDS: Card[] = [
     icon: Package,
     titleKey: 'informes.index.productos.title',
     descKey: 'informes.index.productos.desc',
+  },
+  {
+    to: '/informes/kits',
+    icon: Cube,
+    titleKey: 'informes.index.kits.title',
+    descKey: 'informes.index.kits.desc',
   },
   {
     to: '/informes/bodega/donaciones',

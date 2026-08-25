@@ -69,3 +69,20 @@ export async function fetchProductsByWarehouseMatrix(): Promise<ProductWarehouse
   if (error) throw error;
   return (data ?? []) as ProductWarehouseCell[];
 }
+
+// ================= KITS × BODEGA =================
+
+export interface KitWarehouseCell {
+  warehouse_id: string;
+  warehouse_code: string;
+  warehouse_name: string;
+  kit_id: string;
+  kit_name: string;
+  stock: number;
+}
+
+export async function fetchKitsByWarehouseMatrix(): Promise<KitWarehouseCell[]> {
+  const { data, error } = await supabase.rpc('get_kits_by_warehouse_matrix');
+  if (error) throw error;
+  return (data ?? []) as KitWarehouseCell[];
+}

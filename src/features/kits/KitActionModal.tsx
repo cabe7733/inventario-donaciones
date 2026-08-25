@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildKit, deliverKit, maxBuildable, maxBuildableInWarehouse } from '../../lib/kitOps';
+import { buildKit, deliverKit, maxBuildableInWarehouse } from '../../lib/kitOps';
 import { warehouseStock } from '../../lib/warehouseOps';
 import { StockError } from '../../lib/movements';
 import { formatNumber } from '../../lib/format';
@@ -27,6 +27,8 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
   const toast = useToast();
   const { centerId } = useAuth();
   const [qty, setQty] = useState('1');
+  // ponytail: la bodega ya viene guardada en el kit; pre-llenar para que
+  // el usuario solo confirme. Se puede override.
   const [warehouseId, setWarehouseId] = useState('');
   const [recipientId, setRecipientId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,19 +37,18 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
   useEffect(() => {
     if (open) {
       setQty('1');
-      setWarehouseId('');
+      setWarehouseId(kit?.warehouse_id ?? '');
       setRecipientId(null);
       setWhStocks(new Map());
     }
-  }, [open]);
+  }, [open, kit]);
 
   const isBuild = mode === 'build';
   const qtyNum = Number.parseInt(qty, 10);
   const validQty = Number.isFinite(qtyNum) && qtyNum >= 1;
 
-  // Load warehouse stock when warehouse is selected
   useEffect(() => {
-    if (!warehouseId || !isBuild || components.length === 0) { setWhStocks(new Map()); return; }
+    if (!warehouseId || components.length === 0) { setWhStocks(new Map()); return; }
     let cancelled = false;
     (async () => {
       const entries: [string, number][] = [];
@@ -58,30 +59,18 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
       if (!cancelled) setWhStocks(new Map(entries));
     })();
     return () => { cancelled = true; };
-  }, [warehouseId, isBuild, components]);
+  }, [warehouseId, components]);
 
   const componentSummary = useMemo(() => {
-    if (!isBuild || components.length === 0) return null;
+    if (components.length === 0) return null;
     const lines = components.map((c) => {
       const p = productMap.get(c.productId);
       const total = c.qty * (validQty ? qtyNum : 1);
       return `${p?.name ?? '?'}: ${total}`;
     });
     return lines.join(' · ');
-  }, [isBuild, components, validQty, qtyNum, productMap]);
+  }, [components, validQty, qtyNum, productMap]);
 
-  // Max buildable from global stock (existing logic)
-  const maxBuildGlobal = useMemo(() => {
-    if (!isBuild) return 0;
-    let max = Number.POSITIVE_INFINITY;
-    for (const c of components) {
-      const stock = productMap.get(c.productId)?.total_stock ?? 0;
-      max = Math.min(max, maxBuildable(stock, c.qty));
-    }
-    return components.length === 0 ? 0 : max;
-  }, [isBuild, components, productMap]);
-
-  // Max buildable from warehouse stock
   const [maxBuildWarehouse, setMaxBuildWarehouse] = useState(0);
   useEffect(() => {
     if (!isBuild || !warehouseId || components.length === 0) { setMaxBuildWarehouse(0); return; }
@@ -94,8 +83,8 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
     return () => { cancelled = true; };
   }, [isBuild, warehouseId, components]);
 
-  const max = isBuild ? (warehouseId ? maxBuildWarehouse : maxBuildGlobal) : kit?.total_stock ?? 0;
-  const blocked = !validQty || qtyNum > max || (isBuild && max < 1) || (!isBuild && !recipientId);
+  const max = isBuild ? maxBuildWarehouse : kit?.total_stock ?? 0;
+  const blocked = !validQty || qtyNum > max || (isBuild && (max < 1 || !warehouseId)) || (!isBuild && !recipientId);
 
   const errorQty: string | undefined = !validQty
     ? t('movimientos.error.qty') as string | undefined
@@ -106,7 +95,7 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
   const run = async () => {
     if (!kit || busy || blocked) return;
     if (!centerId) { toast.push({ message: 'No hay centro activo', tone: 'error' }); return; }
-    if (!warehouseId) { toast.push({ message: 'Selecciona una bodega', tone: 'error' }); return; }
+    if (!warehouseId) { toast.push({ message: t('kits.form.warehouseRequired'), tone: 'error' }); return; }
     setBusy(true);
     try {
       if (isBuild) {
@@ -139,6 +128,23 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
             : t('kits.action.deliverQuestion', { name: kit?.name })}
         </p>
 
+        <WarehouseSelect
+          value={warehouseId}
+          onChange={setWarehouseId}
+          required
+          label={t('kits.action.warehouseOrigin')}
+        />
+
+        {!isBuild && (
+          <QuickPartySelect
+            kind="recipient"
+            value={recipientId}
+            onChange={setRecipientId}
+            required
+            label={t('kits.entregar.destinatario')}
+          />
+        )}
+
         <Field label={t('kits.cantidad')} error={errorQty}>
           <input
             type="number"
@@ -151,25 +157,13 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
           />
         </Field>
 
-        {!isBuild && (
-          <QuickPartySelect
-            kind="recipient"
-            value={recipientId}
-            onChange={setRecipientId}
-            required
-            label={t('kits.entregar.destinatario')}
-          />
-        )}
-
-        <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
-
         {componentSummary && (
           <p className="rounded-lg bg-primary-50 px-3 py-2 text-caption text-primary-700">
             {t('kits.action.consumes')}: {componentSummary}
           </p>
         )}
 
-        {isBuild && warehouseId && whStocks.size > 0 && (
+        {warehouseId && whStocks.size > 0 && (
           <div className="rounded-lg bg-surface p-3">
             <p className="text-label mb-1 text-fg">{t('kits.action.warehouseStock', { stock: '' }).replace(': ', '')}</p>
             <ul className="flex flex-col gap-1">
@@ -189,18 +183,18 @@ export function KitActionModal({ mode, kit, open, onClose, components, productMa
           </div>
         )}
 
-        {isBuild &&
-          (maxBuildGlobal < 1 ? (
-            <p role="alert" className="rounded-lg bg-danger-500/10 px-3 py-2 text-caption font-semibold text-danger-700">
-              {t('kits.action.noStock')}
-            </p>
-          ) : (
-            <p role="alert" className="rounded-lg bg-warning-500/10 px-3 py-2 text-caption font-semibold text-warning-700">
-              {warehouseId
-                ? t('kits.action.maxBuildableWarehouse', { count: maxBuildWarehouse })
-                : t('kits.action.maxBuildable', { count: maxBuildGlobal })}
-            </p>
-          ))}
+        {isBuild && (
+          <div
+            role="alert"
+            className={`rounded-lg px-3 py-2 text-caption font-semibold ${
+              maxBuildWarehouse < 1 ? 'bg-danger-500/10 text-danger-700' : 'bg-warning-500/10 text-warning-700'
+            }`}
+          >
+            {maxBuildWarehouse < 1
+              ? t('kits.action.noStock')
+              : t('kits.action.maxBuildableWarehouse', { count: maxBuildWarehouse })}
+          </div>
+        )}
 
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>

@@ -58,15 +58,20 @@ export function MembersPage() {
   const [inviting, setInviting] = useState(false);
   const [lastInviteCode, setLastInviteCode] = useState<string | null>(null);
   const [lastInviteEmailSent, setLastInviteEmailSent] = useState<boolean | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const canManage = role === 'super_admin';
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
+    // ponytail: profiles tiene RLS que solo deja leer el propio. La RPC
+    // get_center_member_profiles() es SECURITY DEFINER y devuelve los
+    // profiles de todos los miembros activos del centro del usuario.
     const [membersRes, invitesRes, centerRes] = await Promise.all([
       supabase
         .from('center_members')
-        .select('user_id, role, is_active, created_at, profile:profiles(full_name, first_name, last_name)')
+        .select('user_id, role, is_active, created_at')
         .order('created_at', { ascending: true }),
       supabase
         .from('center_invitations')
@@ -78,18 +83,48 @@ export function MembersPage() {
         : Promise.resolve({ data: null } as { data: Center | null }),
     ]);
 
-    if (!membersRes.error) {
-      const rows = (membersRes.data ?? []) as Array<Omit<Member, 'profile'> & { profile: Member['profile'][] | null }>;
-      setMembers(
-        rows.map((r) => ({
-          user_id: r.user_id,
-          role: r.role,
-          is_active: r.is_active,
-          created_at: r.created_at,
-          profile: Array.isArray(r.profile) ? r.profile[0] ?? null : r.profile,
-        })),
-      );
+    if (membersRes.error) {
+      setLoadError(membersRes.error.message);
+      setMembers([]);
+      setLoading(false);
+      return;
     }
+
+    // ponytail: RPC SECURITY DEFINER que bypasea RLS de profiles.
+    // Antes: query directo a profiles fallaba porque la policy solo permitía
+    // leer el propio profile. Ahora la RPC devuelve los profiles de todos
+    // los miembros activos del centro del usuario actual.
+    const { data: profiles, error: profilesErr } = await supabase.rpc(
+      'get_center_member_profiles',
+    );
+    if (profilesErr) {
+      setLoadError(profilesErr.message);
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
+    type MemberProfile = { full_name: string; first_name: string; last_name: string; email: string | null };
+    const profileById = new Map<string, MemberProfile>(
+      (profiles ?? []).map((p: { user_id: string; full_name: string | null; first_name: string | null; last_name: string | null; email: string | null }) => [
+        p.user_id,
+        {
+          full_name: p.full_name ?? '',
+          first_name: p.first_name ?? '',
+          last_name: p.last_name ?? '',
+          email: p.email,
+        },
+      ]),
+    );
+
+    setMembers(
+      (membersRes.data ?? []).map((r) => ({
+        user_id: r.user_id,
+        role: r.role,
+        is_active: r.is_active,
+        created_at: r.created_at,
+        profile: profileById.get(r.user_id) ?? null,
+      })),
+    );
     if (!invitesRes.error) setInvitations((invitesRes.data ?? []) as Invitation[]);
     if (centerRes?.data) setCenter(centerRes.data as Center);
     setLoading(false);
@@ -161,9 +196,22 @@ export function MembersPage() {
       .from('center_members')
       .update({ is_active: false })
       .eq('user_id', userId);
-    toast.push({ message: 'Miembro removido', tone: 'neutral' });
+    toast.push({ message: 'Acceso revocado', tone: 'neutral' });
     load();
   };
+
+  const restoreMember = async (userId: string) => {
+    await supabase
+      .from('center_members')
+      .update({ is_active: true })
+      .eq('user_id', userId);
+    toast.push({ message: 'Acceso restablecido', tone: 'success' });
+    load();
+  };
+
+  const [confirmRemove, setConfirmRemove] = useState<Member | null>(null);
+  const activeMembers = members.filter((m) => m.is_active);
+  const revokedMembers = members.filter((m) => !m.is_active);
 
   const copyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -187,33 +235,51 @@ export function MembersPage() {
         )}
       </header>
 
+      {loadError && (
+        <div className="rounded-lg border border-danger-500/40 bg-danger-500/10 p-3 text-caption text-danger-700" role="alert">
+          Error cargando miembros: {loadError}
+        </div>
+      )}
+
+      {!loadError && !centerId && (
+        <div className="rounded-lg border border-warning-500/40 bg-warning-500/10 p-3 text-caption text-warning-700" role="alert">
+          No estás asociado a ningún centro todavía.
+        </div>
+      )}
+
       <section className="flex flex-col gap-3">
-        <h2 className="text-h3">Miembros activos</h2>
+        <h2 className="text-h3">
+          Miembros activos{' '}
+          <span className="text-caption font-normal text-muted">({activeMembers.length})</span>
+        </h2>
         {loading ? (
           <p className="text-body text-muted">Cargando...</p>
-        ) : members.filter((m) => m.is_active).length === 0 ? (
+        ) : activeMembers.length === 0 ? (
           <p className="text-body text-muted">Sin miembros todavía</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {members.filter((m) => m.is_active).map((m) => (
+            {activeMembers.map((m) => (
               <li
                 key={m.user_id}
                 className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-semibold">
-                  {(m.profile?.first_name?.[0] ?? m.profile?.full_name?.[0] ?? '?').toUpperCase()}
+                  {(m.profile?.first_name?.[0] || m.profile?.full_name?.[0] || '?').toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="truncate text-body font-medium text-fg">
-                    {m.profile?.full_name || 'Sin nombre'}
+                    {m.profile?.full_name?.trim() || m.profile?.email || `Usuario ${m.user_id.slice(0, 8)}`}
                   </p>
-                  <p className="text-caption text-muted">{ROLE_LABELS[m.role]}</p>
+                  <p className="truncate text-caption text-muted">
+                    {ROLE_LABELS[m.role]}
+                    {m.profile?.email && ` · ${m.profile.email}`}
+                  </p>
                 </div>
                 {canManage && m.role !== 'super_admin' && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => void removeMember(m.user_id)}
+                    onClick={() => setConfirmRemove(m)}
                   >
                     Remover
                   </Button>
@@ -223,6 +289,51 @@ export function MembersPage() {
           </ul>
         )}
       </section>
+
+      {canManage && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-h3">
+            Acceso revocado{' '}
+            <span className="text-caption font-normal text-muted">({revokedMembers.length})</span>
+          </h2>
+          {loading ? (
+            <p className="text-body text-muted">Cargando...</p>
+          ) : revokedMembers.length === 0 ? (
+            <p className="text-body text-muted">Sin accesos revocados</p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {revokedMembers.map((m) => (
+                <li
+                  key={m.user_id}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-muted font-semibold">
+                    {(m.profile?.first_name?.[0] || m.profile?.full_name?.[0] || '?').toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate text-body font-medium text-fg">
+                      {m.profile?.full_name?.trim() || m.profile?.email || `Usuario ${m.user_id.slice(0, 8)}`}
+                    </p>
+                    <p className="truncate text-caption text-muted">
+                      {ROLE_LABELS[m.role]}
+                      {m.profile?.email && ` · ${m.profile.email}`}
+                    </p>
+                  </div>
+                  {m.role !== 'super_admin' && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => void restoreMember(m.user_id)}
+                    >
+                      Restablecer acceso
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {canManage && (
         <section className="flex flex-col gap-3">
@@ -344,6 +455,37 @@ export function MembersPage() {
               </div>
             </>
           )}
+        </div>
+      </Modal>
+
+      <Modal
+        open={confirmRemove !== null}
+        onClose={() => setConfirmRemove(null)}
+        title="Revocar acceso"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-body text-fg">
+            ¿Revocar el acceso de <strong>{confirmRemove?.profile?.full_name || 'esta persona'}</strong>?
+          </p>
+          <p className="text-caption text-muted">
+            No podrá ver ni modificar datos del centro. Podrás restablecer su acceso después.
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setConfirmRemove(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (confirmRemove) {
+                  void removeMember(confirmRemove.user_id);
+                  setConfirmRemove(null);
+                }
+              }}
+            >
+              Revocar acceso
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>

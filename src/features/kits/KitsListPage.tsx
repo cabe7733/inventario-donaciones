@@ -149,10 +149,10 @@ export function KitsListPage() {
         open={formOpen}
         onClose={() => { setFormOpen(false); refresh(); }}
         kit={editing}
-        categories={categories}
         units={units}
         products={products}
         comps={editing ? compsByKit.get(editing.id) ?? [] : []}
+        onBuilt={refresh}
       />
 
       <KitActionModal

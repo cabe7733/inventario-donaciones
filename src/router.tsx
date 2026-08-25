@@ -27,6 +27,7 @@ import { InformeBodegaPage } from './features/informes/InformeBodegaPage';
 import { InformesIndexPage } from './features/informes/InformesIndexPage';
 import { InformeDonacionesPage } from './features/informes/InformeDonacionesPage';
 import { InformeGeneralPage } from './features/informes/InformeGeneralPage';
+import { InformeKitsPorBodegaPage } from './features/informes/InformeKitsPorBodegaPage';
 import { InformeProductosPorBodegaPage } from './features/informes/InformeProductosPorBodegaPage';
 
 function SuspenseBoundary({ children }: { children: ReactNode }) {
@@ -135,6 +136,7 @@ export const router = createBrowserRouter([
           { path: 'bodega', element: <InformeBodegaPage /> },
           { path: 'bodega/donaciones', element: <InformeDonacionesPage /> },
           { path: 'general', element: <InformeGeneralPage /> },
+          { path: 'kits', element: <InformeKitsPorBodegaPage /> },
           { path: 'productos', element: <InformeProductosPorBodegaPage /> },
         ],
       },

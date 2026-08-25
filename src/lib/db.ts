@@ -99,6 +99,7 @@ export interface Kit {
   total_stock: number;
   is_active: boolean;
   deleted: boolean;
+  warehouse_id: string | null;
   center_id?: string | null;
   created_at: string;
   updated_at: string;

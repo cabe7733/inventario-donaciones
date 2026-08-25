@@ -29,7 +29,7 @@ export function SalidaModal({ medication, open, onClose }: Props) {
   const toast = useToast();
   const { centerId } = useAuth();
 
-  const [qty, setQty] = useState('1');
+  const [qty, setQty] = useState('');
   const [qtyError, setQtyError] = useState<string>();
   const [fecha, setFecha] = useState(todayKey());
   const [warehouseId, setWarehouseId] = useState('');
@@ -41,13 +41,14 @@ export function SalidaModal({ medication, open, onClose }: Props) {
 
   useEffect(() => {
     if (!open || !medication) return;
-    setQty('1');
+    setQty('');
     setQtyError(undefined);
     setFecha(todayKey());
     setWarehouseId('');
     setRecipientId(null);
     setRecipientName(null);
-    void updatePlan(1);
+    setPlan([]);
+    setInsufficient(false);
   }, [open, medication]);
 
   const updatePlan = async (q: number) => {
@@ -115,7 +116,7 @@ export function SalidaModal({ medication, open, onClose }: Props) {
           }
         }} />
         <Field id="sa-qty" label={t('medicamentos.cantidad')} error={qtyError}>
-          <input id="sa-qty" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" className={inputClass} value={qty} onChange={(e) => changeQty(e.target.value)} onKeyDown={(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault(); }} />
+          <input id="sa-qty" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" className={inputClass} placeholder="Cantidad" value={qty} onChange={(e) => changeQty(e.target.value)} onKeyDown={(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault(); }} />
         </Field>
         <Field id="sa-fecha" label={t('movimientos.fecha')}>
           <input id="sa-fecha" type="date" className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg" value={fecha} onChange={(e) => setFecha(e.target.value)} />

@@ -26,7 +26,7 @@ export function EntradaModal({ medication, open, onClose }: Props) {
 
   const [lots, setLots] = useState<Awaited<ReturnType<typeof lotsFor>>>([]);
   const [loteId, setLoteId] = useState<string | null>(null);
-  const [qty, setQty] = useState('1');
+  const [qty, setQty] = useState('');
   const [error, setError] = useState<string>();
   const [qtyError, setQtyError] = useState<string>();
   const [fecha, setFecha] = useState(todayKey());
@@ -38,7 +38,7 @@ export function EntradaModal({ medication, open, onClose }: Props) {
   useEffect(() => {
     if (open && medication) {
       setLoteId(null);
-      setQty('1');
+      setQty('');
       setError(undefined);
       setQtyError(undefined);
       setFecha(todayKey());
@@ -108,7 +108,7 @@ export function EntradaModal({ medication, open, onClose }: Props) {
         }} />
         <AutocompleteOrCreate id="en-lote" label={t('medicamentos.lote.select')} required value={loteId} onChange={setLoteId} items={lotItems} error={error} hint={lotItems.length === 0 ? t('medicamentos.entrada.noLotes') : undefined} />
         <Field id="en-qty" label={t('medicamentos.cantidad')} error={qtyError}>
-          <input id="en-qty" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" className={inputClass} value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))} onKeyDown={(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault(); }} />
+          <input id="en-qty" type="text" inputMode="numeric" pattern="[0-9]*" autoComplete="off" className={inputClass} placeholder="Cantidad" value={qty} onChange={(e) => setQty(e.target.value.replace(/[^0-9]/g, ''))} onKeyDown={(e) => { if (e.key.length === 1 && !/[0-9]/.test(e.key)) e.preventDefault(); }} />
         </Field>
         <Field id="en-fecha" label={t('movimientos.fecha')}>
           <input id="en-fecha" type="date" className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg" value={fecha} onChange={(e) => setFecha(e.target.value)} />
