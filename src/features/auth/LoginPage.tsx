@@ -108,6 +108,12 @@ export function LoginPage() {
             Crear cuenta
           </Link>
         </p>
+
+        <footer className="mt-10 border-t border-border pt-4 text-center text-caption text-muted">
+          <p className="font-medium text-fg">Donario</p>
+          <p>© {new Date().getFullYear()} Esteban Ramirez Grajales</p>
+          <p>CC 1004702039 · estebanramirezgrajales@gmail.com</p>
+        </footer>
       </div>
     </div>
   );

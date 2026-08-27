@@ -4,6 +4,7 @@
   "version": "0.2.0",
   "type": "module",
   "description": "Inventario de donaciones — Supabase",
+  "author": "Esteban Ramirez Grajales <estebanramirezgrajales@gmail.com> (CC 1004702039)",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
