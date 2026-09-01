@@ -13,7 +13,7 @@ import { useToast } from '../../components/ui/Toast';
 
 interface Props {
   open: boolean;
-  onClose: () => void;
+  onClose: (createdId?: string) => void;
   product: Product | null;
   categories: Category[];
   units: Unit[];
@@ -99,8 +99,9 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
         });
         toast.push({ message: t('productos.saved'), tone: 'success' });
       } else {
+        const id = newId();
         await createProduct({
-          id: newId(),
+          id,
           name: parsed.data.name,
           aliases: aliasList,
           category_id: parsed.data.category_id,
@@ -111,6 +112,8 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
           center_id: centerId,
         });
         toast.push({ message: t('productos.created'), tone: 'success' });
+        onClose(id);
+        return;
       }
       onClose();
     } catch (e) {
@@ -137,9 +140,9 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
         <Field id="p-minstock" label={t('productos.form.minStock')} hint={t('productos.form.minStock.hint')} error={errors.min_stock}>
           <input id="p-minstock" className={inputWithError(errors.min_stock)} value={minStock} onChange={(e) => setMinStock(e.target.value)} inputMode="decimal" />
         </Field>
-        <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={() => void save()} disabled={saving}>{t('common.save')}</Button>
+          <div className="mt-2 flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => onClose()}>{t('common.cancel')}</Button>
+          <Button onClick={() => void save()} loading={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
         </div>
       </div>
     </Modal>

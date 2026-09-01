@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from '@phosphor-icons/react';
-import { fetchCategories, fetchProducts, fetchUnits, type Product } from '../../lib/db';
+import { fetchCategories, fetchProduct, fetchUnits, type Product } from '../../lib/db';
 import { categoriasFor, unitsFor } from '../../lib/catalog';
 import { AutocompleteOrCreate, type AocItem } from './AutocompleteOrCreate';
 import { ProductFormModal } from '../../features/productos/ProductFormModal';
@@ -38,15 +38,10 @@ export function QuickProductSelect({ items, value, onChange, onCreated, label }:
     [items, optimistic],
   );
 
-  const onFormClose = async () => {
+  const onFormClose = async (createdId?: string) => {
     setShowForm(false);
-    if (!onCreated) return;
-    // ponytail: detect the just-created product by diffing id sets. We can't
-    // rely on alphabetical order (fetchProducts sorts by name) or by created_at
-    // (no stable clock). Diffing prev vs new is the cheapest reliable signal.
-    const prevIds = new Set(items.map((i) => i.id));
-    const refreshed: Product[] = await fetchProducts();
-    const created = refreshed.find((p) => !prevIds.has(p.id) && p.is_active);
+    if (!onCreated || !createdId) return;
+    const created = await fetchProduct(createdId);
     if (created) {
       setOptimistic({ id: created.id, label: created.name });
       onCreated(created);
@@ -73,7 +68,7 @@ export function QuickProductSelect({ items, value, onChange, onCreated, label }:
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-caption font-medium text-primary-700 hover:bg-primary-50"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-caption font-medium text-accent-600 hover:bg-accent-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
         >
           <Plus size={14} aria-hidden="true" />
           {t('productos.quickNew')}

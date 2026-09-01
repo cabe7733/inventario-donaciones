@@ -260,13 +260,7 @@ export function OrderFormPage() {
 
         {/* Items section */}
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-h3">Items</h2>
-            <Button type="button" variant="ghost" onClick={addItem}>
-              <Plus size={18} className="mr-1" />
-              Agregar
-            </Button>
-          </div>
+          <h2 className="text-h3">Items</h2>
 
           {items.map((item, index) => {
             const stock = item.item_id ? effectiveStockByItem(item.item_id) : 0;
@@ -337,16 +331,23 @@ export function OrderFormPage() {
               </div>
             );
           })}
+
+          <div>
+            <Button type="button" variant="ghost" onClick={addItem}>
+              <Plus size={18} className="mr-1" />
+              Agregar
+            </Button>
+          </div>
         </section>
 
         {/* Actions */}
-        <div className="flex gap-3 justify-end">
+          <div className="flex gap-3 justify-end">
           <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
             Cancelar
           </Button>
           <Button
             type="button"
-            disabled={saveMutation.isPending}
+            loading={saveMutation.isPending}
             onClick={() => void saveMutation.mutateAsync()}
           >
             {saveMutation.isPending
