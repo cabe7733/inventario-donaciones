@@ -13,8 +13,6 @@ interface SearchableSelectProps {
   className?: string;
 }
 
-// ponytail: select nativo con búsqueda para listas medianas. Sin dependencias
-// externas. Si crece a miles de opciones, cambiar a AutocompleteOrCreate.
 export function SearchableSelect({
   id,
   value,
@@ -57,27 +55,29 @@ export function SearchableSelect({
         id={id}
         type="button"
         disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={clsx(
-          'h-11 w-full rounded-lg border border-border bg-card px-3 text-left text-body text-fg',
+          'h-11 w-full rounded-lg border border-border bg-surface-card px-3 text-left text-body text-fg',
           'flex items-center justify-between gap-2 transition-colors',
-          'hover:border-primary-300 focus:border-primary-500 focus:outline-none',
+          'hover:border-primary-300 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200',
           disabled && 'cursor-not-allowed opacity-50',
-          open && 'border-primary-500',
+          open && 'border-accent-500',
         )}
       >
-        <span className={clsx('truncate', !value && 'text-muted')}>
+        <span className={clsx('truncate', !value && 'text-text-tertiary')}>
           {value || placeholder}
         </span>
-        <CaretDown size={16} className={clsx('text-muted transition-transform', open && 'rotate-180')} aria-hidden="true" />
+        <CaretDown size={16} className={clsx('text-text-tertiary transition-transform', open && 'rotate-180')} aria-hidden="true" />
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-border bg-card shadow-elev-3">
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-border bg-surface-card shadow-elev-4">
           <div className="relative border-b border-border">
             <MagnifyingGlass
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"
               aria-hidden="true"
             />
             <input
@@ -86,13 +86,13 @@ export function SearchableSelect({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar…"
-              className="h-10 w-full bg-transparent pl-9 pr-3 text-body-sm text-fg placeholder:text-muted focus:outline-none"
+              className="h-10 w-full bg-transparent pl-9 pr-3 text-body-sm text-fg placeholder:text-text-tertiary focus:outline-none"
             />
           </div>
 
           <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
             {filtered.length === 0 ? (
-              <li className="px-3 py-2.5 text-caption text-muted">{emptyText}</li>
+              <li className="px-3 py-2.5 text-caption text-text-secondary">{emptyText}</li>
             ) : (
               filtered.map((opt) => (
                 <li key={opt} role="option" aria-selected={opt === value}>
@@ -104,13 +104,13 @@ export function SearchableSelect({
                       setOpen(false);
                     }}
                     className={clsx(
-                      'flex w-full items-center justify-between px-3 py-2 text-left text-body-sm transition-colors',
-                      'hover:bg-neutral-100 dark:hover:bg-neutral-800',
-                      opt === value && 'bg-primary-50 text-primary-700 dark:bg-primary-900/20',
+                      'flex w-full items-center justify-between px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
+                      'hover:bg-neutral-50',
+                      opt === value && 'bg-accent-50 text-accent-700',
                     )}
                   >
-                    <span className="truncate">{opt}</span>
-                    {opt === value && <Check size={16} className="text-primary-700" aria-hidden="true" />}
+                    <span className="truncate font-medium">{opt}</span>
+                    {opt === value && <Check size={16} className="text-accent-600" aria-hidden="true" />}
                   </button>
                 </li>
               ))

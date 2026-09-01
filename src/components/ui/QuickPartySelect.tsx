@@ -71,7 +71,7 @@ export function QuickPartySelect({ kind, value, onChange, required, error, label
         <button
           type="button"
           onClick={() => setShowQuickForm(true)}
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-caption font-medium text-primary-700 hover:bg-primary-50"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-caption font-medium text-accent-600 hover:bg-accent-50"
         >
           <Plus size={14} aria-hidden="true" />
           {registerLabel}

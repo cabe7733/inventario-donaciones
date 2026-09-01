@@ -1,13 +1,67 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { ArrowDownRight, ArrowUpRight, Stack, Triangle, Warning, Pill } from '@phosphor-icons/react';
-import { fetchProducts, fetchMedications, fetchMovements, fetchLots, type Product, type Movement, type Medication } from '../../lib/db';
-import { formatNumber, formatTime, startOfTodayISO } from '../../lib/format';
+import { ArrowDownRight, ArrowUpRight, Stack, Warning, Package, Pill, TrendUp, TrendDown, Eye } from '@phosphor-icons/react';
+import type { IconProps } from '@phosphor-icons/react';
+import { fetchProducts, fetchMedications, fetchMovements, fetchLots, type Product, type Movement } from '../../lib/db';
+import { formatNumber, startOfTodayISO } from '../../lib/format';
 import { lotExpired } from '../../lib/medicationOps';
 import { MovementsWidget } from '../movimientos/MovementsWidget';
-import { PageContainer } from '../../components/layout/PageContainer';
 import { Skeleton } from '../../components/ui/Skeleton';
+
+interface KpiCardProps {
+  label: string;
+  value: number;
+  icon: React.ComponentType<IconProps>;
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: string;
+  variant?: 'default' | 'success' | 'warning' | 'danger';
+}
+
+function KpiCard({ label, value, icon: Icon, trend, trendValue, variant = 'default' }: KpiCardProps) {
+  const variantStyles = {
+    default: 'bg-surface-card border-border',
+    success: 'bg-success-50 border-success-200',
+    warning: 'bg-warning-50 border-warning-200',
+    danger: 'bg-danger-50 border-danger-200',
+  };
+
+  const iconStyles = {
+    default: 'bg-primary-100 text-primary-600',
+    success: 'bg-success-100 text-success-600',
+    warning: 'bg-warning-100 text-warning-600',
+    danger: 'bg-danger-100 text-danger-600',
+  };
+
+  const valueStyles: Record<string, string> = {
+    default: 'text-fg',
+    success: 'text-success-700',
+    warning: 'text-warning-700',
+    danger: 'text-danger-700',
+  };
+
+  return (
+    <div className={`rounded-xl border p-4 ${variantStyles[variant]}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconStyles[variant]}`}>
+          <Icon size={20} weight="fill" />
+        </div>
+        {trend && trendValue && (
+          <div className={`flex items-center gap-1 text-caption font-medium ${
+            trend === 'up' ? 'text-success-600' : trend === 'down' ? 'text-danger-600' : 'text-text-secondary'
+          }`}>
+            {trend === 'up' ? <TrendUp size={14} /> : trend === 'down' ? <TrendDown size={14} /> : null}
+            <span>{trendValue}</span>
+          </div>
+        )}
+      </div>
+      <div className="mt-3">
+        <p className={`text-numeric-xl font-bold ${valueStyles[variant]}`}>{formatNumber(value)}</p>
+        <p className="mt-1 text-body-sm text-text-secondary">{label}</p>
+      </div>
+    </div>
+  );
+}
 
 export function DashboardPage() {
   const { t } = useTranslation();
@@ -15,25 +69,23 @@ export function DashboardPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [todayMovements, setTodayMovements] = useState<Movement[]>([]);
   const [medMovements, setMedMovements] = useState<Movement[]>([]);
-  const [meds, setMeds] = useState<Medication[]>([]);
   const [expiredLots, setExpiredLots] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void (async () => {
-      const [prods, meds, movs, medMovs] = await Promise.all([
+      const [prods, medsData, movs, medMovs] = await Promise.all([
         fetchProducts(),
         fetchMedications(),
         fetchMovements({ since: startOfTodayISO() }),
         fetchMovements({ itemType: 'medication', limit: 5 }),
       ]);
       setProducts(prods);
-      setMeds(meds);
       setTodayMovements(movs);
       setMedMovements(medMovs);
 
       let expired = 0;
-      const lotsResults = await Promise.all(meds.map((m) => fetchLots(m.id)));
+      const lotsResults = await Promise.all(medsData.map((m) => fetchLots(m.id)));
       for (const lots of lotsResults) {
         if (lots.some(lotExpired)) expired++;
       }
@@ -45,190 +97,231 @@ export function DashboardPage() {
   const entradaHoy = todayMovements.filter((m) => m.kind === 'entrada').reduce((acc, m) => acc + m.qty, 0);
   const salidaHoy = todayMovements.filter((m) => m.kind === 'salida').reduce((acc, m) => acc + m.qty, 0);
   const lowStock = products.filter((p) => p.is_active && p.min_stock != null && p.total_stock <= p.min_stock);
-  const medNameBy = new Map(meds.map((m) => [m.id, m.name]));
-  const medEntradaHoy = todayMovements.filter((m) => m.item_type === 'medication' && m.kind === 'entrada').reduce((acc, m) => acc + m.qty, 0);
-  const medSalidaHoy = todayMovements.filter((m) => m.item_type === 'medication' && m.kind === 'salida').reduce((acc, m) => acc + m.qty, 0);
+  const outOfStock = products.filter((p) => p.is_active && p.total_stock === 0);
 
-  const kpis = [
-    { label: t('dashboard.kpis.entradasHoy'), value: entradaHoy, icon: ArrowDownRight, tone: 'success' as const },
-    { label: t('dashboard.kpis.salidasHoy'), value: salidaHoy, icon: ArrowUpRight, tone: 'secondary' as const },
-    { label: t('dashboard.kpis.alertas'), value: lowStock.length + expiredLots, icon: Warning, tone: 'warning' as const },
-    { label: t('dashboard.kpis.productos'), value: products.length, icon: Stack, tone: 'primary' as const },
-  ];
+  const alertsCount = lowStock.length + expiredLots;
 
-  const toneStyles: Record<string, { bg: string; text: string }> = {
-    success: { bg: 'bg-success-500/15', text: 'text-success-700' },
-    secondary: { bg: 'bg-secondary-500/15', text: 'text-secondary-700' },
-    warning: { bg: 'bg-warning-500/15', text: 'text-warning-700' },
-    primary: { bg: 'bg-primary-500/15', text: 'text-primary-700' },
-  };
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-8">
+      {/* Header */}
+      <header className="mb-6">
+        <h1 className="text-display-md mb-1">{t('dashboard.title')}</h1>
+        <p className="text-body text-text-secondary">
+          Resumen del inventario y actividad reciente
+        </p>
+      </header>
 
-  const sidebar = (
-    <>
-      <section className="flex flex-col gap-3">
-        <h2 className="text-h3">Acciones rápidas</h2>
-        <div className="grid grid-cols-2 gap-3">
+      {/* Quick Actions */}
+      <section className="mb-6">
+        <h2 className="sr-only">Acciones rápidas</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {loading ? (
             <>
-              <Skeleton className="min-h-[88px] rounded-lg" />
-              <Skeleton className="min-h-[88px] rounded-lg" />
+              <Skeleton className="h-20 rounded-xl" />
+              <Skeleton className="h-20 rounded-xl" />
             </>
           ) : (
             <>
               <Link
                 to="/entradas/nueva?tipo=entrada"
-                className="bg-primary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
               >
-                <ArrowDownRight size={28} aria-hidden="true" />
-                <span className="text-caption font-semibold">{t('dashboard.quick.entrada')}</span>
+                <ArrowDownRight size={20} className="text-success-600" />
+                <span>Nueva entrada</span>
               </Link>
               <Link
                 to="/salidas/nueva?tipo=salida"
-                className="bg-secondary-600 flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-lg p-4 text-inverse shadow-elev-2 transition-transform active:scale-95"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
               >
-                <ArrowUpRight size={28} aria-hidden="true" />
-                <span className="text-caption font-semibold">{t('dashboard.quick.salida')}</span>
+                <ArrowUpRight size={20} className="text-warning-600" />
+                <span>Nueva salida</span>
+              </Link>
+              <Link
+                to="/productos"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
+              >
+                <Package size={20} className="text-primary-600" />
+                <span>Productos</span>
+              </Link>
+              <Link
+                to="/informes"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
+              >
+                <Eye size={20} className="text-info-600" />
+                <span>Ver reportes</span>
               </Link>
             </>
           )}
         </div>
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-h3 hidden lg:block">Indicadores</h2>
+      {/* KPIs */}
+      <section className="mb-6">
+        <h2 className="sr-only">Indicadores principales</h2>
         {loading ? (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
-              {Array.from({ length: 4 }, (_, i) => (
-                <Skeleton key={i} className="min-h-[88px] rounded-lg" />
-              ))}
-            </div>
-            <div className="hidden flex-col gap-3 rounded-lg border border-border bg-card p-4 lg:flex">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div key={i} className="flex flex-col gap-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
-              ))}
-            </div>
-          </>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-28 rounded-xl" />
+            ))}
+          </div>
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
-              {kpis.map(({ label, value, icon: Icon }) => (
-                <div key={label} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3">
-                  <span className="flex items-center gap-1.5 text-caption text-muted">
-                    <Icon size={14} aria-hidden="true" /> {label}
-                  </span>
-                  <p className="text-numeric-lg text-fg">{formatNumber(value)}</p>
-                </div>
-              ))}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="animate-fade-in-up stagger-1">
+              <KpiCard
+                label="Entradas hoy"
+                value={entradaHoy}
+                icon={ArrowDownRight}
+                variant="success"
+              />
             </div>
-            <ul className="hidden flex-col gap-3 rounded-lg border border-border bg-card p-4 lg:flex">
-              {kpis.map(({ label, value, icon: Icon, tone }) => {
-                const s = toneStyles[tone];
-                return (
-                  <li key={label} className="flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-body-sm text-muted">
-                      <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${s.bg} ${s.text}`}>
-                        <Icon size={16} aria-hidden="true" />
-                      </span>
-                      {label}
+            <div className="animate-fade-in-up stagger-2">
+              <KpiCard
+                label="Salidas hoy"
+                value={salidaHoy}
+                icon={ArrowUpRight}
+                variant="warning"
+              />
+            </div>
+            <div className="animate-fade-in-up stagger-3">
+              <KpiCard
+                label="Total productos"
+                value={products.length}
+                icon={Stack}
+                variant="default"
+              />
+            </div>
+            <div className="animate-fade-in-up stagger-4">
+              <KpiCard
+                label="Alertas"
+                value={alertsCount}
+                icon={Warning}
+                variant={alertsCount > 0 ? 'danger' : 'default'}
+              />
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Main content grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Movements Widget - spans 2 columns */}
+        <div className="lg:col-span-2">
+          <MovementsWidget />
+        </div>
+
+        {/* Alerts sidebar */}
+        <div className="space-y-4">
+          {/* Low Stock */}
+          {lowStock.length > 0 && (
+            <section className="rounded-xl border border-warning-200 bg-warning-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-warning-100">
+                  <Warning size={18} className="text-warning-600" weight="fill" />
+                </div>
+                <h3 className="text-h3 text-warning-700">Stock bajo</h3>
+              </div>
+              <ul className="space-y-2">
+                {lowStock.slice(0, 5).map((p) => (
+                  <li key={p.id} className="flex items-center justify-between text-body-sm">
+                    <span className="truncate text-fg">{p.name}</span>
+                    <span className="ml-2 shrink-0 font-semibold text-warning-700">
+                      {formatNumber(p.total_stock)}
                     </span>
-                    <span className="text-numeric-lg text-fg">{formatNumber(value)}</span>
                   </li>
-                );
-              })}
-            </ul>
-          </>
-        )}
-      </section>
-    </>
-  );
+                ))}
+                {lowStock.length > 5 && (
+                  <li className="text-caption text-warning-600">
+                    +{lowStock.length - 5} más
+                  </li>
+                )}
+              </ul>
+              <Link
+                to="/productos?filter=low-stock"
+                className="mt-3 block text-center text-caption font-semibold text-warning-700 hover:underline"
+              >
+                Ver todos los productos con stock bajo
+              </Link>
+            </section>
+          )}
 
-  return (
-    <PageContainer sidebar={sidebar}>
-      <header>
-        <h1 className="text-h2">{t('dashboard.title')}</h1>
-      </header>
+          {/* Out of Stock */}
+          {outOfStock.length > 0 && (
+            <section className="rounded-xl border border-danger-200 bg-danger-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-danger-100">
+                  <Package size={18} className="text-danger-600" weight="fill" />
+                </div>
+                <h3 className="text-h3 text-danger-700">Agotados</h3>
+              </div>
+              <ul className="space-y-2">
+                {outOfStock.slice(0, 5).map((p) => (
+                  <li key={p.id} className="flex items-center justify-between text-body-sm">
+                    <span className="truncate text-fg">{p.name}</span>
+                    <span className="ml-2 shrink-0 font-semibold text-danger-700">0</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-      <MovementsWidget />
+          {/* Expired Medications */}
+          {expiredLots > 0 && (
+            <section className="rounded-xl border border-danger-200 bg-danger-50 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-danger-100">
+                  <Pill size={18} className="text-danger-600" weight="fill" />
+                </div>
+                <h3 className="text-h3 text-danger-700">Vencidos</h3>
+              </div>
+              <p className="text-body-sm text-fg">
+                {expiredLots === 1
+                  ? '1 medicamento tiene lotes vencidos'
+                  : `${expiredLots} medicamentos tienen lotes vencidos`}
+              </p>
+              <Link
+                to="/medicamentos?filter=expired"
+                className="mt-3 block text-center text-caption font-semibold text-danger-700 hover:underline"
+              >
+                Ver medicamentos vencidos
+              </Link>
+            </section>
+          )}
 
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-h3">{t('dashboard.medMov')}</h2>
-          <Link to="/medicamentos?vista=movimientos" className="text-caption font-semibold text-primary-700">
-            {t('dashboard.verTodo')}
-          </Link>
+          {/* Recent Medications Activity */}
+          <section className="rounded-xl border border-border bg-surface-card p-4">
+            <h3 className="text-h3 mb-3">Medicamentos</h3>
+            {loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <Skeleton key={i} className="h-12 rounded-lg" />
+                ))}
+              </div>
+            ) : medMovements.length === 0 ? (
+              <p className="text-body-sm text-text-secondary">
+                No hay movimientos de medicamentos hoy
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {medMovements.slice(0, 5).map((m) => (
+                  <li key={m.id} className="flex items-center gap-3 text-body-sm">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${
+                      m.kind === 'entrada' ? 'bg-success-100 text-success-600' : 'bg-warning-100 text-warning-600'
+                    }`}>
+                      {m.kind === 'entrada' ? <ArrowDownRight size={14} /> : <ArrowUpRight size={14} />}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-fg">{m.item_id}</span>
+                    <span className={`font-semibold ${
+                      m.kind === 'entrada' ? 'text-success-700' : 'text-warning-700'
+                    }`}>
+                      {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </div>
-        <div className="mb-3 grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1 rounded-lg border border-border bg-card p-3">
-            <span className="flex items-center gap-1.5 text-caption text-muted">
-              <ArrowDownRight size={14} aria-hidden="true" /> {t('dashboard.medMov.entradasHoy')}
-            </span>
-            <p className="text-numeric-lg text-success-700">{formatNumber(medEntradaHoy)}</p>
-          </div>
-          <div className="flex flex-col gap-1 rounded-lg border border-border bg-card p-3">
-            <span className="flex items-center gap-1.5 text-caption text-muted">
-              <ArrowUpRight size={14} aria-hidden="true" /> {t('dashboard.medMov.salidasHoy')}
-            </span>
-            <p className="text-numeric-lg text-secondary-700">{formatNumber(medSalidaHoy)}</p>
-          </div>
-        </div>
-        {loading ? (
-          <Skeleton className="min-h-[60px] rounded-lg" />
-        ) : medMovements.length === 0 ? (
-          <p className="text-body text-muted">{t('dashboard.medMov.empty')}</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {medMovements.map((m) => (
-              <li key={m.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${m.kind === 'entrada' ? 'bg-success-500/15 text-success-700' : 'bg-secondary-500/15 text-secondary-700'}`}>
-                  {m.kind === 'entrada' ? <ArrowDownRight size={18} aria-hidden="true" /> : <ArrowUpRight size={18} aria-hidden="true" />}
-                </span>
-                <Pill size={16} className="shrink-0 text-muted" aria-hidden="true" />
-                <span className="min-w-0 flex-1 truncate text-body-sm font-medium">{medNameBy.get(m.item_id) ?? '?'}</span>
-                <span className={`text-numeric ${m.kind === 'entrada' ? 'text-success-700' : 'text-secondary-700'}`}>
-                  {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}
-                </span>
-                <span className="text-caption text-muted">{formatTime(m.fecha)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {lowStock.length > 0 && (
-        <section>
-          <h2 className="text-h3 mb-3">{t('dashboard.alerts')}</h2>
-          <ul className="flex flex-col gap-2">
-            {lowStock.map((p) => (
-              <li key={p.id} className="flex items-center gap-2 rounded-lg border border-warning-500/40 bg-warning-500/10 p-3">
-                <Triangle size={16} className="text-warning-700" aria-hidden="true" />
-                <span className="flex-1 text-body-sm font-medium">{p.name}</span>
-                <span className="text-numeric text-warning-700">{formatNumber(p.total_stock)}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {expiredLots > 0 && (
-        <section>
-          <h2 className="text-h3 mb-3">{t('medicamentos.vto.expired')}</h2>
-          <div className="flex items-center gap-2 rounded-lg border border-danger-500/40 bg-danger-500/10 p-3">
-            <Pill size={16} className="text-danger-700" aria-hidden="true" />
-            <span className="flex-1 text-body-sm font-medium">
-              {expiredLots === 1
-                ? '1 medicamento con lotes vencidos'
-                : `${expiredLots} medicamentos con lotes vencidos`}
-            </span>
-            <Link to="/medicamentos" className="text-caption font-semibold text-danger-700 hover:underline">
-              Ver
-            </Link>
-          </div>
-        </section>
-      )}
-    </PageContainer>
+      </div>
+    </div>
   );
 }

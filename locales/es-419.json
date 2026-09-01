@@ -4,6 +4,7 @@
     "confirm": "Confirmar",
     "cancel": "Cancelar",
     "save": "Guardar",
+    "saving": "Guardando…",
     "edit": "Editar",
     "delete": "Eliminar",
     "create": "Crear",
@@ -40,7 +41,16 @@
     "voluntarios": "Voluntarios",
     "centro": "Mi Centro",
     "config": "Configuración",
-    "mas": "Más"
+    "mas": "Más",
+    "group": {
+      "principal": "Principal",
+      "inventario": "Inventario",
+      "operaciones": "Operaciones",
+      "almacen": "Almacén",
+      "personas": "Personas",
+      "reportes": "Reportes",
+      "administracion": "Administración"
+    }
   },
 
   "dashboard": {

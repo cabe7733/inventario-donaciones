@@ -4,29 +4,47 @@
 
 @layer base {
   html {
-    @apply text-body;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    @apply text-body antialiased;
+    scroll-behavior: smooth;
   }
+
   body {
-    @apply bg-surface text-fg antialiased;
+    @apply bg-surface text-fg;
     min-height: 100dvh;
   }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   button,
   input,
   select,
   textarea {
     font: inherit;
   }
+
   :focus-visible {
-    outline: 2px solid rgb(var(--color-primary-500));
+    outline: 2px solid rgb(var(--color-accent-500));
     outline-offset: 2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: rgb(var(--color-accent-200));
+    color: rgb(var(--color-accent-900));
   }
 }
 
 @layer utilities {
   .tap-target {
-    min-width: 48px;
-    min-height: 48px;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   @keyframes fade-in {
@@ -38,12 +56,56 @@
     }
   }
 
-  @keyframes sheet-in {
+  @keyframes fade-in-up {
     from {
       opacity: 0;
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
     }
   }
 
@@ -51,9 +113,32 @@
     animation: fade-in var(--duration-fast) var(--ease-decel) both;
   }
 
+  .animate-fade-in-up {
+    animation: fade-in-up var(--duration-normal) var(--ease-decel) both;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right var(--duration-normal) var(--ease-decel) both;
+  }
+
   .animate-sheet-in {
     animation: sheet-in var(--duration-normal) var(--ease-emphasized) both;
   }
+
+  .animate-scale-in {
+    animation: scale-in var(--duration-fast) var(--ease-decel) both;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 1.5s ease-in-out infinite;
+  }
+
+  .stagger-1 { animation-delay: 50ms; }
+  .stagger-2 { animation-delay: 100ms; }
+  .stagger-3 { animation-delay: 150ms; }
+  .stagger-4 { animation-delay: 200ms; }
+  .stagger-5 { animation-delay: 250ms; }
+  .stagger-6 { animation-delay: 300ms; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -67,5 +152,32 @@
   }
 }
 
-/* ponytail: Inter self-hosted se agrega en su fase (binario woff2 no descargable en este entorno).
-   La pila system-ui/Segoe UI/Roboto cubre v1. */
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border-default));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--border-strong));
+}
+
+/* Hide scrollbar on mobile while still allowing scroll */
+@media (max-width: 1024px) {
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

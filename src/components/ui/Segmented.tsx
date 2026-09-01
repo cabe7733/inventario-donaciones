@@ -19,7 +19,7 @@ export function Segmented<T extends string>({ options, value, onChange, ariaLabe
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="grid grid-flow-col auto-cols-fr overflow-hidden rounded-lg border border-border bg-card p-1"
+      className="grid grid-flow-col auto-cols-fr overflow-hidden rounded-xl border border-border bg-neutral-100 p-1"
     >
       {options.map((o) => (
         <button
@@ -29,12 +29,10 @@ export function Segmented<T extends string>({ options, value, onChange, ariaLabe
           aria-selected={value === o.value}
           onClick={() => onChange(o.value)}
           className={clsx(
-            'flex h-11 items-center justify-center gap-1.5 rounded-md text-body-sm font-semibold transition-colors',
+            'flex h-11 items-center justify-center gap-2 rounded-lg text-body-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2',
             value === o.value
-              ? o.value === 'salida'
-                ? 'bg-secondary-600 text-inverse'
-                : 'bg-primary-600 text-inverse'
-              : 'text-muted',
+              ? 'bg-surface-card text-fg shadow-elev-1'
+              : 'text-text-secondary hover:text-fg',
           )}
         >
           {o.icon}

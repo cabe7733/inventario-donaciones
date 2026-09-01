@@ -82,16 +82,21 @@ export function FileUploader({ expectedColumns, onImport }: FileUploaderProps) {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputRef.current?.click(); } }}
+        role="button"
+        tabIndex={0}
+        aria-label="Arrastrá un archivo CSV aquí o seleccioná uno"
         className={clsx(
           'flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer',
-          dragOver ? 'border-primary-500 bg-primary-50' : 'border-border hover:border-primary-300',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2',
+          dragOver ? 'border-accent-500 bg-accent-50' : 'border-border hover:border-accent-300',
         )}
       >
-        <Upload size={32} className="text-muted" />
-        <p className="text-body text-muted">
-          Arrastrá un archivo CSV aquí o <span className="text-primary-600 font-medium">seleccioná uno</span>
+        <Upload size={32} className="text-text-tertiary" />
+        <p className="text-body text-text-secondary">
+          Arrastrá un archivo CSV aquí o <span className="text-accent-600 font-semibold">seleccioná uno</span>
         </p>
-        <p className="text-caption text-muted">Solo archivos .csv</p>
+        <p className="text-caption text-text-tertiary">Solo archivos .csv</p>
         <input
           ref={inputRef}
           type="file"
@@ -106,35 +111,35 @@ export function FileUploader({ expectedColumns, onImport }: FileUploaderProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <FileText size={20} className="text-muted" />
-        <span className="text-body font-medium">{file.name}</span>
-        <button type="button" onClick={reset} className="text-muted hover:text-fg">
-          <X size={18} />
+        <FileText size={20} className="text-text-secondary" />
+        <span className="text-body font-medium text-fg">{file.name}</span>
+        <button type="button" onClick={reset} className="ml-auto text-text-secondary hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg" aria-label="Eliminar archivo">
+          <X size={18} aria-hidden="true" />
         </button>
       </div>
 
       <div className="flex items-center gap-4 text-caption">
-        <span>{parsedRows.length} filas detectadas</span>
-        {validCount > 0 && <span className="text-success-700">{validCount} válidas</span>}
-        {invalidCount > 0 && <span className="text-danger-700">{invalidCount} con errores</span>}
+        <span className="text-text-secondary">{parsedRows.length} filas detectadas</span>
+        {validCount > 0 && <span className="text-success-700 font-medium">{validCount} válidas</span>}
+        {invalidCount > 0 && <span className="text-danger-700 font-medium">{invalidCount} con errores</span>}
       </div>
 
       {parsedRows.length > 0 && (
         <>
-          <div className="max-h-64 overflow-auto rounded-lg border border-border">
+          <div className="max-h-64 overflow-auto rounded-xl border border-border">
             <table className="w-full text-caption">
               <thead>
-                <tr className="border-b border-border bg-neutral-50 dark:bg-neutral-800">
+                <tr className="border-b border-border bg-neutral-50">
                   {expectedColumns.map((col) => (
-                    <th key={col} className="px-3 py-2 text-left font-medium">{col}</th>
+                    <th key={col} className="px-3 py-2 text-left font-semibold text-text-secondary">{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {parsedRows.slice(0, 5).map((row, i) => (
-                  <tr key={i} className={clsx('border-b border-border', !row.isValid && 'bg-danger-50 dark:bg-danger-900/20')}>
+                  <tr key={i} className={clsx('border-b border-border last:border-b-0', !row.isValid && 'bg-danger-50')}>
                     {expectedColumns.map((col) => (
-                      <td key={col} className="px-3 py-2">{row.data[col]}</td>
+                      <td key={col} className="px-3 py-2 text-fg">{row.data[col]}</td>
                     ))}
                   </tr>
                 ))}
@@ -146,7 +151,7 @@ export function FileUploader({ expectedColumns, onImport }: FileUploaderProps) {
             <Button variant="ghost" onClick={reset}>
               Cancelar
             </Button>
-            <Button onClick={handleImport} disabled={isImporting || validCount === 0}>
+            <Button onClick={handleImport} loading={isImporting} disabled={validCount === 0}>
               {isImporting ? 'Importando...' : `Importar ${validCount} filas`}
             </Button>
           </div>

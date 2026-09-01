@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { ArrowDownRight, ArrowUpRight, Package, Pill, Cube } from '@phosphor-icons/react';
+import { ArrowDownRight, ArrowUpRight, Package, Pill, Cube, Plus } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { fetchMovements, fetchProducts, fetchMedications, fetchKits, type Movement, type ItemType } from '../../lib/db';
 import { formatNumber, formatTime } from '../../lib/format';
 import { SkeletonCard } from '../../components/ui/Skeleton';
+import { clsx } from 'clsx';
 
 const ICON: Record<ItemType, typeof Package> = {
   product: Package,
@@ -12,15 +12,32 @@ const ICON: Record<ItemType, typeof Package> = {
   kit: Cube,
 };
 
+const kindStyles = {
+  entrada: {
+    bg: 'bg-success-100',
+    text: 'text-success-600',
+    iconBg: 'bg-success-500',
+  },
+  salida: {
+    bg: 'bg-warning-100',
+    text: 'text-warning-600',
+    iconBg: 'bg-warning-500',
+  },
+};
+
 export function MovementsWidget() {
-  const { t } = useTranslation();
   const [recent, setRecent] = useState<Movement[]>([]);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     void (async () => {
-      const [movs, prods, meds, kits] = await Promise.all([fetchMovements({ limit: 5 }), fetchProducts(), fetchMedications(), fetchKits()]);
+      const [movs, prods, meds, kits] = await Promise.all([
+        fetchMovements({ limit: 8 }),
+        fetchProducts(),
+        fetchMedications(),
+        fetchKits(),
+      ]);
       setRecent(movs);
       const m = new Map<string, string>();
       for (const p of prods) m.set(p.id, p.name);
@@ -32,34 +49,77 @@ export function MovementsWidget() {
   }, []);
 
   return (
-    <section>
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-h3">{t('dashboard.recent')}</h2>
-        <Link to="/mas/movimientos" className="text-caption font-semibold text-primary-700">{t('dashboard.verTodo')}</Link>
+    <section className="rounded-xl border border-border bg-surface-card p-5">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-h2">Movimientos recientes</h2>
+        <Link
+          to="/mas/movimientos"
+          className="text-caption font-semibold text-accent-600 hover:text-accent-700"
+        >
+          Ver todos
+        </Link>
       </div>
+
       {loading ? (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }, (_, i) => (
+        <div className="space-y-3">
+          {Array.from({ length: 4 }, (_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       ) : recent.length === 0 ? (
-        <p className="text-body text-muted">{t('dashboard.recent.empty')}</p>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100">
+            <Plus size={24} className="text-text-tertiary" />
+          </div>
+          <p className="text-body text-text-secondary">No hay movimientos registrados</p>
+          <p className="mt-1 text-caption text-text-tertiary">
+            Los movimientos aparecerán aquí cuando se registren entradas o salidas
+          </p>
+        </div>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {recent.map((m) => {
+        <ul className="space-y-2">
+          {recent.map((m, index) => {
             const Icon = ICON[m.item_type];
+            const style = kindStyles[m.kind];
+
             return (
-              <li key={m.id} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${m.kind === 'entrada' ? 'bg-success-500/15 text-success-700' : 'bg-secondary-500/15 text-secondary-700'}`}>
-                  {m.kind === 'entrada' ? <ArrowDownRight size={18} aria-hidden="true" /> : <ArrowUpRight size={18} aria-hidden="true" />}
-                </span>
-                <Icon size={16} className="shrink-0 text-muted" aria-hidden="true" />
-                <span className="min-w-0 flex-1 truncate text-body-sm font-medium">{names.get(m.item_id) ?? '?'}</span>
-                <span className={`text-numeric ${m.kind === 'entrada' ? 'text-success-700' : 'text-secondary-700'}`}>
-                  {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}
-                </span>
-                <span className="text-caption text-muted">{formatTime(m.fecha)}</span>
+              <li
+                key={m.id}
+                className={clsx(
+                  'flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-neutral-50',
+                  'animate-fade-in-up',
+                )}
+                style={{ animationDelay: `${index * 50}ms` }}
+              >
+                <div className={clsx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', style.bg)}>
+                  <span className={clsx('flex h-5 w-5 items-center justify-center rounded-md', style.iconBg)}>
+                    {m.kind === 'entrada' ? (
+                      <ArrowDownRight size={14} className="text-white" weight="bold" />
+                    ) : (
+                      <ArrowUpRight size={14} className="text-white" weight="bold" />
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100">
+                  <Icon size={16} className="text-text-secondary" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-body-sm font-medium text-fg">
+                    {names.get(m.item_id) ?? '—'}
+                  </p>
+                  <p className="text-caption text-text-tertiary">
+                    {m.item_type === 'product' ? 'Producto' : m.item_type === 'medication' ? 'Medicamento' : 'Kit'}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className={clsx('text-numeric font-semibold', style.text)}>
+                    {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}
+                  </p>
+                  <p className="text-caption text-text-tertiary">{formatTime(m.fecha)}</p>
+                </div>
               </li>
             );
           })}

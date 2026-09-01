@@ -21,21 +21,21 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-surface text-fg">
-      <header className="flex h-14 items-center gap-2 border-b border-border bg-card px-4">
+      <header className="flex h-14 items-center gap-2 border-b border-border bg-surface-card px-4">
         {isSubPage ? (
           <>
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex h-11 w-11 items-center justify-center -ml-2 rounded-lg text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+              className="flex h-11 w-11 items-center justify-center -ml-2 rounded-lg text-text-secondary hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
               aria-label={t('common.back')}
             >
               <CaretLeft size={20} aria-hidden="true" />
             </button>
-            <span className="text-h3 text-primary-700">Donario</span>
+            <span className="text-h3 text-accent-600">Donario</span>
           </>
         ) : (
-          <span className="text-h3 text-primary-700">Donario</span>
+          <span className="text-h3 text-accent-600">Donario</span>
         )}
       </header>
 
@@ -46,7 +46,7 @@ export function AppShell() {
       </main>
 
       <nav
-        className="sticky bottom-0 flex border-t border-border bg-card"
+        className="sticky bottom-0 flex border-t border-border bg-surface-card"
         aria-label={t('nav.inicio')}
       >
         {TABS.map(({ to, icon: Icon, key, end }) => (
@@ -55,8 +55,8 @@ export function AppShell() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 transition-colors ${
-                isActive ? 'text-primary-700' : 'text-muted'
+              `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset ${
+                isActive ? 'text-accent-600' : 'text-text-secondary'
               }`
             }
           >

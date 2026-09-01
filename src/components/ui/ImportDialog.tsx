@@ -136,6 +136,7 @@ export function ImportDialog({
                     type="file"
                     accept=".csv,.txt,text/csv,text/plain"
                     className="hidden"
+                    aria-label="Seleccionar archivo para importar"
                     onChange={(e) => void onPick(e)}
                   />
                   <UploadSimple size={16} aria-hidden="true" />
@@ -145,7 +146,7 @@ export function ImportDialog({
                   <button
                     type="button"
                     onClick={reset}
-                    className="inline-flex h-11 items-center gap-1 rounded-lg px-3 text-body-sm text-muted hover:text-danger-700"
+                    className="inline-flex h-11 items-center gap-1 rounded-lg px-3 text-body-sm text-muted hover:text-danger-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
                   >
                     <X size={16} aria-hidden="true" /> {fileName}
                   </button>
@@ -198,7 +199,7 @@ export function ImportDialog({
               <Button variant="ghost" onClick={close}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={() => void doImport()} disabled={importing || okCount === 0}>
+              <Button onClick={() => void doImport()} loading={importing} disabled={okCount === 0}>
                 {importing ? 'Importando…' : `Importar ${okCount}`}
               </Button>
             </div>

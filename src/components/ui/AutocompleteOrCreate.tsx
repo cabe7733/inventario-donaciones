@@ -24,8 +24,6 @@ interface AocProps {
   hint?: string;
 }
 
-// Selector con búsqueda y "crear si no existe". Opciones limitadas → `includes` con
-// acentos insensibles en vez de Fuse; el match exacto de autocompletar es preferible.
 export function AutocompleteOrCreate({
   id,
   label,
@@ -116,7 +114,7 @@ export function AutocompleteOrCreate({
       <div ref={rootRef} className="relative">
         <MagnifyingGlass
           size={18}
-          className="pointer-events-none absolute inset-y-0 left-3 my-auto text-muted"
+          className="pointer-events-none absolute inset-y-0 left-3 my-auto text-text-tertiary"
           aria-hidden="true"
         />
         <input
@@ -150,7 +148,7 @@ export function AutocompleteOrCreate({
               onChange(null);
               setOpen(true);
             }}
-            className="absolute inset-y-0 right-1 my-auto flex w-9 items-center justify-center rounded-md text-muted hover:bg-neutral-100 dark:hover:bg-neutral-100"
+            className="absolute inset-y-0 right-1 my-auto flex w-9 items-center justify-center rounded-md text-text-tertiary hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -160,7 +158,7 @@ export function AutocompleteOrCreate({
           <ul
             id="aoc-list"
             role="listbox"
-            className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-lg border border-border bg-card py-1 shadow-elev-3"
+            className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-auto rounded-xl border border-border bg-surface-card py-1 shadow-elev-4"
           >
             {matches.map((item, i) => (
               <li key={item.id} role="option" aria-selected={item.id === value}>
@@ -170,15 +168,15 @@ export function AutocompleteOrCreate({
                   onClick={() => void pick(item)}
                   onMouseEnter={() => setActive(i)}
                   className={clsx(
-                    'flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-body',
-                    i === active && 'bg-primary-50',
+                    'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
+                    i === active ? 'bg-accent-50' : 'hover:bg-neutral-50',
                   )}
                 >
                   <span className="flex-1">
-                    <span className="block font-medium">{item.label}</span>
-                    {item.sublabel && <span className="block text-caption text-muted">{item.sublabel}</span>}
+                    <span className="block font-medium text-fg">{item.label}</span>
+                    {item.sublabel && <span className="block text-caption text-text-secondary">{item.sublabel}</span>}
                   </span>
-                  {item.id === value && <Check size={18} className="text-primary-700" aria-hidden="true" />}
+                  {item.id === value && <Check size={18} className="text-accent-600" aria-hidden="true" />}
                 </button>
               </li>
             ))}
@@ -193,15 +191,15 @@ export function AutocompleteOrCreate({
                     onClick={() => void create()}
                     onMouseEnter={() => setActive(matches.length)}
                     className={clsx(
-                      'flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-body',
-                      active >= matches.length && 'bg-primary-50',
+                      'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
+                      active >= matches.length && 'bg-accent-50',
                     )}
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600">
                       {busy ? '…' : <Plus size={18} aria-hidden="true" />}
                     </span>
-                    <span className="text-primary-700">
-                      {busy ? '…' : `${t('common.createNew')} “${query.trim()}”`}
+                    <span className="font-medium text-accent-600">
+                      {busy ? '…' : `${t('common.createNew')} "${query.trim()}"`}
                     </span>
                   </button>
                 </li>
@@ -209,7 +207,7 @@ export function AutocompleteOrCreate({
             )}
 
             {matches.length === 0 && !canCreate && (
-              <li className="px-3 py-2.5 text-caption text-muted">{t('common.noResults')}</li>
+              <li className="px-3 py-2.5 text-caption text-text-secondary">{t('common.noResults')}</li>
             )}
           </ul>
         )}
