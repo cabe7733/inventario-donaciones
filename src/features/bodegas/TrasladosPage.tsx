@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Trash } from '@phosphor-icons/react';
 import { fetchWarehouses, transferStock, warehouseStocksBulk } from '../../lib/warehouseOps';
 import { fetchProducts, fetchMedications, fetchKits } from '../../lib/db';
 import type { Product, Medication, Kit } from '../../lib/db';
@@ -11,6 +12,7 @@ import { Field, inputWithError } from '../../components/ui/Field';
 import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
 import { AutocompleteOrCreate } from '../../components/ui/AutocompleteOrCreate';
 import { useToast } from '../../components/ui/Toast';
+import { useAuth } from '../../components/auth/AuthProvider';
 
 type ItemType = 'product' | 'medication' | 'kit';
 const ITEMS: { value: ItemType; label: string }[] = [
@@ -22,13 +24,15 @@ const ITEMS: { value: ItemType; label: string }[] = [
 interface TransferItem {
   item_type: ItemType;
   item_id: string;
-  qty: number;
+  // ponytail: qty como string para permitir vacío en el input; se parsea al validar.
+  qty: string;
 }
 
 export function TrasladosPage() {
   const { t } = useTranslation();
   const toast = useToast();
   const queryClient = useQueryClient();
+  const { centerId } = useAuth();
 
   const { data: warehouses = [] } = useQuery({
     queryKey: ['warehouses'],
@@ -41,7 +45,7 @@ export function TrasladosPage() {
 
   const [fromWarehouse, setFromWarehouse] = useState('');
   const [toWarehouse, setToWarehouse] = useState('');
-  const [items, setItems] = useState<TransferItem[]>([{ item_type: 'product', item_id: '', qty: 1 }]);
+  const [items, setItems] = useState<TransferItem[]>([{ item_type: 'product', item_id: '', qty: '' }]);
   const [busy, setBusy] = useState(false);
   const [stocks, setStocks] = useState<Map<string, number>>(new Map());
 
@@ -81,7 +85,7 @@ export function TrasladosPage() {
     return map[type]?.find((i: any) => i.id === id);
   };
 
-  const addItem = () => setItems([...items, { item_type: 'product', item_id: '', qty: 1 }]);
+  const addItem = () => setItems([...items, { item_type: 'product', item_id: '', qty: '' }]);
   const removeItem = (i: number) => items.length > 1 && setItems(items.filter((_, idx) => idx !== i));
   const updateItem = (i: number, field: keyof TransferItem, value: any) => {
     const next = [...items];
@@ -90,14 +94,21 @@ export function TrasladosPage() {
     setItems(next);
   };
 
-  const valid = fromWarehouse && toWarehouse && fromWarehouse !== toWarehouse && items.some((it) => it.item_id && it.qty > 0);
+  const qtyNum = (it: TransferItem) => Number.parseInt(it.qty, 10) || 0;
+
+  const valid = fromWarehouse && toWarehouse && fromWarehouse !== toWarehouse && items.some((it) => it.item_id && qtyNum(it) > 0);
 
   const run = async () => {
     if (!valid) return;
+    if (!centerId) {
+      toast.push({ message: 'No hay centro activo', tone: 'error' });
+      return;
+    }
     setBusy(true);
     try {
       for (const it of items) {
-        if (!it.item_id || it.qty <= 0) continue;
+        const qty = qtyNum(it);
+        if (!it.item_id || qty <= 0) continue;
         const item = getItem(it.item_type, it.item_id);
         if (!item) continue;
         await transferStock({
@@ -106,10 +117,10 @@ export function TrasladosPage() {
           itemType: it.item_type,
           itemId: it.item_id,
           loteId: null,
-          qty: it.qty,
+          qty,
           unitId: (item as any).unit_id,
           fecha: new Date().toISOString(),
-          centerId: '',
+          centerId,
           nota: 'Traslado entre bodegas',
         });
       }
@@ -123,7 +134,7 @@ export function TrasladosPage() {
       // Reset form
       setFromWarehouse('');
       setToWarehouse('');
-      setItems([{ item_type: 'product', item_id: '', qty: 1 }]);
+      setItems([{ item_type: 'product', item_id: '', qty: '' }]);
     } catch (e) {
       if (e instanceof StockError) toast.push({ message: e.message, tone: 'error' });
       else toast.push({ message: 'Error al registrar traslado', tone: 'error' });
@@ -152,6 +163,7 @@ export function TrasladosPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-h3">Items a trasladar</h2>
             <Button type="button" variant="ghost" onClick={addItem}>
+              <Plus size={18} className="mr-1" />
               {t('common.add')}
             </Button>
           </div>
@@ -186,8 +198,10 @@ export function TrasladosPage() {
                     id={`t-qty-${i}`}
                     type="number"
                     min="1"
+                    inputMode="numeric"
                     value={it.qty}
-                    onChange={(e) => updateItem(i, 'qty', parseInt(e.target.value, 10) || 1)}
+                    onChange={(e) => updateItem(i, 'qty', e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="0"
                     className={inputWithError(undefined)}
                   />
                 </Field>
@@ -213,7 +227,7 @@ export function TrasladosPage() {
                 className="mb-0.5 flex h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-danger-50 hover:text-danger-700"
                 aria-label="Eliminar item"
               >
-                ×
+                <Trash size={18} aria-hidden="true" />
               </button>
             </div>
           ))}
