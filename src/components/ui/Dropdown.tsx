@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { createPortal } from 'react-dom';
 
 export interface DropdownItem {
   key: string;
@@ -19,46 +20,79 @@ interface DropdownProps {
 
 export function Dropdown({ trigger, items, align = 'right', ariaLabel }: DropdownProps) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (!open) return;
+
+    const updatePosition = () => {
+      if (triggerRef.current) {
+        const rect = triggerRef.current.getBoundingClientRect();
+        setPosition({
+          top: rect.bottom + window.scrollY,
+          left: align === 'right' ? rect.right + window.scrollX : rect.left + window.scrollX,
+          width: rect.width,
+        });
+      }
+    };
+
+    updatePosition();
+
     const onDown = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        rootRef.current && !rootRef.current.contains(target) &&
+        menuRef.current && !menuRef.current.contains(target)
+      ) {
         setOpen(false);
       }
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false);
     };
+    const onScroll = () => updatePosition();
+
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
+    window.addEventListener('scroll', onScroll, true);
+
     return () => {
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onScroll, true);
     };
-  }, [open]);
+  }, [open, align]);
 
   return (
     <div ref={rootRef} className="relative inline-block">
       <button
+        ref={triggerRef}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={ariaLabel}
         onClick={() => setOpen((v) => !v)}
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg"
       >
         {trigger}
       </button>
 
-      {open && (
+      {open && createPortal(
         <ul
+          ref={menuRef}
           role="menu"
           aria-label={ariaLabel}
-          className={clsx(
-            'absolute z-30 mt-1 min-w-[180px] overflow-hidden rounded-lg border border-border bg-card py-1 shadow-elev-3',
-            align === 'right' ? 'right-0' : 'left-0',
-          )}
+          style={{
+            position: 'absolute',
+            top: position.top,
+            left: align === 'right' ? 'auto' : position.left,
+            right: align === 'right' ? window.innerWidth - position.left - position.width : 'auto',
+            minWidth: Math.max(180, position.width),
+          }}
+          className="z-[100] animate-scale-in overflow-hidden rounded-xl border border-border bg-surface-card py-1 shadow-elev-4 origin-top"
         >
           {items.map((it) => (
             <li key={it.key} role="none">
@@ -66,26 +100,35 @@ export function Dropdown({ trigger, items, align = 'right', ariaLabel }: Dropdow
                 type="button"
                 role="menuitem"
                 disabled={it.disabled}
+                tabIndex={it.disabled ? -1 : 0}
                 onClick={() => {
                   if (it.disabled) return;
                   setOpen(false);
                   it.onClick();
                 }}
                 className={clsx(
-                  'flex w-full items-center gap-2 px-3 py-2 text-left text-body-sm transition-colors',
+                  'flex w-full items-center gap-3 px-4 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
                   it.disabled
-                    ? 'cursor-not-allowed text-muted opacity-50'
+                    ? 'cursor-not-allowed text-text-tertiary'
                     : it.danger
-                      ? 'text-danger-700 hover:bg-danger-500/10'
-                      : 'text-fg hover:bg-neutral-100 dark:hover:bg-neutral-800',
+                      ? 'text-danger-600 hover:bg-danger-50'
+                      : 'text-fg hover:bg-neutral-50',
                 )}
               >
-                {it.icon}
-                <span className="flex-1">{it.label}</span>
+                {it.icon && (
+                  <span className={clsx(
+                    'flex h-8 w-8 items-center justify-center rounded-lg',
+                    it.danger ? 'bg-danger-50 text-danger-600' : 'bg-neutral-100 text-text-secondary',
+                  )}>
+                    {it.icon}
+                  </span>
+                )}
+                <span className="flex-1 font-medium">{it.label}</span>
               </button>
             </li>
           ))}
-        </ul>
+        </ul>,
+        document.body,
       )}
     </div>
   );
