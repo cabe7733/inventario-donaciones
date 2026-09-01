@@ -52,7 +52,7 @@ export function KitsListPage() {
   };
 
   return (
-    <PageContainer>
+    <PageContainer className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">{t('kits.list.title')}</h1>
         <Button

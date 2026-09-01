@@ -83,7 +83,7 @@ export function VoluntariosListPage() {
   };
 
   return (
-    <PageContainer>
+    <PageContainer className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
         <h1 className="text-h2">Voluntarios</h1>
         {canEdit && (

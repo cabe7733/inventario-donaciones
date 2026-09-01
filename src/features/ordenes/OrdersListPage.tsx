@@ -163,7 +163,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
   ];
 
   return (
-    <PageContainer>
+    <PageContainer className="flex flex-col gap-5">
       <header className="flex items-center justify-between">
         <h1 className="text-h2">
           {type === 'entrada' ? 'Entradas' : 'Salidas'}
