@@ -29,6 +29,7 @@ import { InformeDonacionesPage } from './features/informes/InformeDonacionesPage
 import { InformeGeneralPage } from './features/informes/InformeGeneralPage';
 import { InformeKitsPorBodegaPage } from './features/informes/InformeKitsPorBodegaPage';
 import { InformeProductosPorBodegaPage } from './features/informes/InformeProductosPorBodegaPage';
+import { ComedorPersonasPage } from './features/comedor/ComedorPersonasPage';
 
 function SuspenseBoundary({ children }: { children: ReactNode }) {
   return <Suspense fallback={null}>{children}</Suspense>;
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
       { path: 'salidas/nueva', element: <OrderFormPage /> },
       // Volunteers
       { path: 'voluntarios', element: <VoluntariosListPage /> },
+      { path: 'comedor', element: <ComedorPersonasPage /> },
       // Warehouses
       {
         path: 'bodegas',

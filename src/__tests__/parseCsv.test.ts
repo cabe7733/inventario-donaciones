@@ -6,6 +6,7 @@ import {
   parseProductFile,
   isVolunteerHeaderRow,
   parseVolunteerFile,
+  parseComedorFile,
 } from '../lib/parseCsv';
 
 describe('splitCsvLine', () => {
@@ -192,5 +193,16 @@ describe('parseVolunteerFile', () => {
 
   it('returns empty array for empty input', () => {
     expect(parseVolunteerFile('')).toEqual([]);
+  });
+});
+
+describe('parseComedorFile', () => {
+  it('parses attendance rows with optional fields', () => {
+    const rows = parseComedorFile('nombre;apellido;celular;numero_documento;fecha\nJuan;Pérez;;;2026-09-02\n');
+    expect(rows).toEqual([expect.objectContaining({ nombre: 'Juan', apellido: 'Pérez', celular: null, numero_documento: null, fecha: '2026-09-02', lineNo: 2 })]);
+  });
+
+  it('parses rows without headers', () => {
+    expect(parseComedorFile('María;;;;2026-09-03')[0].nombre).toBe('María');
   });
 });

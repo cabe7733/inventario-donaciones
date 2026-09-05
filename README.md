@@ -49,6 +49,21 @@ npx supabase db push
 
 3. Copia `VITE_SUPABASE_URL` y la anon key a las variables de Vercel.
 
+### Comedor y certificados
+
+```bash
+npx supabase db push
+npx supabase secrets set RESEND_API_KEY=re_xxx
+npx supabase secrets set RESEND_FROM="Donario <onboarding@resend.dev>"
+npx supabase secrets set RESEND_DONATION_TEMPLATE_ID=223b057a-b539-49de-87aa-c1e3f5db0fe0
+npx supabase secrets set RESEND_DIRECTOR_NAME="Equipo de la fundación"
+npx supabase functions deploy send-donation-certificate
+```
+
+La plantilla `donation-certificate` ya está publicada en Resend. `docs/resend-donation-template.html` es la copia local editable basada en `public/plantilla`. Nunca pongas `RESEND_API_KEY` en variables `VITE_*` ni en el frontend.
+
+`onboarding@resend.dev` es un remitente sandbox: Resend solo permite entregas de prueba al correo de la cuenta de Resend. Para enviar a donantes reales se necesitará verificar un dominio propio en Resend; Vercel y Supabase no proporcionan un dominio remitente gratuito.
+
 ## Estructura
 
 ```

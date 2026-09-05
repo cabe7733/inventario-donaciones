@@ -150,3 +150,32 @@ export function parseVolunteerFile(text: string): ParsedVolunteerRow[] {
   }
   return rows;
 }
+
+export interface ParsedComedorRow {
+  raw: string[];
+  nombre: string;
+  apellido: string | null;
+  celular: string | null;
+  numero_documento: string | null;
+  fecha: string;
+  lineNo: number;
+}
+
+export function parseComedorFile(text: string): ParsedComedorRow[] {
+  const lines = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+  if (!lines.length) return [];
+  const sep = detectSeparator(lines);
+  const split = (line: string) => sep === '\t' ? line.split('\t').map((v) => v.trim()) : splitCsvLine(line);
+  const first = split(lines[0]).map((v) => v.toLowerCase());
+  const hasHeader = first.includes('nombre') || first.includes('name');
+  const headers = hasHeader ? first : [];
+  const get = (cells: string[], ...names: string[]) => {
+    const index = names.map((name) => headers.indexOf(name)).find((value) => value >= 0);
+    return index === undefined ? '' : cells[index] ?? '';
+  };
+  return lines.slice(hasHeader ? 1 : 0).map((line, index) => {
+    const cells = split(line);
+    const value = (...names: string[]) => hasHeader ? get(cells, ...names) : cells[names[0] === 'nombre' ? 0 : names[0] === 'apellido' ? 1 : names[0] === 'celular' ? 2 : names[0] === 'numero_documento' ? 3 : 4] ?? '';
+    return { raw: cells, nombre: value('nombre', 'name').trim(), apellido: value('apellido', 'last_name').trim() || null, celular: value('celular', 'telefono', 'teléfono', 'phone').trim() || null, numero_documento: value('numero_documento', 'documento', 'cedula', 'cédula', 'id_number').trim() || null, fecha: value('fecha', 'date').trim(), lineNo: index + (hasHeader ? 2 : 1) };
+  });
+}

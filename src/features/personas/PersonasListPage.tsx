@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Download } from '@phosphor-icons/react';
-import { fetchParties, type Party, type PartyKind } from '../../lib/donorOps';
+import { Plus, Download, EnvelopeSimple } from '@phosphor-icons/react';
+import { fetchParties, sendDonationCertificate, type Party, type PartyKind } from '../../lib/donorOps';
 import { exportToCsv } from '../../lib/exporters';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { PersonaFormModal } from './PersonaFormModal';
+import { useToast } from '../../components/ui/Toast';
 
 interface Props {
   kind: PartyKind;
@@ -16,6 +17,7 @@ interface Props {
 export function PersonasListPage({ kind }: Props) {
   const { role } = useAuth();
   const canEdit = role === 'super_admin' || role === 'admin';
+  const toast = useToast();
 
   const { data: parties = [], isLoading } = useQuery({
     queryKey: ['parties', kind],
@@ -24,6 +26,7 @@ export function PersonasListPage({ kind }: Props) {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Party | null>(null);
+  const [sendingId, setSendingId] = useState<string | null>(null);
 
   const label = kind === 'donor' ? 'Donantes' : 'Beneficiarios';
   const fileName = kind === 'donor' ? 'donantes' : 'beneficiarios';
@@ -53,6 +56,15 @@ export function PersonasListPage({ kind }: Props) {
       header: 'Tipo',
       render: (r) => <Badge variant={r.kind === 'entity' ? 'info' : 'default'}>{r.kind === 'entity' ? 'Entidad' : 'Persona'}</Badge>,
     },
+    ...(kind === 'donor' ? [{ key: 'certificate' as keyof Party, header: 'Certificado', render: (r: Party) => (
+      <Button variant="ghost" size="sm" disabled={!r.email || sendingId === r.id} onClick={(event) => {
+        event.stopPropagation();
+        setSendingId(r.id);
+        void sendDonationCertificate(r.id).then(() => toast.push({ message: 'Certificado enviado por correo', tone: 'success' })).catch((e) => toast.push({ message: e instanceof Error ? e.message : 'Error al enviar el certificado', tone: 'error' })).finally(() => setSendingId(null));
+      }} title={r.email ? 'Enviar certificado' : 'El donante no tiene email'}>
+        <EnvelopeSimple size={17} aria-hidden="true" /> {sendingId === r.id ? 'Enviando...' : 'Enviar'}
+      </Button>
+    ) }] : []),
   ];
 
   return (

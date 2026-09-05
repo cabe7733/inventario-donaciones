@@ -19,6 +19,12 @@
       "skillPath": "skills/react/SKILL.md",
       "computedHash": "7950a6403bae48f638036768fd5d4a4643aaaa3bde04e99d4d8f2d1f485ab63d"
     },
+    "resend": {
+      "source": "resend/resend-skills",
+      "sourceType": "github",
+      "skillPath": "skills/resend/SKILL.md",
+      "computedHash": "c30550862a44113da113443337fa5629e492ed5452e2d529db7b3d13b4b1b431"
+    },
     "stitch::react-components": {
       "source": "google-labs-code/stitch-skills",
       "sourceType": "github",

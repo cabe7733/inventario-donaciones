@@ -60,3 +60,11 @@ export async function updateParty(
 export async function deactivateParty(kind: PartyKind, id: string): Promise<void> {
   await updateParty(kind, id, { is_active: false });
 }
+
+export async function sendDonationCertificate(donorId: string): Promise<void> {
+  const { data, error } = await supabase.functions.invoke<{ sent: boolean; error?: string }>('send-donation-certificate', {
+    body: { donor_id: donorId },
+  });
+  if (error) throw error;
+  if (!data?.sent) throw new Error(data?.error ?? 'No se pudo enviar el certificado');
+}

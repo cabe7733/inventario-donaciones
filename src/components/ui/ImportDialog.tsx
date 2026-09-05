@@ -5,7 +5,7 @@ import { Button } from './Button';
 import { Modal } from './Modal';
 
 export interface ImportDialogConfig {
-  scope: 'products' | 'medications' | 'volunteers';
+  scope: 'products' | 'medications' | 'volunteers' | 'comedor';
   onImport: (rows: ParsedImportRow[]) => Promise<{ ok: number; [k: string]: unknown }>;
   templateFilename: string;
   templateContent: string;
@@ -33,6 +33,7 @@ const SCOPE_LABELS: Record<ImportDialogConfig['scope'], { title: string; item: s
   products: { title: 'productos', item: 'producto' },
   medications: { title: 'medicamentos', item: 'medicamento' },
   volunteers: { title: 'voluntarios', item: 'voluntario' },
+  comedor: { title: 'asistentes del comedor', item: 'asistente' },
 };
 
 export function ImportDialog({

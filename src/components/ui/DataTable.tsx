@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
-import { CaretUp, CaretDown, DotsThree } from '@phosphor-icons/react';
+import { isValidElement, useState, useMemo, useEffect, type ReactNode } from 'react';
+import { CaretLeft, CaretRight, CaretUp, CaretDown, DotsThree, MagnifyingGlass, X } from '@phosphor-icons/react';
 import { clsx } from 'clsx';
 import { Button } from './Button';
+import { normalize } from '../../lib/search';
 
 interface Column<T> {
   key: string;
@@ -10,6 +11,7 @@ interface Column<T> {
   render?: (row: T) => React.ReactNode;
   className?: string;
   align?: 'left' | 'center' | 'right';
+  filterable?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -43,10 +45,18 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-function getCellValue<T>(col: Column<T>, row: T): React.ReactNode {
+function getCellValue<T>(col: Column<T>, row: T): ReactNode {
   return col.render
     ? col.render(row)
     : String((row as Record<string, unknown>)[col.key] ?? '');
+}
+
+function getCellText(value: ReactNode): string {
+  if (value == null || typeof value === 'boolean') return '';
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint') return String(value);
+  if (Array.isArray(value)) return value.map(getCellText).join(' ');
+  if (isValidElement(value)) return getCellText(value.props.children);
+  return '';
 }
 
 export function DataTable<T extends { id?: string | number }>({
@@ -62,12 +72,29 @@ export function DataTable<T extends { id?: string | number }>({
   const [page, setPage] = useState(0);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [search, setSearch] = useState('');
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
+  const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<string | number | null>(null);
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
+  const filtered = useMemo(() => {
+    const normalizedSearch = normalize(search);
+    return data.filter((row) => {
+      const matchesSearch = !normalizedSearch || columns.some((col) =>
+        normalize(getCellText(getCellValue(col, row))).includes(normalizedSearch),
+      );
+      const matchesColumns = columns.every((col) => {
+        const value = normalize(columnFilters[col.key] ?? '');
+        return !value || normalize(getCellText(getCellValue(col, row))).includes(value);
+      });
+      return matchesSearch && matchesColumns;
+    });
+  }, [columnFilters, columns, data, search]);
+
   const sorted = useMemo(() => {
-    if (!sortKey) return data;
-    return [...data].sort((a, b) => {
+    if (!sortKey) return filtered;
+    return [...filtered].sort((a, b) => {
       const aVal = (a as Record<string, unknown>)[sortKey];
       const bVal = (b as Record<string, unknown>)[sortKey];
       if (aVal == null) return 1;
@@ -75,10 +102,10 @@ export function DataTable<T extends { id?: string | number }>({
       const cmp = String(aVal).localeCompare(String(bVal), 'es');
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [data, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir]);
 
-  const paged = sorted.slice(page * pageSize, (page + 1) * pageSize);
-  const totalPages = Math.ceil(data.length / pageSize);
+  const paged = sorted.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  const totalPages = Math.ceil(sorted.length / rowsPerPage);
 
   useEffect(() => {
     if (page >= totalPages) setPage(0);
@@ -111,6 +138,38 @@ export function DataTable<T extends { id?: string | number }>({
     );
   }
 
+  const hasFilters = Boolean(search || Object.values(columnFilters).some(Boolean));
+  const clearFilters = () => {
+    setSearch('');
+    setColumnFilters({});
+    setPage(0);
+  };
+
+  const renderControls = () => (
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-card p-3 sm:flex-row sm:items-center sm:justify-between">
+      <label className="relative min-w-0 flex-1">
+        <span className="sr-only">Buscar en la tabla</span>
+        <MagnifyingGlass size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" aria-hidden />
+        <input
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          placeholder="Buscar en todos los campos..."
+          className="h-10 w-full rounded-lg border border-border bg-surface px-9 text-body-sm text-fg placeholder:text-text-tertiary focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200"
+        />
+        {search && <button type="button" onClick={() => { setSearch(''); setPage(0); }} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-text-secondary hover:bg-neutral-100" aria-label="Limpiar búsqueda"><X size={16} /></button>}
+      </label>
+      <div className="flex items-center justify-between gap-2 sm:justify-end">
+        <label className="flex items-center gap-2 text-caption text-text-secondary">
+          <span>Registros:</span>
+          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }} className="h-9 rounded-lg border border-border bg-surface px-2 text-body-sm text-fg focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200" aria-label="Registros por página">
+            {[10, 20, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
+          </select>
+        </label>
+        {hasFilters && <button type="button" onClick={clearFilters} className="text-caption font-medium text-accent-700 hover:underline">Limpiar filtros</button>}
+      </div>
+    </div>
+  );
+
   const primaryCol = columns[0];
   const prioritySet = priorityColumns ? new Set(priorityColumns) : null;
   const visibleMobileCols = prioritySet
@@ -130,7 +189,7 @@ export function DataTable<T extends { id?: string | number }>({
     return (
       <div className="flex items-center justify-between gap-4 px-1 py-3">
         <span className="text-caption text-text-secondary">
-          {page * pageSize + 1}–{Math.min((page + 1) * pageSize, data.length)} de {data.length}
+          {sorted.length ? `${page * rowsPerPage + 1}–${Math.min((page + 1) * rowsPerPage, sorted.length)} de ${sorted.length}` : '0 registros'}
         </span>
         <div className="flex gap-2">
           <Button
@@ -141,7 +200,7 @@ export function DataTable<T extends { id?: string | number }>({
             aria-label="Página anterior"
             className="gap-1"
           >
-            <CaretUp size={14} />
+            <CaretLeft size={14} />
             Anterior
           </Button>
           <Button
@@ -153,7 +212,7 @@ export function DataTable<T extends { id?: string | number }>({
             className="gap-1"
           >
             Siguiente
-            <CaretDown size={14} />
+            <CaretRight size={14} />
           </Button>
         </div>
       </div>
@@ -163,6 +222,8 @@ export function DataTable<T extends { id?: string | number }>({
   if (!isDesktop) {
     return (
       <div className="flex flex-col gap-3">
+        {renderControls()}
+        {sorted.length === 0 ? <div className="rounded-xl border border-border bg-surface-card p-8 text-center"><p className="text-body text-text-secondary">No hay registros que coincidan con los filtros.</p></div> : null}
         <ul className="flex flex-col gap-2">
           {paged.map((row, i) => (
             <li
@@ -242,6 +303,8 @@ export function DataTable<T extends { id?: string | number }>({
 
   return (
     <div className="flex flex-col gap-2">
+        {renderControls()}
+        {sorted.length === 0 ? <div className="rounded-xl border border-border bg-surface-card p-8 text-center"><p className="text-body text-text-secondary">No hay registros que coincidan con los filtros.</p></div> : null}
       <div className="overflow-x-auto rounded-xl border border-border bg-surface-card">
         <table className="w-full text-left">
           <thead>
@@ -285,6 +348,14 @@ export function DataTable<T extends { id?: string | number }>({
                   Acciones
                 </th>
               )}
+            </tr>
+            <tr className="border-b border-border bg-surface-card">
+              {columns.map((col) => (
+                <th key={col.key} className={clsx('px-3 py-2', col.className)}>
+                  {col.filterable !== false && <input value={columnFilters[col.key] ?? ''} onChange={(e) => { setColumnFilters((current) => ({ ...current, [col.key]: e.target.value })); setPage(0); }} placeholder={`Filtrar ${col.header}`} aria-label={`Filtrar por ${col.header}`} className="h-8 w-full min-w-24 rounded-md border border-border bg-surface px-2 text-caption font-normal normal-case tracking-normal text-fg placeholder:text-text-tertiary focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200" />}
+                </th>
+              ))}
+              {actions && actions.length > 0 && <th />}
             </tr>
           </thead>
           <tbody>

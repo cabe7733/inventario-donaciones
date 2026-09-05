@@ -18,6 +18,9 @@ import {
   CaretRight,
   SignOut,
   Gear,
+  BowlFood,
+  List,
+  X,
 } from '@phosphor-icons/react';
 import type { IconProps } from '@phosphor-icons/react';
 import { useAuth } from '../auth/AuthProvider';
@@ -72,6 +75,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: '/donantes', icon: UserCircle, key: 'nav.donantes' },
       { to: '/beneficiarios', icon: UserCircle, key: 'nav.beneficiarios' },
       { to: '/voluntarios', icon: Users, key: 'nav.voluntarios' },
+      { to: '/comedor', icon: BowlFood, key: 'nav.comedor' },
     ],
   },
   {
@@ -97,6 +101,7 @@ export function AppShellDesktop() {
   const { t } = useTranslation();
   const { role, user, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const visibleGroups = NAV_GROUPS.map((group) => ({
     ...group,
@@ -116,7 +121,7 @@ export function AppShellDesktop() {
         <div className="flex h-16 items-center justify-between border-b border-border px-4">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <img src="/donario_logo.png" alt="Donario" className="h-8" />
+              <img src="/donario_logo.png" alt="Donario" className="h-10 w-10" />
               <span className="text-h3 font-semibold text-accent-600">Donario</span>
             </div>
           )}
@@ -204,7 +209,16 @@ export function AppShellDesktop() {
         {/* Mobile header */}
         <header className="flex h-14 items-center justify-between border-b border-border bg-surface-card px-4 lg:hidden">
           <div className="flex items-center gap-2">
-            <img src="/donario_logo.png" alt="Donario" className="h-7" />
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(true)}
+              className="mr-1 flex h-10 w-10 items-center justify-center rounded-lg text-text-secondary hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+              aria-label="Abrir menú de navegación"
+              aria-expanded={mobileMenuOpen}
+            >
+              <List size={24} />
+            </button>
+            <img src="/donario_logo.png" alt="Donario" className="h-9 w-9" />
             <span className="text-h3 font-semibold text-accent-600">Donario</span>
           </div>
           <button
@@ -216,6 +230,46 @@ export function AppShellDesktop() {
             <SignOut size={20} />
           </button>
         </header>
+
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+            <button type="button" className="absolute inset-0 bg-slate-950/30" onClick={() => setMobileMenuOpen(false)} aria-label="Cerrar menú" />
+            <aside className="relative flex h-full w-[min(88vw,320px)] flex-col bg-surface-card shadow-elev-4 animate-slide-in-right">
+              <div className="flex h-16 items-center justify-between border-b border-border px-4">
+                <div className="flex items-center gap-2">
+                  <img src="/donario_logo.png" alt="Donario" className="h-10 w-10" />
+                  <span className="text-h3 font-semibold text-accent-600">Donario</span>
+                </div>
+                <button type="button" onClick={() => setMobileMenuOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-lg text-text-secondary hover:bg-neutral-100" aria-label="Cerrar menú">
+                  <X size={22} />
+                </button>
+              </div>
+              <nav className="flex-1 overflow-y-auto py-4" aria-label="Todas las funcionalidades">
+                {visibleGroups.map((group) => (
+                  <div key={group.title} className="mb-4">
+                    <p className="mb-1 px-4 text-xs font-semibold uppercase tracking-wider text-text-tertiary">{t(`nav.group.${group.title}`)}</p>
+                    <ul className="space-y-0.5 px-2">
+                      {group.items.map(({ to, icon: Icon, key, end }) => (
+                        <li key={to}>
+                          <NavLink to={to} end={end} onClick={() => setMobileMenuOpen(false)} className={({ isActive }) => `flex items-center gap-3 rounded-lg px-3 py-3 text-body transition-colors ${isActive ? 'bg-accent-50 font-semibold text-accent-700' : 'text-text-secondary hover:bg-neutral-100 hover:text-fg'}`}>
+                            <Icon size={21} aria-hidden />
+                            <span>{t(key)}</span>
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </nav>
+              <div className="border-t border-border p-3">
+                <button type="button" onClick={signOut} className="flex w-full items-center gap-2 rounded-lg px-3 py-3 text-body-sm text-text-secondary hover:bg-neutral-100 hover:text-fg">
+                  <SignOut size={18} aria-hidden />
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
+            </aside>
+          </div>
+        )}
 
         <main className="flex-1 overflow-y-auto pb-[var(--header-height)] lg:pb-0">
           <Suspense fallback={null}>
