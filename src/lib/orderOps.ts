@@ -23,6 +23,7 @@ export interface Order {
   recipient_entity_name: string | null;
   recipient_entity_rfc: string | null;
   recipient_type: string | null;
+  inventory_authorizer_id: string | null;
   created_by: string;
   order_date: string;
   notes: string;
@@ -145,6 +146,30 @@ export async function createOrder(input: CreateOrderInput): Promise<string> {
 
   if (error) throw error;
   return data;
+}
+
+export async function createInventoryExit(input: Omit<CreateOrderInput, 'order_type'> & { inventory_authorizer_id: string }): Promise<string> {
+  const { data, error } = await supabase.rpc('create_order_with_authorizer', {
+    p_warehouse_id: input.warehouse_id,
+    p_items: input.items,
+    p_recipient_id: input.recipient_id ?? null,
+    p_inventory_authorizer_id: input.inventory_authorizer_id,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function updateInventoryExitAuthorizer(orderId: string, authorizerId: string | null): Promise<void> {
+  const { error: orderError } = await supabase
+    .from('orders')
+    .update({ inventory_authorizer_id: authorizerId })
+    .eq('id', orderId);
+  if (orderError) throw orderError;
+  const { error: movementError } = await supabase
+    .from('movements')
+    .update({ authorized_inventory_by: authorizerId })
+    .eq('order_id', orderId);
+  if (movementError) throw movementError;
 }
 
 // ponytail: replace_order/delete_order son super_admin-only (la RLS y la RPC

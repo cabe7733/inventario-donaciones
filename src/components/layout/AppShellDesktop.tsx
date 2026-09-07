@@ -5,6 +5,7 @@ import {
   House,
   Package,
   Pill,
+  ClipboardText,
   Cube,
   ArrowsLeftRight,
   ArrowDownRight,
@@ -26,6 +27,7 @@ import type { IconProps } from '@phosphor-icons/react';
 import { useAuth } from '../auth/AuthProvider';
 import type { UserRole } from '../auth/AuthProvider';
 import { BottomNav } from './BottomNav';
+import { ContextHelp } from './ContextHelp';
 
 interface NavItem {
   to: string;
@@ -52,6 +54,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/productos', icon: Package, key: 'nav.productos' },
       { to: '/medicamentos', icon: Pill, key: 'nav.medicamentos' },
+      { to: '/formulas', icon: ClipboardText, key: 'nav.formulas' },
       { to: '/kits', icon: Cube, key: 'nav.kits' },
     ],
   },
@@ -125,6 +128,7 @@ export function AppShellDesktop() {
               <span className="text-h3 font-semibold text-accent-600">Donario</span>
             </div>
           )}
+          <ContextHelp />
           <button
             type="button"
             onClick={() => setCollapsed(!collapsed)}
@@ -218,6 +222,7 @@ export function AppShellDesktop() {
             >
               <List size={24} />
             </button>
+            <ContextHelp />
             <img src="/donario_logo.png" alt="Donario" className="h-9 w-9" />
             <span className="text-h3 font-semibold text-accent-600">Donario</span>
           </div>

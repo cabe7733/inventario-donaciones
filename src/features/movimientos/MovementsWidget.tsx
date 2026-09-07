@@ -5,10 +5,12 @@ import { fetchMovements, fetchProducts, fetchMedications, fetchKits, type Moveme
 import { formatNumber, formatTime } from '../../lib/format';
 import { SkeletonCard } from '../../components/ui/Skeleton';
 import { clsx } from 'clsx';
+import { fetchMedicalSupplies } from '../../lib/medicalSupplyOps';
 
 const ICON: Record<ItemType, typeof Package> = {
   product: Package,
   medication: Pill,
+  medical_supply: Package,
   kit: Cube,
 };
 
@@ -32,17 +34,19 @@ export function MovementsWidget() {
 
   useEffect(() => {
     void (async () => {
-      const [movs, prods, meds, kits] = await Promise.all([
+      const [movs, prods, meds, kits, supplies] = await Promise.all([
         fetchMovements({ limit: 8 }),
         fetchProducts(),
         fetchMedications(),
         fetchKits(),
+        fetchMedicalSupplies(),
       ]);
       setRecent(movs);
       const m = new Map<string, string>();
       for (const p of prods) m.set(p.id, p.name);
       for (const x of meds) m.set(x.id, x.name);
       for (const x of kits) m.set(x.id, x.name);
+      for (const x of supplies) m.set(x.id, x.name);
       setNames(m);
       setLoading(false);
     })();
@@ -110,7 +114,7 @@ export function MovementsWidget() {
                     {names.get(m.item_id) ?? '—'}
                   </p>
                   <p className="text-caption text-text-tertiary">
-                    {m.item_type === 'product' ? 'Producto' : m.item_type === 'medication' ? 'Medicamento' : 'Kit'}
+                     {m.item_type === 'product' ? 'Producto' : m.item_type === 'medication' ? 'Medicamento' : m.item_type === 'medical_supply' ? 'Insumo médico' : 'Kit'}
                   </p>
                 </div>
 

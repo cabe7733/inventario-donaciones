@@ -1,0 +1,3 @@
+ALTER TABLE comedor_people
+  ADD COLUMN IF NOT EXISTS fecha_nacimiento DATE,
+  ADD COLUMN IF NOT EXISTS sexo TEXT;

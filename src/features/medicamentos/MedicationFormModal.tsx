@@ -1,10 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { newId } from '../../lib/ids';
-import { addCategory, addUnit } from '../../lib/catalog';
-import { createMedication, updateMedication, type Category, type Medication, type Unit } from '../../lib/db';
+import { createMedication, updateMedication, type Medication } from '../../lib/db';
 import { useAuth } from '../../components/auth/AuthProvider';
-import { AutocompleteOrCreate, type AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
@@ -14,58 +12,46 @@ interface Props {
   open: boolean;
   onClose: () => void;
   medication: Medication | null;
-  categories: Category[];
-  units: Unit[];
 }
 
 interface Errors {
   name?: string;
-  unit?: string;
+  activeIngredient?: string;
+  pharmaceuticalForm?: string;
+  content?: string;
+  manufacturer?: string;
 }
 
-export function MedicationFormModal({ open, onClose, medication, categories, units }: Props) {
+export function MedicationFormModal({ open, onClose, medication }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const { centerId } = useAuth();
 
   const [name, setName] = useState('');
-  const [presentacion, setPresentacion] = useState('');
-  const [categoriaId, setCategoriaId] = useState<string | null>(null);
-  const [unitId, setUnitId] = useState<string | null>(null);
+  const [activeIngredient, setActiveIngredient] = useState('');
+  const [pharmaceuticalForm, setPharmaceuticalForm] = useState('');
+  const [content, setContent] = useState('');
+  const [manufacturer, setManufacturer] = useState('');
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setName(medication?.name ?? '');
-    setPresentacion(medication?.presentacion ?? '');
-    setCategoriaId(medication?.categoria_id ?? null);
-    setUnitId(medication?.unit_id ?? null);
+    setActiveIngredient(medication?.active_ingredient ?? '');
+    setPharmaceuticalForm(medication?.pharmaceutical_form ?? medication?.presentacion ?? '');
+    setContent(medication?.content ?? '');
+    setManufacturer(medication?.manufacturer ?? '');
     setErrors({});
   }, [open, medication]);
-
-  const categoryItems = useMemo<AocItem[]>(
-    () => categories.map((c) => ({ id: c.id, label: c.name })),
-    [categories],
-  );
-  const unitItems = useMemo<AocItem[]>(
-    () => units.map((u) => ({ id: u.id, label: u.name, sublabel: u.abbreviation })),
-    [units],
-  );
-
-  const createCategory = async (label: string) => {
-    if (!centerId) throw new Error('No hay centro activo');
-    return addCategory(label, 'medication', 'pills', categories.length, 'primary-600', centerId);
-  };
-  const createUnit = async (label: string) => {
-    if (!centerId) throw new Error('No hay centro activo');
-    return addUnit(label, 'medication', undefined, centerId);
-  };
 
   const save = async () => {
     const next: Errors = {};
     if (!name.trim()) next.name = t('common.required');
-    if (!unitId) next.unit = t('common.required');
+    if (!activeIngredient.trim()) next.activeIngredient = t('common.required');
+    if (!pharmaceuticalForm.trim()) next.pharmaceuticalForm = t('common.required');
+    if (!content.trim()) next.content = t('common.required');
+    if (!manufacturer.trim()) next.manufacturer = t('common.required');
     if (Object.keys(next).length) { setErrors(next); return; }
     if (!centerId) {
       toast.push({ message: 'No hay centro activo', tone: 'error' });
@@ -73,7 +59,17 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
     }
     setSaving(true);
     try {
-      const data = { name: name.trim(), presentacion: presentacion.trim(), categoria_id: categoriaId, unit_id: unitId! };
+      const data = {
+        name: name.trim(),
+        presentacion: pharmaceuticalForm.trim(),
+        active_ingredient: activeIngredient.trim(),
+        excipients: '',
+        pharmaceutical_form: pharmaceuticalForm.trim(),
+        content: content.trim(),
+        manufacturer: manufacturer.trim(),
+        categoria_id: null,
+        unit_id: null,
+      };
       if (medication) {
         await updateMedication(medication.id, { ...data });
         toast.push({ message: t('medicamentos.saved'), tone: 'success' });
@@ -95,14 +91,13 @@ export function MedicationFormModal({ open, onClose, medication, categories, uni
   return (
     <Modal open={open} onClose={onClose} title={medication ? t('medicamentos.form.editTitle') : t('medicamentos.form.title')}>
       <div className="flex flex-col gap-4">
-        <Field id="md-name" label={t('medicamentos.form.name')} required error={errors.name}>
-          <input id="md-name" className={inputWithError(errors.name)} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('medicamentos.form.name.placeholder')} autoFocus />
+        <Field id="md-name" label="Nombre del medicamento" hint="Incluye la marca comercial o principio activo, la dosis y la forma farmacéutica." required error={errors.name}>
+          <input id="md-name" className={inputWithError(errors.name)} value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Amoxicilina 500 mg comprimido" autoFocus />
         </Field>
-        <Field id="md-pres" label={t('medicamentos.form.presentacion')} hint={t('medicamentos.form.presentacion.hint')}>
-          <input id="md-pres" className="h-11 w-full rounded-lg border border-border bg-card px-3 text-body text-fg placeholder:text-muted" value={presentacion} onChange={(e) => setPresentacion(e.target.value)} placeholder={t('medicamentos.form.presentacion.placeholder')} />
-        </Field>
-        <AutocompleteOrCreate id="md-cat" label={t('medicamentos.form.categoria')} value={categoriaId} onChange={setCategoriaId} items={categoryItems} onCreate={createCategory} />
-        <AutocompleteOrCreate id="md-unit" label={t('medicamentos.form.unit')} required value={unitId} onChange={setUnitId} items={unitItems} onCreate={createUnit} error={errors.unit} />
+        <Field id="md-active" label="Principio activo" hint="Cantidad exacta de la sustancia activa y lista de excipientes." required error={errors.activeIngredient}><textarea id="md-active" className={inputWithError(errors.activeIngredient)} value={activeIngredient} onChange={(e) => setActiveIngredient(e.target.value)} placeholder="Ej. Amoxicilina 500 mg. Excipientes: ..." /></Field>
+        <Field id="md-form" label="Forma farmacéutica" hint="Comprimidos, jarabe, gotas o solución inyectable." required error={errors.pharmaceuticalForm}><input id="md-form" className={inputWithError(errors.pharmaceuticalForm)} value={pharmaceuticalForm} onChange={(e) => setPharmaceuticalForm(e.target.value)} placeholder="Ej. Comprimido" /></Field>
+        <Field id="md-content" label="Contenido" hint="Cantidad de unidades o volumen total." required error={errors.content}><input id="md-content" className={inputWithError(errors.content)} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Ej. 20 comprimidos o 100 ml" /></Field>
+        <Field id="md-manufacturer" label="Laboratorio fabricante" required error={errors.manufacturer}><input id="md-manufacturer" className={inputWithError(errors.manufacturer)} value={manufacturer} onChange={(e) => setManufacturer(e.target.value)} /></Field>
         <div className="mt-2 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={() => void save()} disabled={saving}>{t('common.save')}</Button>

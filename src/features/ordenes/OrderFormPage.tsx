@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash } from '@phosphor-icons/react';
 import { fetchProducts } from '../../lib/db';
-import { createOrder, replaceOrder, fetchOrderWithItems } from '../../lib/orderOps';
+import { createInventoryExit, createOrder, replaceOrder, fetchOrderWithItems, updateInventoryExitAuthorizer } from '../../lib/orderOps';
+import { fetchInventoryAuthorizers, type ExitAuthorizer } from '../../lib/medicalPrescriptionOps';
 import { warehouseStocksBulk } from '../../lib/warehouseOps';
 import { formatNumber } from '../../lib/format';
 import type { PartyKind } from '../../lib/donorOps';
@@ -49,6 +50,7 @@ export function OrderFormPage() {
   const [orderType, setOrderType] = useState<'entrada' | 'salida'>(initialType);
   const [warehouseId, setWarehouseId] = useState('');
   const [partyId, setPartyId] = useState<string | null>(null);
+  const [inventoryAuthorizerId, setInventoryAuthorizerId] = useState('');
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [vehicleType, setVehicleType] = useState('');
   const [vehicleColor, setVehicleColor] = useState('');
@@ -56,12 +58,19 @@ export function OrderFormPage() {
     { item_type: 'product', item_id: '', qty: '' },
   ]);
 
+  const { data: inventoryAuthorizers = [] } = useQuery<ExitAuthorizer[]>({
+    queryKey: ['inventory-exit-authorizers'],
+    queryFn: fetchInventoryAuthorizers,
+    enabled: orderType === 'salida',
+  });
+
   // Cargar datos al editar.
   useEffect(() => {
     if (!existingOrder) return;
     setOrderType(existingOrder.order_type);
     setWarehouseId(existingOrder.warehouse_id);
     setPartyId(existingOrder.donor_id ?? existingOrder.recipient_id ?? null);
+    setInventoryAuthorizerId(existingOrder.inventory_authorizer_id ?? '');
     setVehiclePlate(existingOrder.vehicle_plate ?? '');
     setVehicleType(existingOrder.vehicle_type ?? '');
     setVehicleColor(existingOrder.vehicle_color ?? '');
@@ -142,6 +151,7 @@ export function OrderFormPage() {
       }
       if (parsed.length === 0) throw new Error('Debe agregar al menos un item');
       if (!warehouseId) throw new Error('Selecciona una bodega');
+      if (orderType === 'salida' && !inventoryAuthorizerId) throw new Error('Selecciona quién autoriza la salida');
 
       const baseInput = {
         warehouse_id: warehouseId,
@@ -155,9 +165,14 @@ export function OrderFormPage() {
 
       if (isEditing) {
         await replaceOrder(editingId!, baseInput);
+        if (orderType === 'salida') await updateInventoryExitAuthorizer(editingId!, inventoryAuthorizerId);
         return 'updated' as const;
       }
-      await createOrder({ order_type: orderType, ...baseInput });
+      if (orderType === 'salida') {
+        await createInventoryExit({ ...baseInput, inventory_authorizer_id: inventoryAuthorizerId });
+      } else {
+        await createOrder({ order_type: orderType, ...baseInput });
+      }
       return 'created' as const;
     },
     onSuccess: (result) => {
@@ -221,6 +236,22 @@ export function OrderFormPage() {
             { value: 'salida', label: 'Salida' },
           ]}
         />
+
+        {orderType === 'salida' && (
+          <Field id="inventory-authorizer" label="Autoriza la salida" required>
+            <select
+              id="inventory-authorizer"
+              value={inventoryAuthorizerId}
+              onChange={(e) => setInventoryAuthorizerId(e.target.value)}
+              className={inputWithError(undefined)}
+            >
+              <option value="">Seleccionar...</option>
+              {inventoryAuthorizers.map((authorizer) => (
+                <option key={authorizer.id} value={authorizer.id}>{authorizer.name}</option>
+              ))}
+            </select>
+          </Field>
+        )}
 
         {/* Warehouse */}
         <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />

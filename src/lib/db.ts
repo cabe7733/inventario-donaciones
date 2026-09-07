@@ -4,7 +4,7 @@ import { newId, nowISO } from './ids';
 // ---------- Types ----------
 
 export type Scope = 'product' | 'medication';
-export type ItemType = 'product' | 'medication' | 'kit';
+export type ItemType = 'product' | 'medication' | 'medical_supply' | 'kit';
 export type MovementKind = 'entrada' | 'salida';
 
 export interface Category {
@@ -52,8 +52,15 @@ export interface Medication {
   id: string;
   name: string;
   presentacion: string;
+  commercial_name?: string;
+  active_ingredient: string;
+  dosage?: string;
+  excipients: string;
+  pharmaceutical_form: string;
+  content: string;
+  manufacturer: string;
   categoria_id: string | null;
-  unit_id: string;
+  unit_id: string | null;
   is_active: boolean;
   deleted: boolean;
   center_id?: string | null;
@@ -79,16 +86,21 @@ export interface Movement {
   item_type: ItemType;
   item_id: string;
   qty: number;
-  unit_id: string;
+  unit_id: string | null;
   lote_id: string | null;
+  medical_supply_lot_id?: string | null;
   fecha: string;
   operador_id: string | null;
   nota: string;
   deleted: boolean;
   center_id?: string | null;
-  warehouse_id: string;
+  warehouse_id: string | null;
   created_at: string;
   updated_at: string;
+  prescription_id?: string | null;
+  authorized_by?: string | null;
+  authorized_inventory_by?: string | null;
+  dispensed_by?: string | null;
 }
 
 export interface Kit {
@@ -439,12 +451,12 @@ export async function createMovement(row: {
   item_type: ItemType;
   item_id: string;
   qty: number;
-  unit_id: string;
+  unit_id: string | null;
   lote_id: string | null;
   fecha: string;
   nota: string;
   center_id: string;
-  warehouse_id: string;
+  warehouse_id: string | null;
   donor_id?: string | null;
   recipient_id?: string | null;
 }): Promise<string> {
@@ -655,7 +667,7 @@ export async function fetchOperadores(): Promise<Operador[]> {
 export async function importProductsFromRows(
   rows: Array<{
     product: string;
-    category: string;
+    category?: string;
     qty: number;
     unit?: string;
     warehouse?: string;
@@ -676,12 +688,19 @@ export async function importProductsFromRows(
 export async function importMedicationsFromRows(
   rows: Array<{
     medication: string;
-    category: string;
+    category?: string;
     qty: number;
     unit?: string;
     presentation?: string;
     lot?: string;
     expiry?: string;
+    commercial_name?: string;
+    active_ingredient?: string;
+    dosage?: string;
+    excipients?: string;
+    pharmaceutical_form?: string;
+    content?: string;
+    manufacturer?: string;
   }>,
   userId?: string,
   centerId?: string,

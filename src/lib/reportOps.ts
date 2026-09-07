@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
 export type ItemKind = 'entrada' | 'salida';
-export type ItemType = 'product' | 'medication' | 'kit';
+export type ItemType = 'product' | 'medication' | 'medical_supply' | 'kit';
 
 // ================= DONACIONES POR BODEGA =================
 

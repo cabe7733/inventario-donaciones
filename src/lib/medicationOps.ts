@@ -31,7 +31,7 @@ export async function addLot(args: {
   stockIn: number;
   fecha: string;
   centerId: string;
-  warehouseId: string;
+  warehouseId?: string | null;
   nota?: string;
 }): Promise<string> {
   const med = await fetchMedication(args.medicationId);
@@ -57,7 +57,7 @@ export async function addLot(args: {
     fecha: args.fecha,
     nota: args.nota ?? `Lote ${args.lote}`,
     center_id: args.centerId,
-    warehouse_id: args.warehouseId,
+    warehouse_id: args.warehouseId ?? null,
   });
 
   return id;
@@ -70,7 +70,7 @@ export async function registerMedicationEntrada(args: {
   qty: number;
   fecha: string;
   centerId: string;
-  warehouseId: string;
+  warehouseId?: string | null;
   nota?: string;
   donorId?: string | null;
   donorName?: string | null;
@@ -100,7 +100,7 @@ export async function registerMedicationEntrada(args: {
     fecha: args.fecha,
     nota,
     center_id: args.centerId,
-    warehouse_id: args.warehouseId,
+    warehouse_id: args.warehouseId ?? null,
     donor_id: args.donorId ?? null,
   });
 }
@@ -111,7 +111,7 @@ export async function salidaFefo(args: {
   qty: number;
   fecha: string;
   centerId: string;
-  warehouseId: string;
+  warehouseId?: string | null;
   nota?: string;
   recipientId?: string | null;
   recipientName?: string | null;
@@ -155,7 +155,7 @@ export async function salidaFefo(args: {
       fecha: args.fecha,
       nota: baseNota || `Lote ${p.lote}`,
       center_id: args.centerId,
-      warehouse_id: args.warehouseId,
+      warehouse_id: args.warehouseId ?? null,
       recipient_id: args.recipientId ?? null,
     });
   }

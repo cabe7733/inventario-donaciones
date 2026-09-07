@@ -10,11 +10,13 @@ import { Segmented } from '../../components/ui/Segmented';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageContainer } from '../../components/layout/PageContainer';
+import { fetchMedicalSupplies } from '../../lib/medicalSupplyOps';
 
 const ITEM_NAV_KEY: Record<ItemType, string> = {
   product: 'nav.productos',
   medication: 'nav.medicamentos',
   kit: 'nav.kits',
+  medical_supply: 'nav.medicamentos',
 };
 
 function itemName(kind: ItemType, id: string, maps: { [k in ItemType]: Map<string, string> }): string {
@@ -27,7 +29,7 @@ export function MovimientosPage() {
   const scope = params.get('scope') ?? 'all';
 
   const [movements, setMovements] = useState<Movement[]>([]);
-  const [maps, setMaps] = useState<{ product: Map<string, string>; medication: Map<string, string>; kit: Map<string, string> }>({ product: new Map(), medication: new Map(), kit: new Map() });
+  const [maps, setMaps] = useState<{ product: Map<string, string>; medication: Map<string, string>; medical_supply: Map<string, string>; kit: Map<string, string> }>({ product: new Map(), medication: new Map(), medical_supply: new Map(), kit: new Map() });
   const [unitBy, setUnitBy] = useState<Map<string, string>>(new Map());
   const [warehouseMap, setWarehouseMap] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -35,11 +37,12 @@ export function MovimientosPage() {
 
   useEffect(() => {
     void (async () => {
-      const [movs, prods, meds, kits, units, warehouses] = await Promise.all([
+      const [movs, prods, meds, kits, supplies, units, warehouses] = await Promise.all([
         fetchMovements({ limit: 200, warehouseId: warehouseId || undefined }),
         fetchProducts(),
         fetchMedications(),
         fetchKits(),
+        fetchMedicalSupplies(),
         fetchUnits(),
         fetchWarehouses(),
       ]);
@@ -47,6 +50,7 @@ export function MovimientosPage() {
       setMaps({
         product: new Map(prods.map((p) => [p.id, p.name])),
         medication: new Map(meds.map((m) => [m.id, m.name])),
+        medical_supply: new Map(supplies.map((s) => [s.id, s.name])),
         kit: new Map(kits.map((k) => [k.id, k.name])),
       });
       setUnitBy(new Map(units.map((u) => [u.id, u.abbreviation])));
@@ -56,7 +60,7 @@ export function MovimientosPage() {
   }, [warehouseId]);
 
   const scoped = useMemo(() => {
-    if (scope === 'product') return movements.filter((m) => m.item_type !== 'medication');
+    if (scope === 'product') return movements.filter((m) => m.item_type === 'product' || m.item_type === 'medical_supply');
     if (scope === 'medication') return movements.filter((m) => m.item_type === 'medication');
     return movements;
   }, [movements, scope]);
@@ -88,7 +92,7 @@ export function MovimientosPage() {
       <h1 className="text-h2">{t('movimientos.historial')}</h1>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <WarehouseSelect value={warehouseId} onChange={setWarehouseId} />
-        <Segmented value={scope} onChange={setScope} ariaLabel={t('movimientos.scope')} options={[{ value: 'all', label: t('movimientos.scope.all') }, { value: 'product', label: t('movimientos.scope.products') }, { value: 'medication', label: t('movimientos.scope.medications') }]} />
+         <Segmented value={scope} onChange={setScope} ariaLabel={t('movimientos.scope')} options={[{ value: 'all', label: t('movimientos.scope.all') }, { value: 'product', label: 'Inventario e insumos' }, { value: 'medication', label: t('movimientos.scope.medications') }]} />
       </div>
       {loading ? (
         <SkeletonList />
@@ -117,7 +121,7 @@ export function MovimientosPage() {
                     </div>
                     <div className="text-right">
                       <p className={`text-numeric font-semibold ${m.kind === 'entrada' ? 'text-success-700' : 'text-secondary-700'}`}>
-                        {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}<span className="ml-1 text-caption text-muted">{unitBy.get(m.unit_id) ?? ''}</span>
+                        {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}<span className="ml-1 text-caption text-muted">{m.unit_id ? unitBy.get(m.unit_id) ?? '' : ''}</span>
                       </p>
                       <p className="text-caption text-muted">{formatTime(m.fecha)}</p>
                     </div>

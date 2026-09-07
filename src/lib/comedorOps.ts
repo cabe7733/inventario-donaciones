@@ -7,6 +7,8 @@ export interface ComedorPerson {
   apellido: string | null;
   celular: string | null;
   numero_documento: string | null;
+  fecha_nacimiento: string | null;
+  sexo: string | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -30,13 +32,13 @@ export async function fetchVisits(personId: string): Promise<ComedorVisit[]> {
   return data ?? [];
 }
 
-export async function createComedorPerson(row: Pick<ComedorPerson, 'center_id' | 'nombre'> & Partial<Pick<ComedorPerson, 'apellido' | 'celular' | 'numero_documento'>>): Promise<string> {
+export async function createComedorPerson(row: Pick<ComedorPerson, 'center_id' | 'nombre'> & Partial<Pick<ComedorPerson, 'apellido' | 'celular' | 'numero_documento' | 'fecha_nacimiento' | 'sexo'>>): Promise<string> {
   const { data, error } = await supabase.from('comedor_people').insert(row).select('id').single();
   if (error) throw error;
   return data.id;
 }
 
-export async function updateComedorPerson(id: string, updates: Partial<Pick<ComedorPerson, 'nombre' | 'apellido' | 'celular' | 'numero_documento'>>): Promise<void> {
+export async function updateComedorPerson(id: string, updates: Partial<Pick<ComedorPerson, 'nombre' | 'apellido' | 'celular' | 'numero_documento' | 'fecha_nacimiento' | 'sexo'>>): Promise<void> {
   const { error } = await supabase.from('comedor_people').update(updates).eq('id', id);
   if (error) throw error;
 }

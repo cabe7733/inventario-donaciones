@@ -83,7 +83,7 @@ export function MedMovementsList({ kind }: { kind?: 'entrada' | 'salida' }) {
                   <div className="text-right">
                     <p className={`text-numeric font-semibold ${m.kind === 'entrada' ? 'text-success-700' : 'text-secondary-700'}`}>
                       {m.kind === 'entrada' ? '+' : '−'}{formatNumber(m.qty)}
-                      <span className="ml-1 text-caption text-muted">{unitBy.get(m.unit_id) ?? ''}</span>
+                      <span className="ml-1 text-caption text-muted">{m.unit_id ? unitBy.get(m.unit_id) ?? '' : ''}</span>
                     </p>
                     <p className="text-caption text-muted">{formatTime(m.fecha)}</p>
                   </div>

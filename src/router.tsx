@@ -14,6 +14,7 @@ import { EditCenterPage } from './features/centro/EditCenterPage';
 import { MembersPage } from './features/centro/MembersPage';
 import { CategoriasPage } from './features/configuracion/CategoriasPage';
 import { UnidadesPage } from './features/configuracion/UnidadesPage';
+import { AutorizadoresPage } from './features/configuracion/AutorizadoresPage';
 import { KitsListPage } from './features/kits/KitsListPage';
 import { KitDetailPage } from './features/kits/KitDetailPage';
 import { MovimientosPage } from './features/movimientos/MovimientosPage';
@@ -30,6 +31,7 @@ import { InformeGeneralPage } from './features/informes/InformeGeneralPage';
 import { InformeKitsPorBodegaPage } from './features/informes/InformeKitsPorBodegaPage';
 import { InformeProductosPorBodegaPage } from './features/informes/InformeProductosPorBodegaPage';
 import { ComedorPersonasPage } from './features/comedor/ComedorPersonasPage';
+import { FormulasMedicasPage } from './features/formulas/FormulasMedicasPage';
 
 function SuspenseBoundary({ children }: { children: ReactNode }) {
   return <Suspense fallback={null}>{children}</Suspense>;
@@ -94,6 +96,7 @@ export const router = createBrowserRouter([
           </SuspenseBoundary>
         ),
       },
+      { path: 'formulas', element: <FormulasMedicasPage /> },
       { path: 'kits', element: <KitsListPage /> },
       { path: 'kits/:id', element: <KitDetailPage /> },
       { path: 'mas/movimientos', element: <MovimientosPage /> },
@@ -185,6 +188,7 @@ export const router = createBrowserRouter([
                   {[
                     { to: '/config/categorias', label: 'Categorías' },
                     { to: '/config/unidades', label: 'Unidades' },
+                    { to: '/config/autorizadores', label: 'Autorizadores de salida' },
                   ].map(({ to, label }) => (
                     <NavLink
                       key={to}
@@ -200,6 +204,7 @@ export const router = createBrowserRouter([
           },
           { path: 'categorias', element: <CategoriasPage /> },
           { path: 'unidades', element: <UnidadesPage /> },
+          { path: 'autorizadores', element: <AutorizadoresPage /> },
         ],
       },
     ],

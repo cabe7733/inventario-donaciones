@@ -30,6 +30,7 @@
     "inicio": "Inicio",
     "productos": "Productos",
     "medicamentos": "Medicamentos",
+    "formulas": "Fórmulas médicas",
     "kits": "Kits",
     "entradas": "Entradas",
     "salidas": "Salidas",
@@ -310,7 +311,7 @@
   "importMed": {
     "title": "Importar medicamentos",
     "subtitle": "Carga masiva de medicamentos desde un archivo plano (CSV o TXT)",
-    "help": "Columnas: medicamento, categoria, cantidad, unidad, presentacion, lote, vencimiento. Separador ; o ,. La primera fila puede tener encabezados. Si la categoría o el medicamento no existen, se crean automáticamente. Si se provee lote, se crea o actualiza el stock del lote."
+    "help": "Columnas del catálogo: medicamento, marca_comercial, principio_activo, dosis, excipientes, forma_farmaceutica, contenido, laboratorio_fabricante, categoria y unidad. Las entradas se registran después desde el inventario del medicamento con lote, vencimiento, cantidad y bodega. Separador ; o ,."
   },
   "importVol": {
     "title": "Importar voluntarios",

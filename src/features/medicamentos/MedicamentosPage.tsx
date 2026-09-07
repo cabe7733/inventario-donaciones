@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowDown, ArrowUp, DotsThree, FileArrowDown, PencilSimple, Pill, Plus, Trash, UploadSimple, WarningCircle, Clock } from '@phosphor-icons/react';
-import { fetchMedications, fetchCategories, fetchUnits, fetchLots, deleteMedication, importMedicationsFromRows, type Medication, type Category, type Unit } from '../../lib/db';
+import { ArrowDown, DotsThree, FileArrowDown, PencilSimple, Pill, Plus, Trash, UploadSimple, WarningCircle, Clock } from '@phosphor-icons/react';
+import { fetchMedications, fetchLots, deleteMedication, importMedicationsFromRows, type Medication } from '../../lib/db';
 import { stockFor, lotExpired, lotExpiresSoon } from '../../lib/medicationOps';
 import { formatNumber } from '../../lib/format';
-import { categoriasFor, unitsFor } from '../../lib/catalog';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
 import { Dropdown } from '../../components/ui/Dropdown';
@@ -16,24 +15,29 @@ import { useToast } from '../../components/ui/Toast';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { Segmented } from '../../components/ui/Segmented';
 import { PageContainer } from '../../components/layout/PageContainer';
+import { SearchInput } from '../../components/ui/SearchInput';
 import { MedicationFormModal } from './MedicationFormModal';
-import { LotesModal } from './LotesModal';
 import { EntradaModal } from './EntradaModal';
-import { SalidaModal } from './SalidaModal';
 import { MedMovementsList } from './MedMovementsList';
+import { MedicalSuppliesInventory } from './MedicalSuppliesInventory';
 
-const MEDS_TEMPLATE = 'medicamento;categoria;cantidad;unidad;presentacion;lote;vencimiento\nAmoxicilina 500mg;Antibióticos;100;caja;20 comprimidos;L2408A;2025-12-31\nIbuprofeno 400mg;Antiinflamatorios;50;blister;10 comprimidos;I2409B;\n';
+const MEDS_TEMPLATE = 'nombre_medicamento;principio_activo;forma_farmaceutica;contenido;laboratorio_fabricante\nAmoxicilina 500 mg comprimido;Amoxicilina 500 mg. Excipientes: ...;Comprimido;20 comprimidos;Laboratorio ejemplo\n';
 
 interface MedImportRow {
   raw: string[];
   lineNo: number;
   medication?: string;
-  category?: string;
   qty?: number;
-  unit?: string | null;
   presentation?: string | null;
   lot?: string | null;
   expiry?: string | null;
+  commercialName?: string | null;
+  activeIngredient?: string | null;
+  dosage?: string | null;
+  excipients?: string | null;
+  pharmaceuticalForm?: string | null;
+  content?: string | null;
+  manufacturer?: string | null;
 }
 
 function splitCsvLine(line: string): string[] {
@@ -78,18 +82,22 @@ function parseMedFile(text: string): MedImportRow[] {
     const med = headerCols
       ? get('medicamento', 'medication', 'nombre', 'name')
       : (cells[0] ?? '');
-    const cat = headerCols ? get('categoria', 'categoría', 'category') : (cells[1] ?? '');
     const qty = headerCols ? get('cantidad', 'qty', 'stock') : (cells[2] ?? '');
     rows.push({
       raw: cells,
       lineNo: i + 1,
       medication: med,
-      category: cat,
-      qty: Number.parseInt(qty, 10),
-      unit: headerCols ? (get('unidad', 'unit') || null) : (cells[3] || null),
+      qty: qty ? Number.parseInt(qty, 10) : 0,
       presentation: headerCols ? (get('presentacion', 'presentación', 'presentation') || null) : (cells[4] || null),
       lot: headerCols ? (get('lote', 'lot') || null) : (cells[5] || null),
       expiry: headerCols ? (get('vencimiento', 'expiry', 'expiracion', 'expiración') || null) : (cells[6] || null),
+      commercialName: null,
+      activeIngredient: headerCols ? (get('principio_activo', 'active_ingredient') || null) : null,
+      dosage: null,
+      excipients: null,
+      pharmaceuticalForm: headerCols ? (get('forma_farmaceutica', 'forma', 'pharmaceutical_form') || null) : null,
+      content: headerCols ? (get('contenido', 'content') || null) : null,
+      manufacturer: headerCols ? (get('laboratorio_fabricante', 'laboratorio', 'manufacturer') || null) : null,
     });
   }
   return rows;
@@ -101,21 +109,20 @@ export function MedicamentosPage() {
   const { user, centerId } = useAuth();
   const [params, setParams] = useSearchParams();
   const vista = params.get('vista') ?? 'inventario';
+  const inventarioTipo = params.get('tipo') ?? 'medicamentos';
   const setVista = (v: string) =>
     v === 'inventario' ? setParams({}, { replace: true }) : setParams({ vista: v }, { replace: true });
+  const setInventarioTipo = (tipo: string) => setParams(tipo === 'medicamentos' ? {} : { tipo }, { replace: true });
 
   const [medications, setMedications] = useState<Medication[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
   const [lotsByMed, setLotsByMed] = useState<Map<string, { stock: number; expired: boolean; soon: boolean }>>(new Map());
   const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const [query, setQuery] = useState('');
 
   const reload = async () => {
-    const [meds, cats, unis] = await Promise.all([fetchMedications(), fetchCategories(), fetchUnits()]);
+    const meds = await fetchMedications();
     setMedications(meds);
-    setCategories(cats);
-    setUnits(unis);
 
     const lotsMap = new Map<string, { stock: number; expired: boolean; soon: boolean }>();
     const lotsResults = await Promise.all(meds.map((m) => fetchLots(m.id)));
@@ -133,39 +140,12 @@ export function MedicamentosPage() {
 
   useEffect(() => { void reload(); }, []);
 
-  const cats = useMemo(() => categoriasFor(categories, 'medication'), [categories]);
-  const unis = useMemo(() => unitsFor(units, 'medication'), [units]);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Medication | null>(null);
-  const [lotModal, setLotModal] = useState<Medication | null>(null);
   const [entradaMed, setEntradaMed] = useState<Medication | null>(null);
-  const [salidaMed, setSalidaMed] = useState<Medication | null>(null);
   const [deleting, setDeleting] = useState<Medication | null>(null);
-  const [creatingForEntrada, setCreatingForEntrada] = useState(false);
-
-  const openFormForEntrada = () => {
-    setEditing(null);
-    setCreatingForEntrada(true);
-    setFormOpen(true);
-  };
-
-  // ponytail: detecta el medicamento recién creado comparando ids contra la
-  // lista previa. Si el modal estaba abierto en modo "crear para entrada",
-  // abre EntradaModal directamente con el nuevo medicamento.
-  const onFormCloseWithDetectedCreate = async (): Promise<Medication | null> => {
-    setFormOpen(false);
-    const prevIds = new Set(medications.map((m) => m.id));
-    await reload();
-    const refreshed = await fetchMedications();
-    const created = refreshed.find((m) => !prevIds.has(m.id) && m.is_active);
-    setCreatingForEntrada(false);
-    if (created && creatingForEntrada) setEntradaMed(created);
-    return created ?? null;
-  };
-
-  const catBy = useMemo(() => new Map(cats.map((c) => [c.id, c.name])), [cats]);
-  const unitBy = useMemo(() => new Map(unis.map((u) => [u.id, u.abbreviation])), [unis]);
+  const visibleMedications = useMemo(() => medications.filter((medication) => `${medication.name} ${medication.commercial_name} ${medication.active_ingredient} ${medication.manufacturer}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())), [medications, query]);
 
   const remove = async () => {
     if (!deleting) return;
@@ -192,12 +172,18 @@ export function MedicamentosPage() {
         const med = r as unknown as MedImportRow;
         return {
           medication: med.medication ?? '',
-          category: med.category ?? '',
           qty: Number(med.qty ?? 0),
-          unit: med.unit ?? undefined,
+          unit: undefined,
           presentation: med.presentation ?? undefined,
           lot: med.lot ?? undefined,
           expiry: med.expiry ?? undefined,
+          commercial_name: med.commercialName ?? undefined,
+          active_ingredient: med.activeIngredient ?? undefined,
+          dosage: med.dosage ?? undefined,
+          excipients: med.excipients ?? undefined,
+          pharmaceutical_form: med.pharmaceuticalForm ?? undefined,
+          content: med.content ?? undefined,
+          manufacturer: med.manufacturer ?? undefined,
         };
       });
       const stats = await importMedicationsFromRows(data, user?.id, centerId ?? undefined);
@@ -211,7 +197,6 @@ export function MedicamentosPage() {
     validateRow: (r) => {
       const med = r as unknown as MedImportRow;
       if (!med.medication) return { ok: false, reason: 'Falta nombre del medicamento' };
-      if (!med.category) return { ok: false, reason: 'Falta categoría' };
       if (typeof med.qty !== 'number' || !Number.isFinite(med.qty) || med.qty < 0) {
         return { ok: false, reason: 'Cantidad inválida' };
       }
@@ -222,8 +207,8 @@ export function MedicamentosPage() {
   return (
     <PageContainer className="flex flex-col gap-5">
       <header className="flex items-center justify-between gap-2">
-        <h1 className="text-h2">{t('medicamentos.list.title')}</h1>
-        {vista === 'inventario' && (
+         <h1 className="text-h2">{inventarioTipo === 'insumos' && vista === 'inventario' ? 'Insumos médicos' : t('medicamentos.list.title')}</h1>
+        {vista === 'inventario' && inventarioTipo === 'medicamentos' && (
         <div className="flex items-center gap-2">
           <Dropdown
             ariaLabel="Más acciones"
@@ -248,10 +233,6 @@ export function MedicamentosPage() {
               },
             ]}
           />
-          <Button variant="secondary" onClick={openFormForEntrada}>
-            <ArrowDown size={18} aria-hidden="true" />
-            {t('medicamentos.quickNewEntrada')}
-          </Button>
           <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
             <Plus size={18} aria-hidden="true" />
             {t('medicamentos.new')}
@@ -259,6 +240,19 @@ export function MedicamentosPage() {
         </div>
         )}
       </header>
+
+      {vista === 'inventario' && (
+        <Segmented
+          value={inventarioTipo}
+          onChange={setInventarioTipo}
+          ariaLabel="Tipo de inventario médico"
+          options={[{ value: 'medicamentos', label: 'Medicamentos' }, { value: 'insumos', label: 'Insumos médicos' }]}
+        />
+      )}
+
+      {vista === 'inventario' && inventarioTipo === 'medicamentos' && (
+        <SearchInput value={query} onChange={setQuery} placeholder="Buscar medicamento por nombre, principio activo o laboratorio" aria-label="Buscar medicamento" />
+      )}
 
       <Segmented
         value={vista}
@@ -272,21 +266,19 @@ export function MedicamentosPage() {
         ]}
       />
 
-      {vista !== 'inventario' ? (
+      {vista === 'inventario' && inventarioTipo === 'insumos' ? (
+        <MedicalSuppliesInventory />
+      ) : vista !== 'inventario' ? (
         <MedMovementsList kind={vista === 'entradas' ? 'entrada' : vista === 'salidas' ? 'salida' : undefined} />
       ) : loading ? (
         <SkeletonList />
-      ) : medications.length === 0 ? (
+      ) : visibleMedications.length === 0 ? (
         <EmptyState
           icon={Pill}
           title={t('medicamentos.list.empty')}
           description={t('medicamentos.list.emptyHint')}
           action={
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Button variant="secondary" onClick={openFormForEntrada}>
-                <ArrowDown size={18} aria-hidden="true" />
-                {t('medicamentos.quickNewEntrada')}
-              </Button>
               <Button onClick={() => { setEditing(null); setFormOpen(true); }}>
                 <Plus size={18} aria-hidden="true" />
                 {t('medicamentos.new')}
@@ -296,7 +288,7 @@ export function MedicamentosPage() {
         />
       ) : (
         <ul className="grid grid-cols-1 gap-2 sm:gap-3 lg:grid-cols-2">
-          {[...medications]
+          {[...visibleMedications]
             .sort((a, b) => a.name.localeCompare(b.name, 'es'))
             .map((m) => {
               const st = lotsByMed.get(m.id) ?? { stock: 0, expired: false, soon: false };
@@ -306,11 +298,6 @@ export function MedicamentosPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-body font-semibold">{m.name}</p>
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                        {m.categoria_id && catBy.get(m.categoria_id) && (
-                          <span className="rounded-full bg-primary-50 px-2 py-0.5 text-caption text-primary-700">
-                            {catBy.get(m.categoria_id)}
-                          </span>
-                        )}
                         {st.soon && (
                           <span className="flex items-center gap-1 rounded-full bg-warning-500/15 px-2 py-0.5 text-caption font-semibold text-warning-700">
                             <Clock size={12} aria-hidden="true" /> {t('medicamentos.vto.soon')}
@@ -325,23 +312,20 @@ export function MedicamentosPage() {
                       {m.presentacion && (
                         <p className="truncate text-caption text-muted">{m.presentacion}</p>
                       )}
+                      {(m.active_ingredient || m.pharmaceutical_form || m.content || m.manufacturer) && (
+                        <p className="truncate text-caption text-muted">
+                          {[m.active_ingredient, m.pharmaceutical_form, m.content, m.manufacturer].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
                     </div>
                     <span className="text-numeric-lg text-primary-700">
                       {formatNumber(st.stock)}
-                      <span className="ml-1 text-caption text-muted">{unitBy.get(m.unit_id) ?? ''}</span>
                     </span>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <Button size="sm" variant="secondary" onClick={() => setEntradaMed(m)}>
                       <ArrowDown size={16} aria-hidden="true" />
                       {t('medicamentos.entradaBtn')}
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => setSalidaMed(m)}>
-                      <ArrowUp size={16} aria-hidden="true" />
-                      {t('medicamentos.salidaBtn')}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setLotModal(m)}>
-                      {t('medicamentos.lotesBtn')}
                     </Button>
                     <span className="flex-1" />
                     <Button
@@ -369,10 +353,8 @@ export function MedicamentosPage() {
         </ul>
       )}
 
-      <MedicationFormModal open={formOpen} onClose={() => { void onFormCloseWithDetectedCreate(); }} medication={editing} categories={cats} units={unis} />
-      <LotesModal medication={lotModal} open={lotModal !== null} onClose={() => { setLotModal(null); void reload(); }} />
+      <MedicationFormModal open={formOpen} onClose={() => { setFormOpen(false); void reload(); }} medication={editing} />
       <EntradaModal medication={entradaMed} open={entradaMed !== null} onClose={() => { setEntradaMed(null); void reload(); }} />
-      <SalidaModal medication={salidaMed} open={salidaMed !== null} onClose={() => { setSalidaMed(null); void reload(); }} />
       <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} config={importConfig} />
 
       <Modal open={deleting !== null} onClose={() => setDeleting(null)} title={t('medicamentos.delete.title')}>

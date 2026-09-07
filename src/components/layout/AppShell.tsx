@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Outlet, useLocation, useNavigate, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { House, Package, Pill, Cube, DotsThree, CaretLeft } from '@phosphor-icons/react';
+import { ContextHelp } from './ContextHelp';
 
 const TABS = [
   { to: '/inicio', icon: House, key: 'nav.inicio', end: true },
@@ -33,9 +34,13 @@ export function AppShell() {
               <CaretLeft size={20} aria-hidden="true" />
             </button>
             <span className="text-h3 text-accent-600">Donario</span>
+            <ContextHelp />
           </>
         ) : (
-          <span className="text-h3 text-accent-600">Donario</span>
+          <>
+            <span className="text-h3 text-accent-600">Donario</span>
+            <ContextHelp />
+          </>
         )}
       </header>
 
