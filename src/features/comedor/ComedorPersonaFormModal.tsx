@@ -9,6 +9,7 @@ import { Field, inputWithError } from '../../components/ui/Field';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { CedulaScanner, type CedulaScanResult } from '../../components/ui/CedulaScanner';
+import { useToast } from '../../components/ui/Toast';
 
 const schema = z.object({
   nombre: z.string().trim().min(1, 'El nombre es obligatorio'),
@@ -25,17 +26,24 @@ export function ComedorPersonaFormModal({ person, onClose }: { person: ComedorPe
   const { centerId } = useAuth();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string>();
+  const toast = useToast();
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: person ? { nombre: person.nombre, apellido: person.apellido ?? '', celular: person.celular ?? '', numero_documento: person.numero_documento ?? '', fecha_nacimiento: person.fecha_nacimiento ?? '', sexo: person.sexo ?? '', fecha: '' } : { fecha_nacimiento: '', sexo: '', fecha: new Date().toISOString().slice(0, 10) },
   });
 
   const applyScan = (result: CedulaScanResult) => {
-    if (result.nombres) setValue('nombre', result.nombres);
-    if (result.apellidos) setValue('apellido', result.apellidos);
-    if (result.numero_documento) setValue('numero_documento', result.numero_documento);
-    if (result.fecha_nacimiento) setValue('fecha_nacimiento', result.fecha_nacimiento);
-    if (result.sexo) setValue('sexo', result.sexo);
+    const fields: string[] = [];
+    if (result.nombres) { setValue('nombre', result.nombres); fields.push('nombre'); }
+    if (result.apellidos) { setValue('apellido', result.apellidos); fields.push('apellido'); }
+    if (result.numero_documento) { setValue('numero_documento', result.numero_documento); fields.push('documento'); }
+    if (result.fecha_nacimiento) { setValue('fecha_nacimiento', result.fecha_nacimiento); fields.push('nacimiento'); }
+    if (result.sexo) { setValue('sexo', result.sexo); fields.push('sexo'); }
+    if (fields.length > 0) {
+      toast.push({ message: `Cédula leída: ${fields.join(', ')}`, tone: 'success' });
+    } else {
+      toast.push({ message: 'No se detectaron datos en la cédula. Diligencia manualmente.', tone: 'info' });
+    }
   };
 
   const submit = async (data: FormData) => {
