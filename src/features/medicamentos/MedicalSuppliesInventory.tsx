@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, PencilSimple, Plus, Trash } from '@phosphor-icons/react';
 import { fetchUnits, type Unit } from '../../lib/db';
-import { fetchMedicalSupplies, fetchMedicalSupplyLots, medicalSupplyStock, deleteMedicalSupply, type MedicalSupply } from '../../lib/medicalSupplyOps';
+import { fetchMedicalSupplies, fetchMedicalSupplyLotsBulk, medicalSupplyStock, deleteMedicalSupply, type MedicalSupply } from '../../lib/medicalSupplyOps';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { Button } from '../../components/ui/Button';
 import { SearchInput } from '../../components/ui/SearchInput';
@@ -25,8 +25,8 @@ export function MedicalSuppliesInventory() {
 
   const reload = async () => {
     const [nextSupplies, nextUnits] = await Promise.all([fetchMedicalSupplies(), fetchUnits()]);
-    const lots = await Promise.all(nextSupplies.map((supply) => fetchMedicalSupplyLots(supply.id)));
-    setSupplies(nextSupplies); setUnits(nextUnits); setStocks(new Map(nextSupplies.map((supply, index) => [supply.id, medicalSupplyStock(lots[index])] ))); setLoading(false);
+    const lotsMap = await fetchMedicalSupplyLotsBulk(nextSupplies.map((s) => s.id));
+    setSupplies(nextSupplies); setUnits(nextUnits); setStocks(new Map(nextSupplies.map((supply) => [supply.id, medicalSupplyStock(lotsMap.get(supply.id) ?? [])] ))); setLoading(false);
   };
   useEffect(() => { void reload().catch((e) => toast.push({ message: e instanceof Error ? e.message : 'Error al cargar insumos', tone: 'error' })); }, []);
 

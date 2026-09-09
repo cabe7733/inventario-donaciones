@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { newId } from '../../lib/ids';
 import { addCategory, addUnit } from '../../lib/catalog';
@@ -20,39 +22,48 @@ interface Props {
 }
 
 const schema = z.object({
-  name: z.string().trim().min(1),
+  name: z.string().trim().min(1, 'El nombre es obligatorio'),
   aliases: z.string(),
   category_id: z.string().nullable(),
-  unit_id: z.string().min(1),
-  min_stock: z.preprocess((v) => {
-    const s = String(v).trim();
-    if (s === '') return null;
-    return Number(s);
-  }, z.number().min(0).nullable()),
+  unit_id: z.string().min(1, 'La unidad es obligatoria'),
+  min_stock: z.string(),
 });
+
+type FormData = z.infer<typeof schema>;
+
+function parseMinStock(v: string): number | null {
+  const s = v.trim();
+  if (s === '') return null;
+  const n = Number(s);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
 
 export function ProductFormModal({ open, onClose, product, categories, units }: Props) {
   const { t } = useTranslation();
   const toast = useToast();
   const { centerId } = useAuth();
 
-  const [name, setName] = useState('');
-  const [aliases, setAliases] = useState('');
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [unitId, setUnitId] = useState<string | null>(null);
-  const [minStock, setMinStock] = useState('');
-  const [errors, setErrors] = useState<Partial<Record<keyof z.infer<typeof schema>, string>>>({});
-  const [saving, setSaving] = useState(false);
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      name: '',
+      aliases: '',
+      category_id: null,
+      unit_id: '',
+      min_stock: '',
+    },
+  });
 
   useEffect(() => {
     if (!open) return;
-    setName(product?.name ?? '');
-    setAliases(product?.aliases?.join(', ') ?? '');
-    setCategoryId(product?.category_id ?? null);
-    setUnitId(product?.unit_id ?? null);
-    setMinStock(product?.min_stock != null ? String(product.min_stock) : '');
-    setErrors({});
-  }, [open, product]);
+    reset({
+      name: product?.name ?? '',
+      aliases: product?.aliases?.join(', ') ?? '',
+      category_id: product?.category_id ?? null,
+      unit_id: product?.unit_id ?? '',
+      min_stock: product?.min_stock != null ? String(product.min_stock) : '',
+    });
+  }, [open, product, reset]);
 
   const categoryItems = useMemo<AocItem[]>(
     () => categories.map((c) => ({ id: c.id, label: c.name })),
@@ -72,41 +83,32 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
     return addUnit(label, 'product', undefined, centerId);
   };
 
-  const save = async () => {
-    const parsed = schema.safeParse({ name, aliases, category_id: categoryId, unit_id: unitId, min_stock: minStock });
-    if (!parsed.success) {
-      const next: typeof errors = {};
-      for (const issue of parsed.error.issues) {
-        next[issue.path[0] as keyof typeof errors] = t('common.required');
-      }
-      setErrors(next);
-      return;
-    }
+  const onSubmit = async (data: FormData) => {
     if (!centerId) {
       toast.push({ message: 'No hay centro activo', tone: 'error' });
       return;
     }
-    setSaving(true);
     try {
-      const aliasList = parsed.data.aliases.split(',').map((a) => a.trim()).filter(Boolean);
+      const aliasList = data.aliases.split(',').map((a) => a.trim()).filter(Boolean);
+      const minStock = parseMinStock(data.min_stock);
       if (product) {
         await updateProduct(product.id, {
-          name: parsed.data.name,
+          name: data.name,
           aliases: aliasList,
-          category_id: parsed.data.category_id,
-          unit_id: parsed.data.unit_id,
-          min_stock: parsed.data.min_stock,
+          category_id: data.category_id,
+          unit_id: data.unit_id,
+          min_stock: minStock,
         });
         toast.push({ message: t('productos.saved'), tone: 'success' });
       } else {
         const id = newId();
         await createProduct({
           id,
-          name: parsed.data.name,
+          name: data.name,
           aliases: aliasList,
-          category_id: parsed.data.category_id,
-          unit_id: parsed.data.unit_id,
-          min_stock: parsed.data.min_stock,
+          category_id: data.category_id,
+          unit_id: data.unit_id,
+          min_stock: minStock,
           total_stock: 0,
           is_active: true,
           center_id: centerId,
@@ -121,30 +123,28 @@ export function ProductFormModal({ open, onClose, product, categories, units }: 
         message: e instanceof Error ? e.message : 'Error al guardar',
         tone: 'error',
       });
-    } finally {
-      setSaving(false);
     }
   };
 
   return (
     <Modal open={open} onClose={onClose} title={product ? t('productos.form.editTitle') : t('productos.form.title')}>
-      <div className="flex flex-col gap-4">
-        <Field id="p-name" label={t('productos.form.name')} required error={errors.name}>
-          <input id="p-name" className={inputWithError(errors.name)} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('productos.form.name.placeholder')} autoFocus />
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <Field id="p-name" label={t('productos.form.name')} required error={errors.name?.message}>
+          <input id="p-name" className={inputWithError(errors.name?.message)} {...register('name')} placeholder={t('productos.form.name.placeholder')} autoFocus />
         </Field>
         <Field id="p-aliases" label={t('productos.form.aliases')} hint={t('productos.form.aliases.hint')}>
-          <input id="p-aliases" className={inputWithError(errors.aliases)} value={aliases} onChange={(e) => setAliases(e.target.value)} />
+          <input id="p-aliases" className={inputWithError(errors.aliases?.message)} {...register('aliases')} />
         </Field>
-        <AutocompleteOrCreate id="p-category" label={t('productos.form.category')} value={categoryId} onChange={setCategoryId} items={categoryItems} onCreate={createCategory} error={errors.category_id} />
-        <AutocompleteOrCreate id="p-unit" label={t('productos.form.unit')} required value={unitId} onChange={setUnitId} items={unitItems} onCreate={createUnit} error={errors.unit_id} />
-        <Field id="p-minstock" label={t('productos.form.minStock')} hint={t('productos.form.minStock.hint')} error={errors.min_stock}>
-          <input id="p-minstock" className={inputWithError(errors.min_stock)} value={minStock} onChange={(e) => setMinStock(e.target.value)} inputMode="decimal" />
+        <AutocompleteOrCreate id="p-category" label={t('productos.form.category')} value={watch('category_id')} onChange={(v) => setValue('category_id', v)} items={categoryItems} onCreate={createCategory} error={errors.category_id?.message} />
+        <AutocompleteOrCreate id="p-unit" label={t('productos.form.unit')} required value={watch('unit_id')} onChange={(v) => setValue('unit_id', v ?? '')} items={unitItems} onCreate={createUnit} error={errors.unit_id?.message} />
+        <Field id="p-minstock" label={t('productos.form.minStock')} hint={t('productos.form.minStock.hint')} error={errors.min_stock?.message}>
+          <input id="p-minstock" className={inputWithError(errors.min_stock?.message)} {...register('min_stock')} inputMode="decimal" />
         </Field>
-          <div className="mt-2 flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => onClose()}>{t('common.cancel')}</Button>
-          <Button onClick={() => void save()} loading={saving}>{saving ? t('common.saving') : t('common.save')}</Button>
+        <div className="mt-2 flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={() => onClose()}>{t('common.cancel')}</Button>
+          <Button type="submit" loading={isSubmitting}>{isSubmitting ? t('common.saving') : t('common.save')}</Button>
         </div>
-      </div>
+      </form>
     </Modal>
   );
 }

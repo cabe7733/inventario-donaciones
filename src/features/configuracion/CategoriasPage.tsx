@@ -31,9 +31,8 @@ export function CategoriasPage() {
   const [counts, setCounts] = useState<Map<string, number>>(new Map());
 
   const load = async () => {
-    const cats = await fetchCategories();
+    const [cats, ps, ms] = await Promise.all([fetchCategories(), fetchProducts(), fetchMedications()]);
     setCategories(cats);
-    const [ps, ms] = await Promise.all([fetchProducts(), fetchMedications()]);
     const m = new Map<string, number>();
     for (const p of ps) {
       if (p.category_id) m.set(p.category_id, (m.get(p.category_id) ?? 0) + 1);

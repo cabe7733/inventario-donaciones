@@ -115,9 +115,11 @@ export function ImportDialog({
             <div className="rounded-lg bg-success-500/15 p-3 text-caption text-success-700">
               Importación completada.
             </div>
-            <pre className="w-full rounded-lg border border-border bg-surface p-3 text-left text-caption text-fg">
-              {JSON.stringify(result, null, 2)}
-            </pre>
+            <div className="w-full rounded-lg border border-border bg-surface p-3 text-left text-caption text-fg">
+              <p><strong>{String(result.ok)}</strong> {labels.item}{Number(result.ok) === 1 ? '' : 's'} importado{Number(result.ok) === 1 ? '' : 's'} exitosamente</p>
+              {Number(result.skipped) > 0 && <p className="text-warning-700">{String(result.skipped)} omitido{Number(result.skipped) === 1 ? '' : 's'}</p>}
+              {Number(result.errors) > 0 && <p className="text-danger-700">{String(result.errors)} con error</p>}
+            </div>
             <Button onClick={close}>Listo</Button>
           </div>
         ) : (

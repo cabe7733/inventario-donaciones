@@ -17,7 +17,7 @@ interface SegmentedProps<T extends string> {
 export function Segmented<T extends string>({ options, value, onChange, ariaLabel }: SegmentedProps<T>) {
   return (
     <div
-      role="tablist"
+      role="radiogroup"
       aria-label={ariaLabel}
       className="grid grid-flow-col auto-cols-fr overflow-hidden rounded-xl border border-border bg-neutral-100 p-1"
     >
@@ -25,8 +25,8 @@ export function Segmented<T extends string>({ options, value, onChange, ariaLabe
         <button
           key={o.value}
           type="button"
-          role="tab"
-          aria-selected={value === o.value}
+          role="radio"
+          aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={clsx(
             'flex h-11 items-center justify-center gap-2 rounded-lg text-body-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2',

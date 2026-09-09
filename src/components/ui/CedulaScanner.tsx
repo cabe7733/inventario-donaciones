@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, X } from '@phosphor-icons/react';
-import { createWorker } from 'tesseract.js';
 import { Button } from './Button';
 import { Modal } from './Modal';
 
@@ -106,6 +105,7 @@ export function CedulaScanner({ onResult }: { onResult: (result: CedulaScanResul
       canvas.width = v.videoWidth;
       canvas.height = v.videoHeight;
       canvas.getContext('2d')?.drawImage(v, 0, 0);
+      const { createWorker } = await import('tesseract.js');
       const worker = await createWorker('spa');
       const { data } = await worker.recognize(canvas);
       await worker.terminate();

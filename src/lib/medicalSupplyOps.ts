@@ -53,6 +53,19 @@ export async function fetchMedicalSupplyLots(supplyId: string): Promise<MedicalS
   return data ?? [];
 }
 
+export async function fetchMedicalSupplyLotsBulk(supplyIds: string[]): Promise<Map<string, MedicalSupplyLot[]>> {
+  if (supplyIds.length === 0) return new Map();
+  const { data, error } = await supabase.from('medical_supply_lots').select('*').in('supply_id', supplyIds).eq('deleted', false).order('fecha_vencimiento', { ascending: true });
+  if (error) throw error;
+  const map = new Map<string, MedicalSupplyLot[]>();
+  for (const id of supplyIds) map.set(id, []);
+  for (const lot of data ?? []) {
+    const list = map.get(lot.supply_id);
+    if (list) list.push(lot);
+  }
+  return map;
+}
+
 export async function registerMedicalSupplyEntry(input: { supplyId: string; lote: string; expiry: string | null; qty: number; warehouseId: string; fecha: string; nota?: string }): Promise<void> {
   const { error } = await supabase.rpc('register_medical_supply_entry', {
     p_supply_id: input.supplyId,

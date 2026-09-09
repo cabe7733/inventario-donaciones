@@ -404,6 +404,24 @@ export async function fetchLots(medicationId: string): Promise<MedicationLot[]> 
   return data ?? [];
 }
 
+export async function fetchLotsBulk(medicationIds: string[]): Promise<Map<string, MedicationLot[]>> {
+  if (medicationIds.length === 0) return new Map();
+  const { data, error } = await supabase
+    .from('medication_lots')
+    .select('*')
+    .in('medication_id', medicationIds)
+    .eq('deleted', false)
+    .order('fecha_vencimiento', { ascending: true });
+  if (error) throw error;
+  const map = new Map<string, MedicationLot[]>();
+  for (const id of medicationIds) map.set(id, []);
+  for (const lot of data ?? []) {
+    const list = map.get(lot.medication_id);
+    if (list) list.push(lot);
+  }
+  return map;
+}
+
 export async function fetchLot(id: string): Promise<MedicationLot | null> {
   const { data, error } = await supabase
     .from('medication_lots')

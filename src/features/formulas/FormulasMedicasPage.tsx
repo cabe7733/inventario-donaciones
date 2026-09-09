@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CheckCircle, Plus, Trash } from '@phosphor-icons/react';
-import { fetchMedications, fetchLots, type Medication } from '../../lib/db';
+import { fetchMedications, fetchLotsBulk, type Medication } from '../../lib/db';
 import { stockFor } from '../../lib/medicationOps';
 import {
   createPrescription,
@@ -50,12 +50,12 @@ export function FormulasMedicasPage() {
       fetchMedications(),
       fetchMedicationAuthorizers(),
     ]);
-    const lots = await Promise.all(nextMeds.map((med) => fetchLots(med.id)));
+    const lotsMap = await fetchLotsBulk(nextMeds.map((med) => med.id));
     setPrescriptions(nextPrescriptions);
     setMedications(nextMeds);
-    setMedicationStock(new Map(nextMeds.map((med, index) => [
+    setMedicationStock(new Map(nextMeds.map((med) => [
       med.id,
-      stockFor(lots[index].filter((lot) => !lot.fecha_vencimiento || new Date(`${lot.fecha_vencimiento}T23:59:59`) >= new Date())),
+      stockFor((lotsMap.get(med.id) ?? []).filter((lot) => !lot.fecha_vencimiento || new Date(`${lot.fecha_vencimiento}T23:59:59`) >= new Date())),
     ])));
     setAuthorizedUsers(authorizers.map((authorizer) => authorizer.user_id));
   };

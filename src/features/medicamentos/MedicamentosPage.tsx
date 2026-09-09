@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowDown, DotsThree, FileArrowDown, PencilSimple, Pill, Plus, Trash, UploadSimple, WarningCircle, Clock } from '@phosphor-icons/react';
-import { fetchMedications, fetchLots, deleteMedication, importMedicationsFromRows, type Medication } from '../../lib/db';
+import { fetchMedications, fetchLotsBulk, deleteMedication, importMedicationsFromRows, type Medication } from '../../lib/db';
 import { stockFor, lotExpired, lotExpiresSoon } from '../../lib/medicationOps';
 import { formatNumber } from '../../lib/format';
 import { useAuth } from '../../components/auth/AuthProvider';
@@ -106,6 +107,7 @@ function parseMedFile(text: string): MedImportRow[] {
 export function MedicamentosPage() {
   const { t } = useTranslation();
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { user, centerId } = useAuth();
   const [params, setParams] = useSearchParams();
   const vista = params.get('vista') ?? 'inventario';
@@ -114,32 +116,33 @@ export function MedicamentosPage() {
     v === 'inventario' ? setParams({}, { replace: true }) : setParams({ vista: v }, { replace: true });
   const setInventarioTipo = (tipo: string) => setParams(tipo === 'medicamentos' ? {} : { tipo }, { replace: true });
 
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [lotsByMed, setLotsByMed] = useState<Map<string, { stock: number; expired: boolean; soon: boolean }>>(new Map());
-  const [loading, setLoading] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
   const [query, setQuery] = useState('');
 
-  const reload = async () => {
-    const meds = await fetchMedications();
-    setMedications(meds);
+  const { data: medications = [], isLoading: loadingMeds } = useQuery({
+    queryKey: ['medications'],
+    queryFn: fetchMedications,
+  });
 
-    const lotsMap = new Map<string, { stock: number; expired: boolean; soon: boolean }>();
-    const lotsResults = await Promise.all(meds.map((m) => fetchLots(m.id)));
-    meds.forEach((med, i) => {
-      const active = lotsResults[i];
-      lotsMap.set(med.id, {
-        stock: stockFor(active),
-        expired: active.some(lotExpired),
-        soon: active.some(lotExpiresSoon),
-      });
-    });
-    setLotsByMed(lotsMap);
-    setLoading(false);
-  };
+  const { data: lotsByMed = new Map(), isLoading: loadingLots } = useQuery({
+    queryKey: ['medications', 'lots'],
+    queryFn: async () => {
+      const lotsMap = await fetchLotsBulk(medications.map((m) => m.id));
+      const result = new Map<string, { stock: number; expired: boolean; soon: boolean }>();
+      for (const med of medications) {
+        const active = lotsMap.get(med.id) ?? [];
+        result.set(med.id, {
+          stock: stockFor(active),
+          expired: active.some(lotExpired),
+          soon: active.some(lotExpiresSoon),
+        });
+      }
+      return result;
+    },
+    enabled: medications.length > 0,
+  });
 
-  useEffect(() => { void reload(); }, []);
-
+  const loading = loadingMeds || loadingLots;
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Medication | null>(null);
@@ -152,7 +155,7 @@ export function MedicamentosPage() {
     await deleteMedication(deleting.id);
     toast.push({ message: t('medicamentos.deleted'), tone: 'success' });
     setDeleting(null);
-    void reload();
+    queryClient.invalidateQueries({ queryKey: ['medications'] });
   };
 
   const downloadMedsTemplate = () => {
@@ -188,7 +191,7 @@ export function MedicamentosPage() {
       });
       const stats = await importMedicationsFromRows(data, user?.id, centerId ?? undefined);
       toast.push({ message: `Importación completada: ${stats.ok} medicamentos`, tone: 'success' });
-      void reload();
+      queryClient.invalidateQueries({ queryKey: ['medications'] });
       return stats as { ok: number; [k: string]: unknown };
     },
     templateFilename: 'plantilla-medicamentos.csv',
@@ -353,8 +356,8 @@ export function MedicamentosPage() {
         </ul>
       )}
 
-      <MedicationFormModal open={formOpen} onClose={() => { setFormOpen(false); void reload(); }} medication={editing} />
-      <EntradaModal medication={entradaMed} open={entradaMed !== null} onClose={() => { setEntradaMed(null); void reload(); }} />
+      <MedicationFormModal open={formOpen} onClose={() => { setFormOpen(false); queryClient.invalidateQueries({ queryKey: ['medications'] }); }} medication={editing} />
+      <EntradaModal medication={entradaMed} open={entradaMed !== null} onClose={() => { setEntradaMed(null); queryClient.invalidateQueries({ queryKey: ['medications'] }); }} />
       <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} config={importConfig} />
 
       <Modal open={deleting !== null} onClose={() => setDeleting(null)} title={t('medicamentos.delete.title')}>

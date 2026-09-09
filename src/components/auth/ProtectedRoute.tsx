@@ -11,8 +11,9 @@ export function ProtectedRoute({ children, requireCenter = true }: ProtectedRout
 
   if (loading) {
     return (
-      <div className="flex min-h-dvh items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center" role="status" aria-label="Cargando">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
+        <span className="sr-only">Cargando…</span>
       </div>
     );
   }

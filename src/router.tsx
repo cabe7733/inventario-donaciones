@@ -1,49 +1,117 @@
 import { Suspense, lazy, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate, NavLink, Outlet } from 'react-router-dom';
+import { Skeleton } from './components/ui/Skeleton';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { RoleGuard } from './components/auth/RoleGuard';
 import { AppShellDesktop } from './components/layout/AppShellDesktop';
-import { DashboardPage } from './features/dashboard/DashboardPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
-import { OnboardingPage } from './features/centros/OnboardingPage';
-import { CreateCenterPage } from './features/centros/CreateCenterPage';
-import { JoinCenterPage } from './features/centros/JoinCenterPage';
-import { CentroPage } from './features/centro/CentroPage';
-import { EditCenterPage } from './features/centro/EditCenterPage';
-import { MembersPage } from './features/centro/MembersPage';
-import { CategoriasPage } from './features/configuracion/CategoriasPage';
-import { UnidadesPage } from './features/configuracion/UnidadesPage';
-import { AutorizadoresPage } from './features/configuracion/AutorizadoresPage';
-import { KitsListPage } from './features/kits/KitsListPage';
-import { KitDetailPage } from './features/kits/KitDetailPage';
-import { MovimientosPage } from './features/movimientos/MovimientosPage';
-import { VoluntariosListPage } from './features/voluntarios/VoluntariosListPage';
-import { OrdersListPage } from './features/ordenes/OrdersListPage';
-import { OrderFormPage } from './features/ordenes/OrderFormPage';
-import { BodegasListPage } from './features/bodegas/BodegasListPage';
-import { TrasladosPage } from './features/bodegas/TrasladosPage';
-import { PersonasListPage } from './features/personas/PersonasListPage';
-import { InformeBodegaPage } from './features/informes/InformeBodegaPage';
-import { InformesIndexPage } from './features/informes/InformesIndexPage';
-import { InformeDonacionesPage } from './features/informes/InformeDonacionesPage';
-import { InformeGeneralPage } from './features/informes/InformeGeneralPage';
-import { InformeKitsPorBodegaPage } from './features/informes/InformeKitsPorBodegaPage';
-import { InformeProductosPorBodegaPage } from './features/informes/InformeProductosPorBodegaPage';
-import { ComedorPersonasPage } from './features/comedor/ComedorPersonasPage';
-import { FormulasMedicasPage } from './features/formulas/FormulasMedicasPage';
 
-function SuspenseBoundary({ children }: { children: ReactNode }) {
-  return <Suspense fallback={null}>{children}</Suspense>;
-}
-
+const DashboardPage = lazy(() =>
+  import('./features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+);
+const OnboardingPage = lazy(() =>
+  import('./features/centros/OnboardingPage').then((m) => ({ default: m.OnboardingPage })),
+);
+const CreateCenterPage = lazy(() =>
+  import('./features/centros/CreateCenterPage').then((m) => ({ default: m.CreateCenterPage })),
+);
+const JoinCenterPage = lazy(() =>
+  import('./features/centros/JoinCenterPage').then((m) => ({ default: m.JoinCenterPage })),
+);
+const CentroPage = lazy(() =>
+  import('./features/centro/CentroPage').then((m) => ({ default: m.CentroPage })),
+);
+const EditCenterPage = lazy(() =>
+  import('./features/centro/EditCenterPage').then((m) => ({ default: m.EditCenterPage })),
+);
+const MembersPage = lazy(() =>
+  import('./features/centro/MembersPage').then((m) => ({ default: m.MembersPage })),
+);
+const CategoriasPage = lazy(() =>
+  import('./features/configuracion/CategoriasPage').then((m) => ({ default: m.CategoriasPage })),
+);
+const UnidadesPage = lazy(() =>
+  import('./features/configuracion/UnidadesPage').then((m) => ({ default: m.UnidadesPage })),
+);
+const AutorizadoresPage = lazy(() =>
+  import('./features/configuracion/AutorizadoresPage').then((m) => ({ default: m.AutorizadoresPage })),
+);
 const ProductosList = lazy(() =>
   import('./features/productos/ProductosListPage').then((m) => ({ default: m.ProductosListPage })),
 );
-
 const MedicamentosList = lazy(() =>
   import('./features/medicamentos/MedicamentosPage').then((m) => ({ default: m.MedicamentosPage })),
 );
+const KitsListPage = lazy(() =>
+  import('./features/kits/KitsListPage').then((m) => ({ default: m.KitsListPage })),
+);
+const KitDetailPage = lazy(() =>
+  import('./features/kits/KitDetailPage').then((m) => ({ default: m.KitDetailPage })),
+);
+const MovimientosPage = lazy(() =>
+  import('./features/movimientos/MovimientosPage').then((m) => ({ default: m.MovimientosPage })),
+);
+const VoluntariosListPage = lazy(() =>
+  import('./features/voluntarios/VoluntariosListPage').then((m) => ({ default: m.VoluntariosListPage })),
+);
+const OrdersListPage = lazy(() =>
+  import('./features/ordenes/OrdersListPage').then((m) => ({ default: m.OrdersListPage })),
+);
+const OrderFormPage = lazy(() =>
+  import('./features/ordenes/OrderFormPage').then((m) => ({ default: m.OrderFormPage })),
+);
+const BodegasListPage = lazy(() =>
+  import('./features/bodegas/BodegasListPage').then((m) => ({ default: m.BodegasListPage })),
+);
+const TrasladosPage = lazy(() =>
+  import('./features/bodegas/TrasladosPage').then((m) => ({ default: m.TrasladosPage })),
+);
+const PersonasListPage = lazy(() =>
+  import('./features/personas/PersonasListPage').then((m) => ({ default: m.PersonasListPage })),
+);
+const InformesIndexPage = lazy(() =>
+  import('./features/informes/InformesIndexPage').then((m) => ({ default: m.InformesIndexPage })),
+);
+const InformeBodegaPage = lazy(() =>
+  import('./features/informes/InformeBodegaPage').then((m) => ({ default: m.InformeBodegaPage })),
+);
+const InformeDonacionesPage = lazy(() =>
+  import('./features/informes/InformeDonacionesPage').then((m) => ({ default: m.InformeDonacionesPage })),
+);
+const InformeGeneralPage = lazy(() =>
+  import('./features/informes/InformeGeneralPage').then((m) => ({ default: m.InformeGeneralPage })),
+);
+const InformeKitsPorBodegaPage = lazy(() =>
+  import('./features/informes/InformeKitsPorBodegaPage').then((m) => ({ default: m.InformeKitsPorBodegaPage })),
+);
+const InformeProductosPorBodegaPage = lazy(() =>
+  import('./features/informes/InformeProductosPorBodegaPage').then((m) => ({ default: m.InformeProductosPorBodegaPage })),
+);
+const ComedorPersonasPage = lazy(() =>
+  import('./features/comedor/ComedorPersonasPage').then((m) => ({ default: m.ComedorPersonasPage })),
+);
+const FormulasMedicasPage = lazy(() =>
+  import('./features/formulas/FormulasMedicasPage').then((m) => ({ default: m.FormulasMedicasPage })),
+);
+
+function PageLoader() {
+  return (
+    <div className="flex flex-col gap-4 p-4 lg:p-6">
+      <Skeleton className="h-8 w-48 rounded-lg" />
+      <Skeleton className="h-4 w-72 rounded-lg" />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }, (_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SuspenseBoundary({ children }: { children: ReactNode }) {
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
+}
 
 export const router = createBrowserRouter([
   // Auth routes (no sidebar)
@@ -64,9 +132,9 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <OnboardingPage /> },
-      { path: 'crear-centro', element: <CreateCenterPage /> },
-      { path: 'unirse-centro', element: <JoinCenterPage /> },
+      { index: true, element: <SuspenseBoundary><OnboardingPage /></SuspenseBoundary> },
+      { path: 'crear-centro', element: <SuspenseBoundary><CreateCenterPage /></SuspenseBoundary> },
+      { path: 'unirse-centro', element: <SuspenseBoundary><JoinCenterPage /></SuspenseBoundary> },
     ],
   },
   // Main app routes (protected, with sidebar)
@@ -79,41 +147,27 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/inicio" replace /> },
-      { path: 'inicio', element: <DashboardPage /> },
-      {
-        path: 'productos',
-        element: (
-          <SuspenseBoundary>
-            <ProductosList />
-          </SuspenseBoundary>
-        ),
-      },
-      {
-        path: 'medicamentos',
-        element: (
-          <SuspenseBoundary>
-            <MedicamentosList />
-          </SuspenseBoundary>
-        ),
-      },
-      { path: 'formulas', element: <FormulasMedicasPage /> },
-      { path: 'kits', element: <KitsListPage /> },
-      { path: 'kits/:id', element: <KitDetailPage /> },
-      { path: 'mas/movimientos', element: <MovimientosPage /> },
+      { path: 'inicio', element: <SuspenseBoundary><DashboardPage /></SuspenseBoundary> },
+      { path: 'productos', element: <SuspenseBoundary><ProductosList /></SuspenseBoundary> },
+      { path: 'medicamentos', element: <SuspenseBoundary><MedicamentosList /></SuspenseBoundary> },
+      { path: 'formulas', element: <SuspenseBoundary><FormulasMedicasPage /></SuspenseBoundary> },
+      { path: 'kits', element: <SuspenseBoundary><KitsListPage /></SuspenseBoundary> },
+      { path: 'kits/:id', element: <SuspenseBoundary><KitDetailPage /></SuspenseBoundary> },
+      { path: 'mas/movimientos', element: <SuspenseBoundary><MovimientosPage /></SuspenseBoundary> },
       // Orders
-      { path: 'entradas', element: <OrdersListPage type="entrada" /> },
-      { path: 'entradas/nueva', element: <OrderFormPage /> },
-      { path: 'salidas', element: <OrdersListPage type="salida" /> },
-      { path: 'salidas/nueva', element: <OrderFormPage /> },
+      { path: 'entradas', element: <SuspenseBoundary><OrdersListPage type="entrada" /></SuspenseBoundary> },
+      { path: 'entradas/nueva', element: <SuspenseBoundary><OrderFormPage /></SuspenseBoundary> },
+      { path: 'salidas', element: <SuspenseBoundary><OrdersListPage type="salida" /></SuspenseBoundary> },
+      { path: 'salidas/nueva', element: <SuspenseBoundary><OrderFormPage /></SuspenseBoundary> },
       // Volunteers
-      { path: 'voluntarios', element: <VoluntariosListPage /> },
-      { path: 'comedor', element: <ComedorPersonasPage /> },
+      { path: 'voluntarios', element: <SuspenseBoundary><VoluntariosListPage /></SuspenseBoundary> },
+      { path: 'comedor', element: <SuspenseBoundary><ComedorPersonasPage /></SuspenseBoundary> },
       // Warehouses
       {
         path: 'bodegas',
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
-            <BodegasListPage />
+            <SuspenseBoundary><BodegasListPage /></SuspenseBoundary>
           </RoleGuard>
         ),
       },
@@ -121,13 +175,13 @@ export const router = createBrowserRouter([
         path: 'bodegas/traslados',
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
-            <TrasladosPage />
+            <SuspenseBoundary><TrasladosPage /></SuspenseBoundary>
           </RoleGuard>
         ),
       },
       // Donors / Recipients
-      { path: 'donantes', element: <PersonasListPage kind="donor" /> },
-      { path: 'beneficiarios', element: <PersonasListPage kind="recipient" /> },
+      { path: 'donantes', element: <SuspenseBoundary><PersonasListPage kind="donor" /></SuspenseBoundary> },
+      { path: 'beneficiarios', element: <SuspenseBoundary><PersonasListPage kind="recipient" /></SuspenseBoundary> },
       // Reports
       {
         path: 'informes',
@@ -137,12 +191,12 @@ export const router = createBrowserRouter([
           </RoleGuard>
         ),
         children: [
-          { index: true, element: <InformesIndexPage /> },
-          { path: 'bodega', element: <InformeBodegaPage /> },
-          { path: 'bodega/donaciones', element: <InformeDonacionesPage /> },
-          { path: 'general', element: <InformeGeneralPage /> },
-          { path: 'kits', element: <InformeKitsPorBodegaPage /> },
-          { path: 'productos', element: <InformeProductosPorBodegaPage /> },
+          { index: true, element: <SuspenseBoundary><InformesIndexPage /></SuspenseBoundary> },
+          { path: 'bodega', element: <SuspenseBoundary><InformeBodegaPage /></SuspenseBoundary> },
+          { path: 'bodega/donaciones', element: <SuspenseBoundary><InformeDonacionesPage /></SuspenseBoundary> },
+          { path: 'general', element: <SuspenseBoundary><InformeGeneralPage /></SuspenseBoundary> },
+          { path: 'kits', element: <SuspenseBoundary><InformeKitsPorBodegaPage /></SuspenseBoundary> },
+          { path: 'productos', element: <SuspenseBoundary><InformeProductosPorBodegaPage /></SuspenseBoundary> },
         ],
       },
       // Center
@@ -150,7 +204,7 @@ export const router = createBrowserRouter([
         path: 'centro',
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
-            <CentroPage />
+            <SuspenseBoundary><CentroPage /></SuspenseBoundary>
           </RoleGuard>
         ),
       },
@@ -158,7 +212,7 @@ export const router = createBrowserRouter([
         path: 'centro/editar',
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
-            <EditCenterPage />
+            <SuspenseBoundary><EditCenterPage /></SuspenseBoundary>
           </RoleGuard>
         ),
       },
@@ -166,7 +220,7 @@ export const router = createBrowserRouter([
         path: 'centro/miembros',
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
-            <MembersPage />
+            <SuspenseBoundary><MembersPage /></SuspenseBoundary>
           </RoleGuard>
         ),
       },
@@ -202,9 +256,9 @@ export const router = createBrowserRouter([
               </div>
             ),
           },
-          { path: 'categorias', element: <CategoriasPage /> },
-          { path: 'unidades', element: <UnidadesPage /> },
-          { path: 'autorizadores', element: <AutorizadoresPage /> },
+          { path: 'categorias', element: <SuspenseBoundary><CategoriasPage /></SuspenseBoundary> },
+          { path: 'unidades', element: <SuspenseBoundary><UnidadesPage /></SuspenseBoundary> },
+          { path: 'autorizadores', element: <SuspenseBoundary><AutorizadoresPage /></SuspenseBoundary> },
         ],
       },
     ],

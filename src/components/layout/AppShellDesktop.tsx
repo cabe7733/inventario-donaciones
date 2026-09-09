@@ -1,4 +1,4 @@
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -105,6 +105,31 @@ export function AppShellDesktop() {
   const { role, user, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const mobileMenuRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const el = mobileMenuRef.current;
+    if (!el) return;
+    const focusable = el.querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    first?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    el.addEventListener('keydown', trap);
+    el.addEventListener('keydown', onKey);
+    return () => { el.removeEventListener('keydown', trap); el.removeEventListener('keydown', onKey); };
+  }, [mobileMenuOpen]);
 
   const visibleGroups = NAV_GROUPS.map((group) => ({
     ...group,
@@ -239,7 +264,7 @@ export function AppShellDesktop() {
         {mobileMenuOpen && (
           <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
             <button type="button" className="absolute inset-0 bg-slate-950/30" onClick={() => setMobileMenuOpen(false)} aria-label="Cerrar menú" />
-            <aside className="relative flex h-full w-[min(88vw,320px)] flex-col bg-surface-card shadow-elev-4 animate-slide-in-right">
+            <aside ref={mobileMenuRef} className="relative flex h-full w-[min(88vw,320px)] flex-col bg-surface-card shadow-elev-4 animate-slide-in-right">
               <div className="flex h-16 items-center justify-between border-b border-border px-4">
                 <div className="flex items-center gap-2">
                   <img src="/donario_logo.png" alt="Donario" className="h-10 w-10" />
