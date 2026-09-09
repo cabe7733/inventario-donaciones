@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash } from '@phosphor-icons/react';
+import { Check, Plus, Trash } from '@phosphor-icons/react';
 import { fetchWarehouses, transferStock, warehouseStocksBulk } from '../../lib/warehouseOps';
 import { fetchProducts, fetchMedications, fetchKits } from '../../lib/db';
 import type { Product, Medication, Kit } from '../../lib/db';
@@ -168,9 +168,8 @@ export function TrasladosPage() {
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-h3">Items a trasladar</h2>
-            <Button type="button" variant="ghost" onClick={addItem}>
-              <Plus size={18} className="mr-1" />
-              {t('common.add')}
+            <Button type="button" variant="ghost" onClick={addItem} aria-label={t('common.add')}>
+              <Plus size={18} />
             </Button>
           </div>
 
@@ -240,8 +239,8 @@ export function TrasladosPage() {
         </section>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="primary" disabled={!valid || busy} onClick={() => void run()}>
-            {busy ? 'Registrando...' : t('bodegas.traslados.confirm')}
+          <Button type="button" variant="primary" disabled={!valid || busy} onClick={() => void run()} aria-label={t('bodegas.traslados.confirm')}>
+            {busy ? 'Registrando...' : <Check size={18} />}
           </Button>
         </div>
       </div>

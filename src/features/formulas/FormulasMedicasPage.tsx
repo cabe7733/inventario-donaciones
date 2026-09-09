@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CheckCircle, Plus, Trash } from '@phosphor-icons/react';
+import { CheckCircle, Plus, Trash, WarningCircle } from '@phosphor-icons/react';
 import { fetchMedications, fetchLotsBulk, type Medication } from '../../lib/db';
-import { stockFor } from '../../lib/medicationOps';
+import { stockFor, lotExpiresSoon } from '../../lib/medicationOps';
 import {
   createPrescription,
   dispatchPrescription,
@@ -36,6 +36,7 @@ export function FormulasMedicasPage() {
   const [prescriptions, setPrescriptions] = useState<MedicalPrescription[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [medicationStock, setMedicationStock] = useState<Map<string, number>>(new Map());
+  const [medicationExpiringSoon, setMedicationExpiringSoon] = useState<Set<string>>(new Set());
   const [authorizedUsers, setAuthorizedUsers] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,10 +54,18 @@ export function FormulasMedicasPage() {
     const lotsMap = await fetchLotsBulk(nextMeds.map((med) => med.id));
     setPrescriptions(nextPrescriptions);
     setMedications(nextMeds);
-    setMedicationStock(new Map(nextMeds.map((med) => [
-      med.id,
-      stockFor((lotsMap.get(med.id) ?? []).filter((lot) => !lot.fecha_vencimiento || new Date(`${lot.fecha_vencimiento}T23:59:59`) >= new Date())),
-    ])));
+    const stockMap = new Map<string, number>();
+    const expiringSet = new Set<string>();
+    for (const med of nextMeds) {
+      const lots = lotsMap.get(med.id) ?? [];
+      const activeLots = lots.filter((lot) => !lot.fecha_vencimiento || new Date(`${lot.fecha_vencimiento}T23:59:59`) >= new Date());
+      stockMap.set(med.id, stockFor(activeLots));
+      if (lots.some((lot) => lotExpiresSoon(lot))) {
+        expiringSet.add(med.id);
+      }
+    }
+    setMedicationStock(stockMap);
+    setMedicationExpiringSoon(expiringSet);
     setAuthorizedUsers(authorizers.map((authorizer) => authorizer.user_id));
   };
 
@@ -69,9 +78,10 @@ export function FormulasMedicasPage() {
     () => medications.filter((med) => med.is_active).map((med) => ({
       id: med.id,
       label: med.name,
-      sublabel: `${med.presentacion || med.pharmaceutical_form || 'Sin presentación'} · Stock: ${formatNumber(medicationStock.get(med.id) ?? 0)}`,
+      sublabel: `${med.active_ingredient ? med.active_ingredient + ' · ' : ''}${med.presentacion || med.pharmaceutical_form || 'Sin presentación'} · Stock: ${formatNumber(medicationStock.get(med.id) ?? 0)}`,
+      danger: medicationExpiringSoon.has(med.id),
     })),
-    [medications, medicationStock],
+    [medications, medicationStock, medicationExpiringSoon],
   );
   const canEdit = role === 'admin' || role === 'super_admin';
   const canDispatch = canEdit && !!user?.id && authorizedUsers.includes(user.id);
@@ -131,7 +141,7 @@ export function FormulasMedicasPage() {
       <div className="flex max-h-[80vh] flex-col gap-4 overflow-y-auto">
         <Field id="pres-type" label="Destinatario"><select id="pres-type" value={patientType} onChange={(e) => setPatientType(e.target.value as typeof patientType)} className={inputWithError(undefined)}><option value="person">Paciente</option><option value="health_center">Centro de salud</option></select></Field>
         {patientType === 'person' ? <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><Field id="pres-first" label="Nombres" required><input id="pres-first" className={inputWithError(undefined)} value={patient.firstName} onChange={(e) => setPatient({ ...patient, firstName: e.target.value })} /></Field><Field id="pres-last" label="Apellidos"><input id="pres-last" className={inputWithError(undefined)} value={patient.lastName} onChange={(e) => setPatient({ ...patient, lastName: e.target.value })} /></Field><Field id="pres-doc" label="Número de documento"><input id="pres-doc" className={inputWithError(undefined)} value={patient.document} onChange={(e) => setPatient({ ...patient, document: e.target.value })} /></Field><Field id="pres-birth" label="Fecha de nacimiento"><input id="pres-birth" type="date" className={inputWithError(undefined)} value={patient.birthDate} onChange={(e) => setPatient({ ...patient, birthDate: e.target.value })} /></Field><Field id="pres-sex" label="Sexo"><select id="pres-sex" className={inputWithError(undefined)} value={patient.sex} onChange={(e) => setPatient({ ...patient, sex: e.target.value })}><option value="">Seleccionar...</option><option value="F">Femenino</option><option value="M">Masculino</option><option value="O">Otro</option></select></Field><Field id="pres-phone" label="Teléfono"><input id="pres-phone" className={inputWithError(undefined)} value={patient.phone} onChange={(e) => setPatient({ ...patient, phone: e.target.value })} /></Field></div> : <div className="grid grid-cols-1 gap-4 sm:grid-cols-2"><Field id="pres-center" label="Centro de salud" required><input id="pres-center" className={inputWithError(undefined)} value={healthCenter.name} onChange={(e) => setHealthCenter({ ...healthCenter, name: e.target.value })} /></Field><Field id="pres-center-doc" label="NIT o identificación"><input id="pres-center-doc" className={inputWithError(undefined)} value={healthCenter.document} onChange={(e) => setHealthCenter({ ...healthCenter, document: e.target.value })} /></Field><Field id="pres-center-contact" label="Contacto"><input id="pres-center-contact" className={inputWithError(undefined)} value={healthCenter.contact} onChange={(e) => setHealthCenter({ ...healthCenter, contact: e.target.value })} /></Field><Field id="pres-center-phone" label="Teléfono"><input id="pres-center-phone" className={inputWithError(undefined)} value={healthCenter.phone} onChange={(e) => setHealthCenter({ ...healthCenter, phone: e.target.value })} /></Field><Field id="pres-center-address" label="Dirección"><input id="pres-center-address" className={inputWithError(undefined)} value={healthCenter.address} onChange={(e) => setHealthCenter({ ...healthCenter, address: e.target.value })} /></Field></div>}
-        <section className="flex flex-col gap-3 rounded-lg border border-border p-3"><div className="flex items-center justify-between"><h2 className="text-label">Medicamentos</h2><Button size="sm" variant="secondary" onClick={() => setItems([...items, emptyItem()])}><Plus size={16} /> Agregar</Button></div>{items.map((item, index) => <div key={item.key} className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_120px_40px]"><AutocompleteOrCreate id={`pres-med-${index}`} label="Medicamento" value={item.item_id || null} onChange={(id) => updateItem(index, { item_id: id ?? '', unit_id: id ? medicationMap.get(id)?.unit_id : null })} items={medicationOptions} placeholder="Buscar medicamento..." /><Field id={`pres-qty-${index}`} label="Cantidad" required><input id={`pres-qty-${index}`} aria-label={`Cantidad de ${medicationMap.get(item.item_id)?.name ?? 'medicamento'}`} type="number" min="1" value={item.qty} onChange={(e) => updateItem(index, { qty: Number(e.target.value) })} className={inputWithError(undefined)} /></Field><Button size="sm" variant="ghost" aria-label="Eliminar medicamento" onClick={() => setItems(items.length === 1 ? items : items.filter((_, itemIndex) => itemIndex !== index))}><Trash size={18} /></Button></div>)}</section>
+        <section className="flex flex-col gap-3 rounded-lg border border-border p-3"><div className="flex items-center justify-between"><h2 className="text-label">Medicamentos</h2><Button size="sm" variant="secondary" onClick={() => setItems([...items, emptyItem()])}><Plus size={16} /> Agregar</Button></div>{items.map((item, index) => <div key={item.key} className="flex flex-col gap-2"><div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_120px_40px]"><AutocompleteOrCreate id={`pres-med-${index}`} label="Medicamento" value={item.item_id || null} onChange={(id) => updateItem(index, { item_id: id ?? '', unit_id: id ? medicationMap.get(id)?.unit_id : null })} items={medicationOptions} placeholder="Buscar medicamento..." /><Field id={`pres-qty-${index}`} label="Cantidad" required><input id={`pres-qty-${index}`} aria-label={`Cantidad de ${medicationMap.get(item.item_id)?.name ?? 'medicamento'}`} type="number" min="1" value={item.qty} onChange={(e) => updateItem(index, { qty: Number(e.target.value) })} className={inputWithError(undefined)} /></Field><Button size="sm" variant="ghost" aria-label="Eliminar medicamento" onClick={() => setItems(items.length === 1 ? items : items.filter((_, itemIndex) => itemIndex !== index))}><Trash size={18} /></Button></div>{item.item_id && medicationExpiringSoon.has(item.item_id) && <p className="flex items-center gap-1 rounded-lg bg-danger-50 px-3 py-2 text-caption text-danger-700"><WarningCircle size={14} aria-hidden="true" /> Este medicamento tiene lotes próximos a vencer.</p>}</div>)}</section>
         <p className="rounded-lg bg-primary-50 p-3 text-caption text-primary-700">La salida de medicamentos no se asocia a una bodega. La autorización se valida con el usuario autenticado.</p>
         <div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={() => void save()} disabled={busy || !canDispatch}>{busy ? 'Guardando...' : 'Guardar fórmula'}</Button></div>
       </div>

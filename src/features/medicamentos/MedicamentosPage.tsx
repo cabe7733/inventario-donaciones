@@ -302,7 +302,7 @@ export function MedicamentosPage() {
                       <p className="truncate text-body font-semibold">{m.name}</p>
                       <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
                         {st.soon && (
-                          <span className="flex items-center gap-1 rounded-full bg-warning-500/15 px-2 py-0.5 text-caption font-semibold text-warning-700">
+                          <span className="flex items-center gap-1 rounded-full bg-danger-500/15 px-2 py-0.5 text-caption font-semibold text-danger-700">
                             <Clock size={12} aria-hidden="true" /> {t('medicamentos.vto.soon')}
                           </span>
                         )}
