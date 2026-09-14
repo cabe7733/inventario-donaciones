@@ -20,6 +20,7 @@ export function LoginPage() {
   const location = useLocation();
   const { refresh } = useAuth();
   const justRegistered = (location.state as { registered?: boolean } | null)?.registered === true;
+  const passwordReset = (location.state as { passwordReset?: boolean } | null)?.passwordReset === true;
   const [error, setError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,9 +45,6 @@ export function LoginPage() {
         return;
       }
 
-      // ponytail: onAuthStateChange dispara loadAuth async, pero navigate
-      // ocurre antes; ProtectedRoute ve user=null y rebota a /auth/login.
-      // refresh() fuerza el setState antes de navegar.
       await refresh();
       navigate('/inicio', { replace: true });
     } catch {
@@ -71,6 +69,11 @@ export function LoginPage() {
               Cuenta creada. Inicia sesión para continuar.
             </div>
           )}
+          {passwordReset && (
+            <div className="rounded-lg bg-success-500/10 p-3 text-caption text-success-700">
+              Contraseña actualizada. Inicia sesión con tu nueva contraseña.
+            </div>
+          )}
           {error && (
             <div className="rounded-lg bg-danger-50 p-3 text-caption text-danger-700">
               {error}
@@ -87,7 +90,18 @@ export function LoginPage() {
             />
           </Field>
 
-          <Field id="password" label="Contraseña" required error={errors.password?.message}>
+          <div>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="mb-1.5 block text-label text-fg">
+                Contraseña <span className="text-danger-500">*</span>
+              </label>
+              <Link
+                to="/auth/recuperar-password"
+                className="text-caption text-primary-600 hover:text-primary-700"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
@@ -95,7 +109,10 @@ export function LoginPage() {
               {...register('password')}
               className={inputWithError(errors.password)}
             />
-          </Field>
+            {errors.password?.message && (
+              <p className="mt-1 text-caption text-danger-600">{errors.password.message}</p>
+            )}
+          </div>
 
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}

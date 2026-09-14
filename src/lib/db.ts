@@ -98,6 +98,8 @@ export interface Movement {
   created_at: string;
   updated_at: string;
   prescription_id?: string | null;
+  donor_id?: string | null;
+  recipient_id?: string | null;
   authorized_by?: string | null;
   authorized_inventory_by?: string | null;
   dispensed_by?: string | null;

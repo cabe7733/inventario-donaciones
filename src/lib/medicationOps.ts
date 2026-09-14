@@ -1,3 +1,4 @@
+import { supabase } from './supabase';
 import {
   fetchMedication,
   fetchLots as _fetchLots,
@@ -190,4 +191,108 @@ export function lotExpiresSoon(lot: MedicationLot, days = 90): boolean {
 export function lotExpired(lot: MedicationLot): boolean {
   if (!lot.fecha_vencimiento || lot.stock <= 0) return false;
   return new Date(`${lot.fecha_vencimiento}T23:59:59`) < new Date();
+}
+
+/**
+ * Elimina un movimiento de medicamento y revierte el stock del lote correspondiente.
+ */
+export async function deleteMedicationMovement(movementId: string): Promise<void> {
+  const { data: mov, error: fetchErr } = await supabase
+    .from('movements')
+    .select('*')
+    .eq('id', movementId)
+    .single();
+
+  if (fetchErr || !mov) throw new Error('Movimiento no encontrado');
+  if (mov.deleted) return;
+
+  if (mov.lote_id) {
+    const lot = await fetchLot(mov.lote_id);
+    if (lot) {
+      if (mov.kind === 'entrada') {
+        // Al borrar una entrada, restamos la cantidad del stock del lote
+        const newStock = Math.max(0, round2(lot.stock - mov.qty));
+        await updateLot(lot.id, { stock: newStock });
+      } else if (mov.kind === 'salida') {
+        // Al borrar una salida, devolvemos la cantidad al stock del lote
+        const newStock = round2(lot.stock + mov.qty);
+        await updateLot(lot.id, { stock: newStock });
+      }
+    }
+  }
+
+  const { error: deleteErr } = await supabase
+    .from('movements')
+    .update({ deleted: true, updated_at: new Date().toISOString() })
+    .eq('id', movementId);
+
+  if (deleteErr) throw deleteErr;
+}
+
+/**
+ * Edita los datos de un movimiento de medicamento y recalibra el stock si cambió la cantidad.
+ */
+export async function updateMedicationMovement(args: {
+  id: string;
+  qty?: number;
+  fecha?: string;
+  nota?: string;
+  loteCode?: string;
+  fechaVencimiento?: string | null;
+  donorId?: string | null;
+  recipientId?: string | null;
+}): Promise<void> {
+  const { data: mov, error: fetchErr } = await supabase
+    .from('movements')
+    .select('*')
+    .eq('id', args.id)
+    .single();
+
+  if (fetchErr || !mov) throw new Error('Movimiento no encontrado');
+
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (args.fecha !== undefined) updates.fecha = args.fecha;
+  if (args.nota !== undefined) updates.nota = args.nota;
+  if (args.donorId !== undefined) updates.donor_id = args.donorId;
+  if (args.recipientId !== undefined) updates.recipient_id = args.recipientId;
+
+  // Actualización del lote (código de lote, fecha de vencimiento y stock)
+  if (mov.lote_id) {
+    const lot = await fetchLot(mov.lote_id);
+    if (lot) {
+      const lotUpdates: Record<string, unknown> = {};
+      if (args.loteCode !== undefined && args.loteCode.trim() !== '') {
+        lotUpdates.lote = args.loteCode.trim();
+      }
+      if (args.fechaVencimiento !== undefined) {
+        lotUpdates.fecha_vencimiento = args.fechaVencimiento || null;
+      }
+
+      if (args.qty !== undefined && args.qty !== mov.qty) {
+        const newQty = round2(args.qty);
+        if (!(newQty > 0)) throw new StockError('Cantidad inválida');
+        const diff = round2(newQty - mov.qty);
+        if (mov.kind === 'entrada') {
+          lotUpdates.stock = Math.max(0, round2(lot.stock + diff));
+        } else if (mov.kind === 'salida') {
+          lotUpdates.stock = Math.max(0, round2(lot.stock - diff));
+        }
+        updates.qty = newQty;
+      }
+
+      if (Object.keys(lotUpdates).length > 0) {
+        await updateLot(lot.id, lotUpdates);
+      }
+    }
+  }
+
+  const { error: updateErr } = await supabase
+    .from('movements')
+    .update(updates)
+    .eq('id', args.id);
+
+  if (updateErr) throw updateErr;
 }

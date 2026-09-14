@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../../lib/supabase';
 
+import { fetchCurrentPermissions, type ModuleId, type PermissionAction, type PermissionMap } from '../../lib/permissions';
+
 export type UserRole = 'super_admin' | 'admin' | 'visualizer';
 
 export interface Profile {
@@ -24,9 +26,11 @@ export interface AuthState {
   profile: Profile | null;
   centerId: string | null;
   role: UserRole | null;
+  permissions: PermissionMap;
   loading: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
+  hasPermission: (module: ModuleId, action: PermissionAction) => boolean;
 }
 
 const signOutFn = async () => {
@@ -39,9 +43,11 @@ const AuthContext = createContext<AuthState>({
   profile: null,
   centerId: null,
   role: null,
+  permissions: {},
   loading: true,
   signOut: signOutFn,
   refresh: async () => {},
+  hasPermission: () => false,
 });
 
 export function useAuth() {
@@ -99,12 +105,13 @@ async function fetchCenterMembership(userId: string): Promise<{ centerId: string
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Omit<AuthState, 'signOut' | 'refresh'>>({
+  const [state, setState] = useState<Omit<AuthState, 'signOut' | 'refresh' | 'hasPermission'>>({
     session: null,
     user: null,
     profile: null,
     centerId: null,
     role: null,
+    permissions: {},
     loading: true,
   });
 
@@ -117,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile: null,
         centerId: null,
         role: null,
+        permissions: {},
         loading: false,
       });
       return;
@@ -127,12 +135,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fetchCenterMembership(session.user.id),
     ]);
 
+    const isSuper = membership?.role === 'super_admin';
+    const permissions = await fetchCurrentPermissions(session.user.id, isSuper);
+
     setState({
       session,
       user: session.user,
       profile,
       centerId: membership?.centerId ?? null,
       role: membership?.role ?? null,
+      permissions,
       loading: false,
     });
   }, []);
@@ -140,6 +152,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     await loadAuth();
   }, [loadAuth]);
+
+  const hasPermission = useCallback(
+    (module: ModuleId, action: PermissionAction): boolean => {
+      if (state.role === 'super_admin') return true;
+      const modPerm = state.permissions[module];
+      if (!modPerm) return false;
+      switch (action) {
+        case 'view':
+          return modPerm.can_view;
+        case 'create':
+          return modPerm.can_create;
+        case 'edit':
+          return modPerm.can_edit;
+        case 'delete':
+          return modPerm.can_delete;
+        default:
+          return false;
+      }
+    },
+    [state.role, state.permissions],
+  );
 
   useEffect(() => {
     loadAuth();
@@ -152,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loadAuth]);
 
   return (
-    <AuthContext.Provider value={{ ...state, signOut: signOutFn, refresh }}>
+    <AuthContext.Provider value={{ ...state, signOut: signOutFn, refresh, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );

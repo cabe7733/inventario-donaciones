@@ -269,7 +269,10 @@ export function MedicamentosPage() {
       {vista === 'inventario' && inventarioTipo === 'insumos' ? (
         <MedicalSuppliesInventory />
       ) : vista !== 'inventario' ? (
-        <MedMovementsList kind={vista === 'entradas' ? 'entrada' : vista === 'salidas' ? 'salida' : undefined} />
+        <MedMovementsList
+          kind={vista === 'entradas' ? 'entrada' : vista === 'salidas' ? 'salida' : undefined}
+          onReloadInventory={() => void reload()}
+        />
       ) : loading ? (
         <SkeletonList />
       ) : visibleMedications.length === 0 ? (

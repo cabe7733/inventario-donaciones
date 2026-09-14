@@ -6,6 +6,8 @@ import { AppShellDesktop } from './components/layout/AppShellDesktop';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
+import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
+import { ResetPasswordPage } from './features/auth/ResetPasswordPage';
 import { OnboardingPage } from './features/centros/OnboardingPage';
 import { CreateCenterPage } from './features/centros/CreateCenterPage';
 import { JoinCenterPage } from './features/centros/JoinCenterPage';
@@ -52,6 +54,9 @@ export const router = createBrowserRouter([
     children: [
       { path: 'login', element: <LoginPage /> },
       { path: 'registro', element: <RegisterPage /> },
+      { path: 'recuperar-password', element: <ForgotPasswordPage /> },
+      { path: 'actualizar-password', element: <ResetPasswordPage /> },
+      { path: 'restablecer', element: <ResetPasswordPage /> },
       { index: true, element: <Navigate to="/auth/login" replace /> },
     ],
   },

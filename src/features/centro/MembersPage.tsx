@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Copy, EnvelopeSimple, UserPlus, X } from '@phosphor-icons/react';
+import { Copy, EnvelopeSimple, ShieldCheck, UserPlus, X } from '@phosphor-icons/react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { Button } from '../../components/ui/Button';
@@ -7,6 +7,7 @@ import { Field, inputWithError } from '../../components/ui/Field';
 import { Modal } from '../../components/ui/Modal';
 import { Segmented } from '../../components/ui/Segmented';
 import { useToast } from '../../components/ui/Toast';
+import { UserPermissionsModal } from './UserPermissionsModal';
 
 type Role = 'super_admin' | 'admin' | 'visualizer';
 
@@ -59,6 +60,7 @@ export function MembersPage() {
   const [lastInviteCode, setLastInviteCode] = useState<string | null>(null);
   const [lastInviteEmailSent, setLastInviteEmailSent] = useState<boolean | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [permissionsTarget, setPermissionsTarget] = useState<{ id: string; name: string } | null>(null);
 
   const canManage = role === 'super_admin';
 
@@ -276,13 +278,28 @@ export function MembersPage() {
                   </p>
                 </div>
                 {canManage && m.role !== 'super_admin' && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setConfirmRemove(m)}
-                  >
-                    Remover
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        setPermissionsTarget({
+                          id: m.user_id,
+                          name: m.profile?.full_name?.trim() || m.profile?.email || m.user_id.slice(0, 8),
+                        })
+                      }
+                    >
+                      <ShieldCheck size={16} aria-hidden="true" />
+                      Permisos
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfirmRemove(m)}
+                    >
+                      Remover
+                    </Button>
+                  </div>
                 )}
               </li>
             ))}
@@ -488,6 +505,13 @@ export function MembersPage() {
           </div>
         </div>
       </Modal>
+
+      <UserPermissionsModal
+        open={permissionsTarget !== null}
+        onClose={() => setPermissionsTarget(null)}
+        userId={permissionsTarget?.id ?? null}
+        userName={permissionsTarget?.name ?? ''}
+      />
     </div>
   );
 }
