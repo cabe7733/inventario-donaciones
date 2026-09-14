@@ -274,7 +274,7 @@ export function MedicamentosPage() {
       ) : vista !== 'inventario' ? (
         <MedMovementsList
           kind={vista === 'entradas' ? 'entrada' : vista === 'salidas' ? 'salida' : undefined}
-          onReloadInventory={() => void reload()}
+          onReloadInventory={() => queryClient.invalidateQueries({ queryKey: ['medications'] })}
         />
       ) : loading ? (
         <SkeletonList />
