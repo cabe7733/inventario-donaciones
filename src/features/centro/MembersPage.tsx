@@ -324,7 +324,7 @@ export function MembersPage() {
                   key={m.user_id}
                   className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-neutral-200 text-muted font-semibold">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-700 font-semibold">
                     {(m.profile?.first_name?.[0] || m.profile?.full_name?.[0] || '?').toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -417,7 +417,7 @@ export function MembersPage() {
                 <button
                   type="button"
                   onClick={() => copyCode(lastInviteCode)}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-neutral-100"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-primary-50"
                   aria-label="Copiar"
                 >
                   <Copy size={18} aria-hidden="true" />

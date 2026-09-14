@@ -143,7 +143,7 @@ export function ProductosListPage() {
             ariaLabel="Más acciones"
             align="right"
             trigger={
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-fg hover:bg-neutral-100 dark:hover:bg-neutral-100">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-fg hover:bg-primary-50 dark:hover:bg-primary-900/30">
                 <DotsThree size={20} weight="bold" aria-hidden="true" />
               </span>
             }

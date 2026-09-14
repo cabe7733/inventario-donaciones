@@ -28,17 +28,17 @@ export function AppShell() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex h-11 w-11 items-center justify-center -ml-2 rounded-lg text-text-secondary hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+              className="flex h-10 w-10 items-center justify-center -ml-2 rounded-lg text-text-secondary hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
               aria-label={t('common.back')}
             >
               <CaretLeft size={20} aria-hidden="true" />
             </button>
-            <span className="text-h3 text-accent-600">Donario</span>
+            <span className="text-h3 font-semibold text-primary-600">Donario</span>
             <ContextHelp />
           </>
         ) : (
           <>
-            <span className="text-h3 text-accent-600">Donario</span>
+            <span className="text-h3 font-semibold text-primary-600">Donario</span>
             <ContextHelp />
           </>
         )}
@@ -60,14 +60,14 @@ export function AppShell() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset ${
-                isActive ? 'text-accent-600' : 'text-text-secondary'
+              `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset ${
+                isActive ? 'text-primary-600' : 'text-text-secondary'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <Icon size={24} aria-hidden="true" aria-current={isActive ? 'page' : undefined} />
+                <Icon size={22} aria-hidden="true" aria-current={isActive ? 'page' : undefined} />
                 <span className="text-caption">{t(key)}</span>
               </>
             )}

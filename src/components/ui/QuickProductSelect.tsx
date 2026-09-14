@@ -68,7 +68,7 @@ export function QuickProductSelect({ items, value, onChange, onCreated, label }:
         <button
           type="button"
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-caption font-medium text-accent-600 hover:bg-accent-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-caption font-medium text-primary-700 hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
         >
           <Plus size={14} aria-hidden="true" />
           {t('productos.quickNew')}

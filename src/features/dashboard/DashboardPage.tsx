@@ -28,7 +28,7 @@ const KpiCard = memo(function KpiCard({ label, value, icon: Icon, trend, trendVa
   };
 
   const iconStyles = {
-    default: 'bg-primary-100 text-primary-600',
+    default: 'bg-primary-100 text-primary-700',
     success: 'bg-success-100 text-success-600',
     warning: 'bg-warning-100 text-warning-600',
     danger: 'bg-danger-100 text-danger-600',
@@ -132,28 +132,28 @@ export function DashboardPage() {
             <>
               <Link
                 to="/entradas/nueva?tipo=entrada"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <ArrowDownRight size={20} className="text-success-600" />
                 <span>Nueva entrada</span>
               </Link>
               <Link
                 to="/salidas/nueva?tipo=salida"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <ArrowUpRight size={20} className="text-warning-600" />
                 <span>Nueva salida</span>
               </Link>
               <Link
                 to="/productos"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <Package size={20} className="text-primary-600" />
                 <span>Productos</span>
               </Link>
               <Link
                 to="/informes"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-accent-300 hover:bg-accent-50 hover:text-accent-700 active:scale-[0.98]"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <Eye size={20} className="text-info-600" />
                 <span>Ver reportes</span>

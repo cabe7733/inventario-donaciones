@@ -149,7 +149,7 @@ export function AutocompleteOrCreate({
               onChange(null);
               setOpen(true);
             }}
-            className="absolute inset-y-0 right-1 my-auto flex w-9 items-center justify-center rounded-md text-text-tertiary hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+            className="absolute inset-y-0 right-1 my-auto flex w-9 items-center justify-center rounded-md text-text-tertiary hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
           >
             <X size={16} aria-hidden="true" />
           </button>
@@ -169,8 +169,8 @@ export function AutocompleteOrCreate({
                   onClick={() => void pick(item)}
                   onMouseEnter={() => setActive(i)}
                   className={clsx(
-                    'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
-                    i === active ? 'bg-accent-50' : 'hover:bg-neutral-50',
+                    'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset',
+                    i === active ? 'bg-primary-50' : 'hover:bg-neutral-50',
                     item.danger && i !== active && 'bg-danger-50 hover:bg-danger-100',
                   )}
                 >
@@ -179,7 +179,7 @@ export function AutocompleteOrCreate({
                     {item.sublabel && <span className="block text-caption text-text-secondary">{item.sublabel}</span>}
                   </span>
                   {item.danger && <WarningCircle size={16} className="shrink-0 text-danger-600" aria-hidden="true" />}
-                  {item.id === value && <Check size={18} className="text-accent-600" aria-hidden="true" />}
+                  {item.id === value && <Check size={18} className="text-primary-600" aria-hidden="true" />}
                 </button>
               </li>
             ))}
@@ -194,14 +194,14 @@ export function AutocompleteOrCreate({
                     onClick={() => void create()}
                     onMouseEnter={() => setActive(matches.length)}
                     className={clsx(
-                      'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
-                      active >= matches.length && 'bg-accent-50',
+                      'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset',
+                      active >= matches.length && 'bg-primary-50',
                     )}
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-50 text-accent-600">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600">
                       {busy ? '…' : <Plus size={18} aria-hidden="true" />}
                     </span>
-                    <span className="font-medium text-accent-600">
+                    <span className="font-medium text-primary-600">
                       {busy ? '…' : `${t('common.createNew')} "${query.trim()}"`}
                     </span>
                   </button>

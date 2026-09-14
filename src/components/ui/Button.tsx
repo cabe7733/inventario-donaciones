@@ -6,17 +6,22 @@ type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
 type Size = 'sm' | 'md' | 'lg';
 
 const VARIANTS: Record<Variant, string> = {
-  primary: 'bg-accent-600 text-[#F5F0E8] hover:bg-accent-700 active:bg-accent-800 shadow-elev-1 hover:shadow-elev-2',
-  secondary: 'bg-primary-100 text-primary-700 hover:bg-primary-200 active:bg-primary-300',
-  ghost: 'bg-transparent text-text-secondary hover:bg-neutral-100 hover:text-fg active:bg-neutral-200',
-  danger: 'bg-danger-600 text-[#F5F0E8] hover:bg-danger-700 active:bg-danger-800 shadow-elev-1 hover:shadow-elev-2',
-  outline: 'bg-transparent border border-border text-text-secondary hover:bg-neutral-50 hover:text-fg hover:border-primary-300 active:bg-neutral-100',
+  primary:
+    'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-sm hover:shadow-md',
+  secondary:
+    'bg-primary-50 text-primary-700 hover:bg-primary-100 active:bg-primary-200 border border-primary-200/60',
+  ghost:
+    'bg-transparent text-text-secondary hover:bg-neutral-100 hover:text-fg active:bg-neutral-200',
+  danger:
+    'bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 shadow-sm hover:shadow-md',
+  outline:
+    'bg-transparent border border-border-default text-text-secondary hover:bg-neutral-50 hover:text-fg hover:border-primary-300 active:bg-neutral-100',
 };
 
 const SIZES: Record<Size, string> = {
-  sm: 'h-9 px-3 text-body-sm gap-1.5',
-  md: 'h-11 px-4 text-body gap-2',
-  lg: 'h-12 px-6 text-body gap-2',
+  sm: 'h-8 px-3.5 text-body-sm gap-1.5 rounded-lg',
+  md: 'h-10 px-4 text-body-sm gap-2 rounded-lg',
+  lg: 'h-12 px-5 text-body gap-2.5 rounded-xl',
 };
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -41,9 +46,9 @@ export function Button({
       type="button"
       disabled={disabled || loading}
       className={clsx(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-100',
+        'inline-flex items-center justify-center font-medium transition-all duration-fast',
         'disabled:pointer-events-none disabled:opacity-50',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
         'active:scale-[0.98]',
         VARIANTS[variant],
         SIZES[size],
@@ -52,7 +57,7 @@ export function Button({
       {...rest}
     >
       {loading ? (
-        <CircleNotch size={size === 'sm' ? 14 : 18} className="animate-spin" aria-hidden />
+        <CircleNotch size={size === 'sm' ? 14 : 16} className="animate-spin" aria-hidden />
       ) : icon ? (
         <span className="flex items-center justify-center" aria-hidden>{icon}</span>
       ) : null}

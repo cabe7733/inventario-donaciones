@@ -32,7 +32,7 @@ export function Dropdown({ trigger, items, align = 'right', ariaLabel }: Dropdow
       if (triggerRef.current) {
         const rect = triggerRef.current.getBoundingClientRect();
         setPosition({
-          top: rect.bottom + window.scrollY,
+          top: rect.bottom + window.scrollY + 4,
           left: align === 'right' ? rect.right + window.scrollX : rect.left + window.scrollX,
           width: rect.width,
         });
@@ -75,7 +75,7 @@ export function Dropdown({ trigger, items, align = 'right', ariaLabel }: Dropdow
         aria-expanded={open}
         aria-label={ariaLabel}
         onClick={() => setOpen((v) => !v)}
-        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg"
+        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 rounded-lg"
       >
         {trigger}
       </button>
@@ -107,7 +107,7 @@ export function Dropdown({ trigger, items, align = 'right', ariaLabel }: Dropdow
                   it.onClick();
                 }}
                 className={clsx(
-                  'flex w-full items-center gap-3 px-4 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
+                  'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset',
                   it.disabled
                     ? 'cursor-not-allowed text-text-tertiary'
                     : it.danger
@@ -117,7 +117,7 @@ export function Dropdown({ trigger, items, align = 'right', ariaLabel }: Dropdow
               >
                 {it.icon && (
                   <span className={clsx(
-                    'flex h-8 w-8 items-center justify-center rounded-lg',
+                    'flex h-7 w-7 items-center justify-center rounded-md',
                     it.danger ? 'bg-danger-50 text-danger-600' : 'bg-neutral-100 text-text-secondary',
                   )}>
                     {it.icon}

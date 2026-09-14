@@ -59,11 +59,11 @@ export function SearchableSelect({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={clsx(
-          'h-11 w-full rounded-lg border border-border bg-surface-card px-3 text-left text-body text-fg',
+          'h-10 w-full rounded-lg border border-border-default bg-white px-3 text-left text-body text-fg',
           'flex items-center justify-between gap-2 transition-colors',
-          'hover:border-primary-300 focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200',
+          'hover:border-primary-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100',
           disabled && 'cursor-not-allowed opacity-50',
-          open && 'border-accent-500',
+          open && 'border-primary-500 ring-2 ring-primary-100',
         )}
       >
         <span className={clsx('truncate', !value && 'text-text-tertiary')}>
@@ -104,13 +104,13 @@ export function SearchableSelect({
                       setOpen(false);
                     }}
                     className={clsx(
-                      'flex w-full items-center justify-between px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
+                      'flex w-full items-center justify-between px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset',
                       'hover:bg-neutral-50',
-                      opt === value && 'bg-accent-50 text-accent-700',
+                      opt === value && 'bg-primary-50 text-primary-700',
                     )}
                   >
                     <span className="truncate font-medium">{opt}</span>
-                    {opt === value && <Check size={16} className="text-accent-600" aria-hidden="true" />}
+                    {opt === value && <Check size={16} className="text-primary-600" aria-hidden="true" />}
                   </button>
                 </li>
               ))

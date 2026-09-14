@@ -124,7 +124,7 @@ export function DataTable<T extends { id?: string | number }>({
     return (
       <div className="flex flex-col gap-3" aria-busy="true" aria-label="Cargando datos">
         {Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="h-16 animate-pulse-soft rounded-xl border border-border bg-surface-card" />
+          <div key={i} className="h-16 animate-shimmer rounded-xl border border-border/60 bg-surface-card" />
         ))}
       </div>
     );
@@ -132,7 +132,7 @@ export function DataTable<T extends { id?: string | number }>({
 
   if (data.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-surface-card p-8 text-center">
+      <div className="rounded-xl border border-border/60 bg-surface-card p-8 text-center">
         <p className="text-body text-text-secondary">{emptyMessage}</p>
       </div>
     );
@@ -146,7 +146,7 @@ export function DataTable<T extends { id?: string | number }>({
   };
 
   const renderControls = () => (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-card p-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-surface-card p-3 sm:flex-row sm:items-center sm:justify-between">
       <label className="relative min-w-0 flex-1">
         <span className="sr-only">Buscar en la tabla</span>
         <MagnifyingGlass size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" aria-hidden />
@@ -154,18 +154,18 @@ export function DataTable<T extends { id?: string | number }>({
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           placeholder="Buscar en todos los campos..."
-          className="h-10 w-full rounded-lg border border-border bg-surface px-9 text-body-sm text-fg placeholder:text-text-tertiary focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200"
+          className="h-10 w-full rounded-lg border border-border-default bg-white px-9 text-body-sm text-fg placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
         />
         {search && <button type="button" onClick={() => { setSearch(''); setPage(0); }} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-text-secondary hover:bg-neutral-100" aria-label="Limpiar búsqueda"><X size={16} /></button>}
       </label>
       <div className="flex items-center justify-between gap-2 sm:justify-end">
         <label className="flex items-center gap-2 text-caption text-text-secondary">
           <span>Registros:</span>
-          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }} className="h-9 rounded-lg border border-border bg-surface px-2 text-body-sm text-fg focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200" aria-label="Registros por página">
+          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }} className="h-9 rounded-lg border border-border-default bg-white px-2 text-body-sm text-fg focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" aria-label="Registros por página">
             {[10, 20, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
           </select>
         </label>
-        {hasFilters && <button type="button" onClick={clearFilters} className="text-caption font-medium text-accent-700 hover:underline">Limpiar filtros</button>}
+        {hasFilters && <button type="button" onClick={clearFilters} className="text-caption font-medium text-primary-700 hover:underline">Limpiar filtros</button>}
       </div>
     </div>
   );
@@ -304,11 +304,11 @@ export function DataTable<T extends { id?: string | number }>({
   return (
     <div className="flex flex-col gap-2">
         {renderControls()}
-        {sorted.length === 0 ? <div className="rounded-xl border border-border bg-surface-card p-8 text-center"><p className="text-body text-text-secondary">No hay registros que coincidan con los filtros.</p></div> : null}
-      <div className="overflow-x-auto rounded-xl border border-border bg-surface-card">
+        {sorted.length === 0 ? <div className="rounded-xl border border-border/60 bg-surface-card p-8 text-center"><p className="text-body text-text-secondary">No hay registros que coincidan con los filtros.</p></div> : null}
+      <div className="overflow-x-auto rounded-xl border border-border/60 bg-surface-card">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-border bg-neutral-50">
+            <tr className="border-b border-border/60 bg-neutral-50/50">
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -328,9 +328,9 @@ export function DataTable<T extends { id?: string | number }>({
                       <span className="flex flex-col">
                         {sortKey === col.key ? (
                           sortDir === 'asc' ? (
-                            <CaretUp size={12} className="text-accent-600" />
+                            <CaretUp size={12} className="text-primary-600" />
                           ) : (
-                            <CaretDown size={12} className="text-accent-600" />
+                            <CaretDown size={12} className="text-primary-600" />
                           )
                         ) : (
                           <>
@@ -352,7 +352,7 @@ export function DataTable<T extends { id?: string | number }>({
             <tr className="border-b border-border bg-surface-card">
               {columns.map((col) => (
                 <th key={col.key} className={clsx('px-3 py-2', col.className)}>
-                  {col.filterable !== false && <input value={columnFilters[col.key] ?? ''} onChange={(e) => { setColumnFilters((current) => ({ ...current, [col.key]: e.target.value })); setPage(0); }} placeholder={`Filtrar ${col.header}`} aria-label={`Filtrar por ${col.header}`} className="h-8 w-full min-w-24 rounded-md border border-border bg-surface px-2 text-caption font-normal normal-case tracking-normal text-fg placeholder:text-text-tertiary focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200" />}
+                  {col.filterable !== false && <input value={columnFilters[col.key] ?? ''} onChange={(e) => { setColumnFilters((current) => ({ ...current, [col.key]: e.target.value })); setPage(0); }} placeholder={`Filtrar ${col.header}`} aria-label={`Filtrar por ${col.header}`} className="h-8 w-full min-w-24 rounded-md border border-border-default bg-white px-2 text-caption font-normal normal-case tracking-normal text-fg placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" />}
                 </th>
               ))}
               {actions && actions.length > 0 && <th />}

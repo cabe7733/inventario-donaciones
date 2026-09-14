@@ -13,7 +13,7 @@ export function SearchInput({ value, onChange, placeholder, 'aria-label': ariaLa
   return (
     <div className={clsx('relative', className)}>
       <MagnifyingGlass
-        size={18}
+        size={16}
         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary"
         aria-hidden="true"
       />
@@ -24,9 +24,9 @@ export function SearchInput({ value, onChange, placeholder, 'aria-label': ariaLa
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={clsx(
-          'h-11 w-full rounded-lg border border-border bg-surface-card py-2 pl-10 pr-10 text-body text-fg',
+          'h-10 w-full rounded-lg border border-border-default bg-white py-2 pl-10 pr-10 text-body text-fg',
           'placeholder:text-text-tertiary',
-          'focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-200',
+          'focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100',
           'transition-colors',
         )}
       />
@@ -34,10 +34,10 @@ export function SearchInput({ value, onChange, placeholder, 'aria-label': ariaLa
         <button
           type="button"
           onClick={() => onChange('')}
-          className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-text-tertiary hover:bg-neutral-100 hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+          className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-text-tertiary hover:bg-neutral-100 hover:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
           aria-label="Limpiar búsqueda"
         >
-          <X size={16} aria-hidden="true" />
+          <X size={14} aria-hidden="true" />
         </button>
       )}
     </div>

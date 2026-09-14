@@ -198,7 +198,7 @@ export function MedMovementsList({ kind, onReloadInventory }: MedMovementsListPr
                       <li
                         key={m.id}
                         onClick={() => setSelectedMovement(m)}
-                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary-500/50 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                        className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary-500/50 hover:bg-primary-50/50 dark:hover:bg-primary-900/20"
                       >
                         <span
                           aria-hidden="true"

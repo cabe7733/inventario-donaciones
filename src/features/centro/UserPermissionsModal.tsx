@@ -122,7 +122,7 @@ export function UserPermissionsModal({
               </thead>
               <tbody className="divide-y divide-border bg-card">
                 {permissions.map((perm) => (
-                  <tr key={perm.module_id} className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+                  <tr key={perm.module_id} className="hover:bg-primary-50/50 dark:hover:bg-primary-900/20">
                     <td className="p-3">
                       <p className="font-medium text-fg">{perm.module_name}</p>
                       <p className="text-caption text-muted">{perm.module_id}</p>
@@ -132,7 +132,7 @@ export function UserPermissionsModal({
                         type="checkbox"
                         checked={perm.can_view}
                         onChange={() => toggleAction(perm.module_id, 'can_view')}
-                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
+                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -140,7 +140,7 @@ export function UserPermissionsModal({
                         type="checkbox"
                         checked={perm.can_create}
                         onChange={() => toggleAction(perm.module_id, 'can_create')}
-                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
+                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -148,7 +148,7 @@ export function UserPermissionsModal({
                         type="checkbox"
                         checked={perm.can_edit}
                         onChange={() => toggleAction(perm.module_id, 'can_edit')}
-                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
+                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-400"
                       />
                     </td>
                     <td className="p-3 text-center">
@@ -156,7 +156,7 @@ export function UserPermissionsModal({
                         type="checkbox"
                         checked={perm.can_delete}
                         onChange={() => toggleAction(perm.module_id, 'can_delete')}
-                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-500"
+                        className="h-4 w-4 rounded border-border text-primary-600 focus:ring-primary-400"
                       />
                     </td>
                   </tr>

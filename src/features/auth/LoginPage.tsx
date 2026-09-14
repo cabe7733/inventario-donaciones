@@ -55,81 +55,84 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-surface p-4">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100/40 p-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center">
-          <img src="/donario_logo.png" alt="Donario" className="mb-4 h-12" />
-          <h1 className="text-h2 text-fg">Iniciar Sesión</h1>
-          <p className="mt-1 text-body text-muted">Accede a tu centro de acopio</p>
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500 shadow-elev-2">
+            <img src="/donario_logo.png" alt="" className="h-10 w-10 object-contain" aria-hidden="true" />
+          </div>
+          <h1 className="text-display-sm text-fg">Donario</h1>
+          <p className="mt-1.5 text-body text-text-secondary">Centro de acopio</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-          {justRegistered && (
-            <div className="rounded-lg bg-success-500/10 p-3 text-caption text-success-700">
-              Cuenta creada. Inicia sesión para continuar.
-            </div>
-          )}
-          {passwordReset && (
-            <div className="rounded-lg bg-success-500/10 p-3 text-caption text-success-700">
-              Contraseña actualizada. Inicia sesión con tu nueva contraseña.
-            </div>
-          )}
-          {error && (
-            <div className="rounded-lg bg-danger-50 p-3 text-caption text-danger-700">
-              {error}
-            </div>
-          )}
-
-          <Field id="email" label="Email" required error={errors.email?.message}>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              {...register('email')}
-              className={inputWithError(errors.email)}
-            />
-          </Field>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="mb-1.5 block text-label text-fg">
-                Contraseña <span className="text-danger-500">*</span>
-              </label>
-              <Link
-                to="/auth/recuperar-password"
-                className="text-caption text-primary-600 hover:text-primary-700"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              {...register('password')}
-              className={inputWithError(errors.password)}
-            />
-            {errors.password?.message && (
-              <p className="mt-1 text-caption text-danger-600">{errors.password.message}</p>
+        <div className="rounded-2xl border border-border/50 bg-surface-card p-6 shadow-elev-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+            {justRegistered && (
+              <div className="rounded-xl bg-success-50 p-3 text-caption text-success-700 ring-1 ring-success-200/40">
+                Cuenta creada. Inicia sesión para continuar.
+              </div>
             )}
-          </div>
+            {passwordReset && (
+              <div className="rounded-xl bg-success-50 p-3 text-caption text-success-700 ring-1 ring-success-200/40">
+                Contraseña actualizada. Inicia sesión con tu nueva contraseña.
+              </div>
+            )}
+            {error && (
+              <div className="rounded-xl bg-danger-50 p-3 text-caption text-danger-700 ring-1 ring-danger-200/40">
+                {error}
+              </div>
+            )}
 
-          <Button type="submit" disabled={isSubmitting} className="w-full">
-            {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-          </Button>
-        </form>
+            <Field id="email" label="Email" required error={errors.email?.message}>
+              <input
+                id="email"
+                type="email"
+                autoComplete="email"
+                {...register('email')}
+                className={inputWithError(errors.email)}
+              />
+            </Field>
 
-        <p className="mt-6 text-center text-caption text-muted">
+            <div>
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="mb-1.5 block text-label text-fg">
+                  Contraseña <span className="text-danger-500">*</span>
+                </label>
+                <Link
+                  to="/auth/recuperar-password"
+                  className="text-caption text-primary-600 hover:text-primary-700"
+                >
+                  ¿Olvidaste tu contraseña?
+                </Link>
+              </div>
+              <input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                {...register('password')}
+                className={inputWithError(errors.password)}
+              />
+              {errors.password?.message && (
+                <p className="mt-1 text-caption text-danger-600">{errors.password.message}</p>
+              )}
+            </div>
+
+            <Button type="submit" disabled={isSubmitting} className="w-full mt-1">
+              {isSubmitting ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            </Button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-caption text-text-secondary">
           ¿No tienes cuenta?{' '}
           <Link to="/auth/registro" className="text-primary-600 hover:text-primary-700 font-medium">
             Crear cuenta
           </Link>
         </p>
 
-        <footer className="mt-10 border-t border-border pt-4 text-center text-caption text-muted">
-          <p className="font-medium text-fg">Donario</p>
+        <footer className="mt-8 text-center text-caption text-text-tertiary">
+          <p className="font-medium text-text-secondary">Donario</p>
           <p>© {new Date().getFullYear()} Esteban Ramirez Grajales</p>
-          <p>estebanramirezgrajales@gmail.com</p>
         </footer>
       </div>
     </div>

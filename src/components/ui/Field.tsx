@@ -4,8 +4,9 @@ import type { FieldError } from 'react-hook-form';
 import { WarningCircle } from '@phosphor-icons/react';
 
 export const inputClass =
-  'h-11 w-full rounded-lg border border-border bg-surface-card px-3 text-body text-fg placeholder:text-text-tertiary transition-colors';
-export const inputErrorClass = 'border-danger-500 focus:border-danger-500 focus:ring-danger-200';
+  'h-10 w-full rounded-lg border border-border-default bg-white px-3 text-body text-fg placeholder:text-text-tertiary transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none';
+
+export const inputErrorClass = 'border-danger-500 focus:border-danger-500 focus:ring-danger-100';
 export const inputDisabledClass = 'opacity-50 cursor-not-allowed bg-neutral-50';
 
 interface FieldProps {
@@ -58,7 +59,6 @@ export function inputWithError(error?: string | FieldError | boolean, disabled?:
   const hasError = typeof error === 'object' ? !!error?.message : !!error;
   return clsx(
     inputClass,
-    'focus:border-accent-500 focus:ring-2 focus:ring-accent-200',
     hasError && inputErrorClass,
     disabled && inputDisabledClass,
     hasError && 'pr-10',
@@ -79,7 +79,6 @@ export function SelectField({ id, label, required, error, hint, disabled, childr
         className={clsx(
           inputClass,
           'appearance-none bg-[url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxMiAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMyA1bDMgMyAzLTMiIHN0cm9rZT0iIzZFNkU2NyIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48L3N2Zz4=)] bg-[length:12px] bg-[right_12px_center] bg-no-repeat pr-10',
-          'focus:border-accent-500 focus:ring-2 focus:ring-accent-200',
           error && inputErrorClass,
           disabled && inputDisabledClass,
         )}

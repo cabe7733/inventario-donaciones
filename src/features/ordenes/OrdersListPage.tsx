@@ -106,13 +106,13 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
             {visible.map((it) => (
               <span
                 key={it.id}
-                className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 text-caption"
+                className="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-caption text-primary-700"
               >
                 {itemLabel(it)}
               </span>
             ))}
             {rest > 0 && (
-              <span className="inline-flex items-center rounded-md bg-neutral-100 px-2 py-0.5 text-caption text-muted">
+              <span className="inline-flex items-center rounded-md bg-primary-50 px-2 py-0.5 text-caption text-primary-700">
                 +{rest}
               </span>
             )}
@@ -142,7 +142,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
                 e.stopPropagation();
                 navigate(`/entradas/nueva?id=${r.id}`);
               }}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-neutral-100 hover:text-fg dark:hover:bg-neutral-800"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-primary-50 hover:text-fg dark:hover:bg-primary-900/30"
             >
               <PencilSimple size={16} aria-hidden="true" />
             </button>

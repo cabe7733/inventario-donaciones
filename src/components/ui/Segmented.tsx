@@ -29,7 +29,7 @@ export function Segmented<T extends string>({ options, value, onChange, ariaLabe
           aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={clsx(
-            'flex h-11 items-center justify-center gap-2 rounded-lg text-body-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2',
+            'flex h-10 items-center justify-center gap-2 rounded-lg text-body-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
             value === o.value
               ? 'bg-surface-card text-fg shadow-elev-1'
               : 'text-text-secondary hover:text-fg',

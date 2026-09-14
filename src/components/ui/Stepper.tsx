@@ -19,20 +19,20 @@ export function Stepper({ value, onChange, min = 1, max, step = 1, suffix }: Ste
   };
 
   return (
-    <div className="flex items-stretch gap-2">
+    <div className="flex items-stretch gap-1">
       <button
         type="button"
         aria-label={t('a11y.decrement')}
         onClick={() => onChange(clamp(value - step))}
         disabled={value <= min}
-        className="flex h-14 w-14 items-center justify-center rounded-lg border border-border bg-card text-fg transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+        className="flex h-11 w-11 items-center justify-center rounded-lg border border-border-default bg-surface-card text-fg transition-colors hover:bg-neutral-50 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
       >
-        <Minus size={20} aria-hidden="true" />
+        <Minus size={18} aria-hidden="true" />
       </button>
-      <div className="flex h-14 flex-1 items-center justify-center rounded-lg border border-border bg-card">
-        <span className="text-numeric-lg" role="status">
+      <div className="flex h-11 flex-1 items-center justify-center rounded-lg border border-border-default bg-surface-card min-w-[64px]">
+        <span className="text-numeric-lg font-medium" role="status">
           {formatNumber(value)}
-          {suffix && <span className="ml-1 text-caption text-muted">{suffix}</span>}
+          {suffix && <span className="ml-1 text-caption text-text-tertiary">{suffix}</span>}
         </span>
       </div>
       <button
@@ -40,9 +40,9 @@ export function Stepper({ value, onChange, min = 1, max, step = 1, suffix }: Ste
         aria-label={t('a11y.increment')}
         onClick={() => onChange(clamp(value + step))}
         disabled={max !== undefined && value >= max}
-        className="flex h-14 w-14 items-center justify-center rounded-lg border border-border bg-card text-fg transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+        className="flex h-11 w-11 items-center justify-center rounded-lg border border-border-default bg-surface-card text-fg transition-colors hover:bg-neutral-50 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
       >
-        <Plus size={20} aria-hidden="true" />
+        <Plus size={18} aria-hidden="true" />
       </button>
     </div>
   );

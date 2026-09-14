@@ -120,7 +120,7 @@ export function CedulaScanner({ onResult }: { onResult: (result: CedulaScanResul
     <Modal open={open} onClose={close} title="Escanear cédula">
       <div className="flex flex-col gap-4">
         <video ref={videoRef} autoPlay playsInline className="aspect-video w-full rounded-lg bg-black object-cover" />
-        <p className="text-caption text-muted">Alinea la cédula, asegúrate de que tenga buena luz y captura una imagen nítida.</p>
+        <p className="text-caption text-text-secondary">Alinea la cédula, asegúrate de que tenga buena luz y captura una imagen nítida.</p>
         {error && <p className="rounded-lg bg-danger-50 p-3 text-caption text-danger-700">{error}</p>}
         <div className="flex justify-end gap-2">
           <Button variant="ghost" onClick={close}><X size={18} /> Cancelar</Button>

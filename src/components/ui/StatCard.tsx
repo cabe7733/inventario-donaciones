@@ -4,28 +4,36 @@ interface StatCardProps {
   title: string;
   value: number | string;
   icon: React.ReactNode;
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple';
+  color?: 'teal' | 'green' | 'yellow' | 'red' | 'blue';
   className?: string;
 }
 
 const colorStyles = {
-  blue: 'bg-info-100 text-info-700',
-  green: 'bg-success-100 text-success-700',
-  yellow: 'bg-warning-100 text-warning-700',
-  red: 'bg-danger-100 text-danger-700',
-  purple: 'bg-primary-100 text-primary-700',
+  teal: 'bg-primary-50 text-primary-600 ring-1 ring-primary-200/40',
+  green: 'bg-success-50 text-success-600 ring-1 ring-success-200/40',
+  yellow: 'bg-warning-50 text-warning-600 ring-1 ring-warning-200/40',
+  red: 'bg-danger-50 text-danger-600 ring-1 ring-danger-200/40',
+  blue: 'bg-info-50 text-info-600 ring-1 ring-info-200/40',
 };
 
-export function StatCard({ title, value, icon, color = 'blue', className }: StatCardProps) {
+const valueColors = {
+  teal: 'text-primary-700',
+  green: 'text-success-700',
+  yellow: 'text-warning-700',
+  red: 'text-danger-700',
+  blue: 'text-info-700',
+};
+
+export function StatCard({ title, value, icon, color = 'teal', className }: StatCardProps) {
   return (
-    <div className={clsx('rounded-xl border border-border bg-card p-4', className)}>
+    <div className={clsx('rounded-xl border border-border/60 bg-surface-card p-5 transition-all duration-fast hover:shadow-elev-2 hover:border-border-default', className)}>
       <div className="flex items-center justify-between">
-        <span className="text-caption text-muted">{title}</span>
-        <div className={clsx('flex h-8 w-8 items-center justify-center rounded-lg', colorStyles[color])}>
+        <span className="text-caption text-text-secondary">{title}</span>
+        <div className={clsx('flex h-10 w-10 items-center justify-center rounded-xl', colorStyles[color])}>
           {icon}
         </div>
       </div>
-      <p className="mt-2 text-h2 text-fg">{value}</p>
+      <p className={clsx('mt-3 text-numeric-lg font-semibold', valueColors[color])}>{value}</p>
     </div>
   );
 }

@@ -88,13 +88,13 @@ export function FileUploader({ expectedColumns, onImport }: FileUploaderProps) {
         aria-label="Arrastrá un archivo CSV aquí o seleccioná uno"
         className={clsx(
           'flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2',
-          dragOver ? 'border-accent-500 bg-accent-50' : 'border-border hover:border-accent-300',
+          '          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
+          dragOver ? 'border-primary-500 bg-primary-50' : 'border-border hover:border-primary-300',
         )}
       >
         <Upload size={32} className="text-text-tertiary" />
         <p className="text-body text-text-secondary">
-          Arrastrá un archivo CSV aquí o <span className="text-accent-600 font-semibold">seleccioná uno</span>
+          Arrastrá un archivo CSV aquí o <span className="text-primary-700 font-semibold">seleccioná uno</span>
         </p>
         <p className="text-caption text-text-tertiary">Solo archivos .csv</p>
         <input
@@ -113,7 +113,7 @@ export function FileUploader({ expectedColumns, onImport }: FileUploaderProps) {
       <div className="flex items-center gap-3">
         <FileText size={20} className="text-text-secondary" />
         <span className="text-body font-medium text-fg">{file.name}</span>
-        <button type="button" onClick={reset} className="ml-auto text-text-secondary hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 rounded-lg" aria-label="Eliminar archivo">
+        <button type="button" onClick={reset} className="ml-auto text-text-secondary hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 rounded-lg" aria-label="Eliminar archivo">
           <X size={18} aria-hidden="true" />
         </button>
       </div>

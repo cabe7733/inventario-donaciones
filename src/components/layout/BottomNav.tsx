@@ -21,7 +21,7 @@ export function BottomNav() {
   const { t } = useTranslation();
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border bg-surface-card lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border/60 bg-surface-card/95 backdrop-blur-lg lg:hidden"
       style={{ height: 'var(--header-height)', paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Navegación principal"
     >
@@ -31,14 +31,14 @@ export function BottomNav() {
           to={to}
           end={end}
           className={({ isActive }) =>
-            `flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset ${
+            `flex flex-1 flex-col items-center justify-center gap-0.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset ${
               isActive
-                ? 'text-accent-600'
+                ? 'text-primary-600'
                 : 'text-text-secondary hover:text-fg'
             }`
           }
         >
-          <Icon size={24} weight="regular" aria-hidden />
+          <Icon size={22} weight="regular" aria-hidden />
           <span className="text-xs font-medium">{t(key)}</span>
         </NavLink>
       ))}

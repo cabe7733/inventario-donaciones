@@ -8,7 +8,7 @@ export function Skeleton({ className }: SkeletonProps) {
   return (
     <div
       className={clsx(
-        'animate-pulse-soft rounded-lg bg-neutral-200 dark:bg-neutral-700',
+        'animate-shimmer rounded-lg bg-neutral-100',
         className,
       )}
     />
@@ -46,7 +46,7 @@ export function SkeletonText({ lines = 3, lastLineWidth = '75%' }: { lines?: num
       {Array.from({ length: lines - 1 }, (_, i) => (
         <Skeleton key={i} className="h-4 w-full" />
       ))}
-      <div className="animate-pulse-soft h-4 rounded-lg bg-neutral-200 dark:bg-neutral-700" style={{ width: lastLineWidth }} />
+      <div className="animate-shimmer h-4 rounded-lg bg-neutral-100" style={{ width: lastLineWidth }} />
     </div>
   );
 }
@@ -54,7 +54,7 @@ export function SkeletonText({ lines = 3, lastLineWidth = '75%' }: { lines?: num
 export function SkeletonCircle({ size = 40 }: { size?: number }) {
   return (
     <div
-      className="animate-pulse-soft rounded-full bg-neutral-200 dark:bg-neutral-700"
+      className="animate-shimmer rounded-full bg-neutral-100"
       style={{ width: size, height: size }}
     />
   );

@@ -140,7 +140,7 @@ export function UnidadesPage() {
             className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
           >
             <span className="flex-1 truncate text-body font-medium">{u.name}</span>
-            <span className="rounded bg-neutral-100 px-2 py-0.5 text-caption font-semibold text-muted dark:bg-neutral-100">
+            <span className="rounded bg-primary-50 px-2 py-0.5 text-caption font-semibold text-primary-700">
               {u.abbreviation}
             </span>
             <span className="text-caption text-muted">{usage.get(u.id) ?? 0}</span>

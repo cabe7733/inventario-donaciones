@@ -93,7 +93,7 @@ export function KitDetailPage() {
     return (
       <div className="flex flex-col items-center justify-center gap-3 p-8">
         <p className="text-body text-danger-700">{error}</p>
-        <Link to="/kits" className="text-caption text-accent-600 hover:underline">
+        <Link to="/kits" className="text-caption text-primary-600 hover:underline">
           ← {t('kits.list.title')}
         </Link>
       </div>

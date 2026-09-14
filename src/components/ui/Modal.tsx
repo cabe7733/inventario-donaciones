@@ -91,13 +91,13 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
         aria-labelledby="modal-title"
         aria-describedby={description ? 'modal-description' : undefined}
         className={clsx(
-          'animate-scale-in relative w-full overflow-hidden rounded-2xl bg-surface-card shadow-elev-5',
+          'animate-scale-in relative w-full overflow-hidden rounded-2xl border border-border/50 bg-surface-card shadow-elev-5',
           sizeStyles[size],
           className,
         )}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
           <div>
             <h2 id="modal-title" className="text-h2">{title}</h2>
             {description && (
@@ -109,15 +109,15 @@ export function Modal({ open, onClose, title, description, children, size = 'md'
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-text-secondary hover:bg-neutral-100 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-neutral-100 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
             aria-label="Cerrar"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="max-h-[70vh] overflow-y-auto p-5">
+        <div className="max-h-[70vh] overflow-y-auto p-6">
           {children}
         </div>
       </div>

@@ -31,23 +31,23 @@ const ToastContext = createContext<{ push: (t: ToastPush) => void }>({
 const TONE_CLASS: Record<Tone, { bg: string; icon: React.ReactNode; iconBg: string }> = {
   success: {
     bg: 'bg-success-600',
-    icon: <CheckCircle size={20} weight="fill" />,
-    iconBg: 'bg-success-500',
+    icon: <CheckCircle size={18} weight="fill" />,
+    iconBg: 'bg-success-500/30',
   },
   error: {
     bg: 'bg-danger-600',
-    icon: <XCircle size={20} weight="fill" />,
-    iconBg: 'bg-danger-500',
+    icon: <XCircle size={18} weight="fill" />,
+    iconBg: 'bg-danger-500/30',
   },
   info: {
     bg: 'bg-info-600',
-    icon: <Info size={20} weight="fill" />,
-    iconBg: 'bg-info-500',
+    icon: <Info size={18} weight="fill" />,
+    iconBg: 'bg-info-500/30',
   },
   neutral: {
-    bg: 'bg-neutral-800',
-    icon: <Info size={20} weight="fill" />,
-    iconBg: 'bg-neutral-600',
+    bg: 'bg-neutral-700',
+    icon: <Info size={18} weight="fill" />,
+    iconBg: 'bg-neutral-600/30',
   },
 };
 
@@ -64,11 +64,11 @@ const ToastItem = memo(function ToastItem({ toast, onDismiss }: ToastItemProps) 
       role="alert"
       aria-live="polite"
       className={clsx(
-        'animate-slide-in-right pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl px-4 py-3 shadow-elev-4',
+        'animate-pop-in pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-xl px-4 py-3 shadow-elev-4',
         bg,
       )}
     >
-      <div className={clsx('flex h-8 w-8 shrink-0 items-center justify-center rounded-full', iconBg)}>
+      <div className={clsx('flex h-7 w-7 shrink-0 items-center justify-center rounded-full', iconBg)}>
         <span className="text-white">{icon}</span>
       </div>
       <p className="flex-1 text-body-sm font-medium text-white">{toast.message}</p>
@@ -87,10 +87,10 @@ const ToastItem = memo(function ToastItem({ toast, onDismiss }: ToastItemProps) 
       <button
         type="button"
         onClick={() => onDismiss(toast.id)}
-        className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+        className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg text-white/70 hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
         aria-label="Cerrar notificación"
       >
-        <X size={16} />
+        <X size={14} />
       </button>
     </div>
   );

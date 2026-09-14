@@ -11,7 +11,7 @@ export function LoadingState({ message = 'Cargando...', className }: LoadingStat
   return (
     <div className={clsx('flex flex-col items-center justify-center gap-4 py-12', className)} role="status">
       <div className="relative">
-        <CircleNotch size={40} className="animate-spin text-accent-600" aria-hidden="true" />
+        <CircleNotch size={40} className="animate-spin text-primary-600" aria-hidden="true" />
       </div>
       <p className="text-body text-text-secondary">{message}</p>
     </div>

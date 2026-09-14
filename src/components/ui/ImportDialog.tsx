@@ -124,8 +124,8 @@ export function ImportDialog({
           </div>
         ) : (
           <>
-            <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3">
-              <p className="text-body-sm text-muted">
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface-card p-4">
+              <p className="text-body-sm text-text-secondary">
                 Carga masiva desde un archivo CSV o TXT. Si la primera fila tiene encabezados, se ignoran.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -133,7 +133,7 @@ export function ImportDialog({
                   <FileArrowDown size={16} aria-hidden="true" />
                   Descargar plantilla
                 </Button>
-                <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-body-sm font-semibold text-fg hover:bg-neutral-100 dark:hover:bg-neutral-100">
+                <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border-default bg-white px-4 text-body-sm font-semibold text-fg hover:bg-neutral-50">
                   <input
                     ref={fileRef}
                     type="file"
@@ -149,7 +149,7 @@ export function ImportDialog({
                   <button
                     type="button"
                     onClick={reset}
-                    className="inline-flex h-11 items-center gap-1 rounded-lg px-3 text-body-sm text-muted hover:text-danger-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+                    className="inline-flex h-10 items-center gap-1 rounded-lg px-3 text-body-sm text-text-secondary hover:text-danger-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
                   >
                     <X size={16} aria-hidden="true" /> {fileName}
                   </button>
@@ -168,8 +168,8 @@ export function ImportDialog({
                   {rows.map((r, i) => (
                     <li
                       key={`${r.lineNo}-${i}`}
-                      className={`flex items-start gap-2 rounded-lg border p-2 text-body-sm ${
-                        r.status === 'ok' ? 'border-border bg-card' : 'border-danger-500/40 bg-danger-500/5'
+                      className={`flex items-start gap-2 rounded-lg border p-2.5 text-body-sm ${
+                        r.status === 'ok' ? 'border-border-default bg-white' : 'border-danger-200 bg-danger-50'
                       }`}
                     >
                       <span className="shrink-0 pt-0.5">
@@ -193,7 +193,7 @@ export function ImportDialog({
             )}
 
             {rows.length === 0 && (
-              <p className="rounded-lg border border-dashed border-border p-3 text-caption text-muted">
+              <p className="rounded-lg border border-dashed border-border p-4 text-caption text-text-secondary">
                 Selecciona un archivo CSV o TXT para previsualizar las filas antes de importar.
               </p>
             )}

@@ -77,7 +77,7 @@ export function MasPage() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="flex items-center gap-3 rounded-lg px-4 py-3 text-body transition-colors hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset"
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-body transition-colors hover:bg-primary-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-inset"
               >
                 <item.icon size={20} className="text-text-tertiary" aria-hidden />
                 <span className="flex-1">{item.label}</span>
@@ -100,7 +100,7 @@ export function MasPage() {
               onClick={() => setTheme('light')}
               aria-pressed={theme === 'light'}
               className={`flex items-center gap-1.5 px-4 py-2 text-caption font-semibold transition-colors ${
-                theme === 'light' ? 'bg-accent-600 text-white' : 'text-text-secondary hover:bg-neutral-50'
+                theme === 'light' ? 'bg-primary-600 text-white' : 'text-text-secondary hover:bg-primary-50'
               }`}
             >
               <Sun size={16} aria-hidden="true" />
@@ -111,7 +111,7 @@ export function MasPage() {
               onClick={() => setTheme('dark')}
               aria-pressed={theme === 'dark'}
               className={`flex items-center gap-1.5 px-4 py-2 text-caption font-semibold transition-colors ${
-                theme === 'dark' ? 'bg-accent-600 text-white' : 'text-text-secondary hover:bg-neutral-50'
+                theme === 'dark' ? 'bg-primary-600 text-white' : 'text-text-secondary hover:bg-primary-50'
               }`}
             >
               <Moon size={16} aria-hidden="true" />

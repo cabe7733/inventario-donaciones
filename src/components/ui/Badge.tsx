@@ -11,20 +11,20 @@ interface BadgeProps {
 
 const variantStyles: Record<BadgeVariant, string> = {
   default: 'bg-neutral-100 text-neutral-700',
-  success: 'bg-success-50 text-success-700 ring-1 ring-success-200',
-  warning: 'bg-warning-50 text-warning-700 ring-1 ring-warning-200',
-  danger: 'bg-danger-50 text-danger-700 ring-1 ring-danger-200',
-  info: 'bg-info-50 text-info-700 ring-1 ring-info-200',
-  primary: 'bg-accent-50 text-accent-700 ring-1 ring-accent-200',
+  success: 'bg-success-50 text-success-700 ring-1 ring-success-200/40',
+  warning: 'bg-warning-50 text-warning-700 ring-1 ring-warning-200/40',
+  danger: 'bg-danger-50 text-danger-700 ring-1 ring-danger-200/40',
+  info: 'bg-info-50 text-info-700 ring-1 ring-info-200/40',
+  primary: 'bg-primary-50 text-primary-700 ring-1 ring-primary-200/40',
 };
 
 const dotStyles: Record<BadgeVariant, string> = {
-  default: 'bg-neutral-500',
+  default: 'bg-neutral-400',
   success: 'bg-success-500',
   warning: 'bg-warning-500',
   danger: 'bg-danger-500',
   info: 'bg-info-500',
-  primary: 'bg-accent-500',
+  primary: 'bg-primary-500',
 };
 
 export function Badge({ children, variant = 'default', className, dot = false }: BadgeProps) {

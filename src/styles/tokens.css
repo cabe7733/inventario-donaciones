@@ -1,64 +1,69 @@
 :root {
-  /* ---- Primary (Slate Blue) ---- */
-  --color-primary-50: 248 250 252;
-  --color-primary-100: 241 245 249;
-  --color-primary-200: 226 232 240;
-  --color-primary-300: 203 213 225;
-  --color-primary-400: 148 163 184;
-  --color-primary-500: 100 116 139;
-  --color-primary-600: 71 85 105;
-  --color-primary-700: 51 65 85;
-  --color-primary-800: 30 41 59;
-  --color-primary-900: 15 23 42;
+  /* ---- Primary (HeroUI Mint/Teal) ---- */
+  --color-primary-50: 236 253 247;
+  --color-primary-100: 209 250 234;
+  --color-primary-200: 167 243 213;
+  --color-primary-300: 110 231 183;
+  --color-primary-400: 52 211 153;
+  --color-primary-500: 16 185 129;
+  --color-primary-600: 5 150 105;
+  --color-primary-700: 4 120 87;
+  --color-primary-800: 6 95 71;
+  --color-primary-900: 6 78 59;
 
-  /* ---- Accent (Indigo) ---- */
-  --color-accent-50: 238 242 255;
-  --color-accent-100: 224 231 255;
-  --color-accent-200: 199 210 254;
-  --color-accent-300: 165 180 252;
-  --color-accent-400: 129 140 248;
-  --color-accent-500: 99 102 241;
-  --color-accent-600: 79 70 229;
-  --color-accent-700: 67 56 202;
-  --color-accent-900: 49 46 129;
+  /* ---- Accent (alias → primary) ---- */
+  --color-accent-50: 236 253 247;
+  --color-accent-100: 209 250 234;
+  --color-accent-200: 167 243 213;
+  --color-accent-300: 110 231 183;
+  --color-accent-400: 52 211 153;
+  --color-accent-500: 16 185 129;
+  --color-accent-600: 5 150 105;
+  --color-accent-700: 4 120 87;
+  --color-accent-800: 6 95 71;
+  --color-accent-900: 6 78 59;
 
   /* ---- Semantic ---- */
-  --color-success-50: 240 253 244;
-  --color-success-100: 220 252 203;
-  --color-success-500: 34 197 94;
-  --color-success-600: 22 163 74;
-  --color-success-700: 21 128 61;
+  --color-success-50: 236 253 245;
+  --color-success-100: 209 250 229;
+  --color-success-200: 167 243 208;
+  --color-success-500: 16 185 129;
+  --color-success-600: 5 150 105;
+  --color-success-700: 4 120 87;
 
-  --color-warning-50: 254 252 232;
-  --color-warning-100: 254 249 200;
-  --color-warning-500: 234 179 8;
-  --color-warning-600: 202 138 4;
-  --color-warning-700: 161 98 7;
+  --color-warning-50: 255 251 235;
+  --color-warning-100: 254 243 199;
+  --color-warning-200: 253 230 138;
+  --color-warning-500: 245 158 11;
+  --color-warning-600: 217 119 6;
+  --color-warning-700: 180 83 9;
 
   --color-danger-50: 254 242 242;
   --color-danger-100: 254 226 226;
+  --color-danger-200: 254 202 202;
   --color-danger-500: 239 68 68;
   --color-danger-600: 220 38 38;
   --color-danger-700: 185 28 28;
 
   --color-info-50: 239 246 255;
   --color-info-100: 219 234 254;
+  --color-info-200: 191 219 254;
   --color-info-500: 59 130 246;
   --color-info-600: 37 99 235;
   --color-info-700: 29 78 216;
 
   /* ---- Neutrals ---- */
   --color-neutral-0: 255 255 255;
-  --color-neutral-50: 248 250 252;
-  --color-neutral-100: 241 245 249;
-  --color-neutral-200: 226 232 240;
-  --color-neutral-300: 203 213 225;
-  --color-neutral-400: 148 163 184;
-  --color-neutral-500: 100 116 139;
-  --color-neutral-600: 71 85 105;
-  --color-neutral-700: 51 65 85;
-  --color-neutral-800: 30 41 59;
-  --color-neutral-900: 15 23 42;
+  --color-neutral-50: 249 250 251;
+  --color-neutral-100: 243 244 246;
+  --color-neutral-200: 229 231 235;
+  --color-neutral-300: 209 213 219;
+  --color-neutral-400: 156 163 175;
+  --color-neutral-500: 107 114 128;
+  --color-neutral-600: 75 85 99;
+  --color-neutral-700: 55 65 81;
+  --color-neutral-800: 31 41 55;
+  --color-neutral-900: 17 24 39;
 
   /* ---- Surfaces & text ---- */
   --surface-page: var(--color-neutral-50);
@@ -67,7 +72,7 @@
   --surface-overlay: var(--color-neutral-0);
   --text-primary: var(--color-neutral-900);
   --text-secondary: var(--color-neutral-600);
-  --text-tertiary: var(--color-neutral-500);
+  --text-tertiary: var(--color-neutral-400);
   --text-inverse: 255 255 255;
   --border-subtle: var(--color-neutral-200);
   --border-default: var(--color-neutral-300);
@@ -95,125 +100,131 @@
   --space-20: 80px;
   --space-24: 96px;
 
-  /* ---- Radius ---- */
+  /* ---- Radius (HeroUI-style generous) ---- */
   --radius-none: 0;
   --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
   --radius-xl: 16px;
   --radius-2xl: 20px;
   --radius-3xl: 24px;
   --radius-full: 9999px;
 
-  /* ---- Elevation ---- */
+  /* ---- Elevation (HeroUI soft shadows) ---- */
   --elev-0: none;
-  --elev-1: 0 1px 2px 0 rgb(15 23 42 / 0.05);
-  --elev-2: 0 1px 3px 0 rgb(15 23 42 / 0.1), 0 1px 2px -1px rgb(15 23 42 / 0.1);
-  --elev-3: 0 4px 6px -1px rgb(15 23 42 / 0.1), 0 2px 4px -2px rgb(15 23 42 / 0.1);
-  --elev-4: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
-  --elev-5: 0 20px 25px -5px rgb(15 23 42 / 0.1), 0 8px 10px -6px rgb(15 23 42 / 0.1);
-  --elev-6: 0 25px 50px -12px rgb(15 23 42 / 0.25);
+  --elev-1: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.03);
+  --elev-2: 0 2px 8px -2px rgb(0 0 0 / 0.06), 0 1px 4px -1px rgb(0 0 0 / 0.04);
+  --elev-3: 0 4px 12px -3px rgb(0 0 0 / 0.07), 0 2px 6px -2px rgb(0 0 0 / 0.04);
+  --elev-4: 0 8px 20px -4px rgb(0 0 0 / 0.08), 0 4px 8px -2px rgb(0 0 0 / 0.03);
+  --elev-5: 0 16px 32px -6px rgb(0 0 0 / 0.10), 0 8px 16px -4px rgb(0 0 0 / 0.04);
+  --elev-6: 0 24px 48px -12px rgb(0 0 0 / 0.18);
 
-  /* ---- Motion ---- */
-  --duration-fast: 100ms;
-  --duration-normal: 200ms;
-  --duration-slow: 300ms;
+  /* ---- Motion (HeroUI smooth) ---- */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
   --duration-page: 400ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-emphasized: cubic-bezier(0.0, 0, 0.2, 1);
   --ease-decel: cubic-bezier(0.0, 0, 0.2, 1);
   --ease-accel: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  /* ---- Sidebar ---- */
-  --sidebar-width: 280px;
+  /* ---- Layout ---- */
+  --sidebar-width: 260px;
   --sidebar-collapsed-width: 72px;
   --header-height: 64px;
   --bottom-nav-height: 64px;
 }
 
 [data-theme='dark'] {
-  /* ---- Primary (lighter slate for dark mode) ---- */
-  --color-primary-50: 15 23 42;
-  --color-primary-100: 30 41 59;
-  --color-primary-200: 51 65 85;
-  --color-primary-300: 71 85 105;
-  --color-primary-400: 100 116 139;
-  --color-primary-500: 148 163 184;
-  --color-primary-600: 203 213 225;
-  --color-primary-700: 226 232 240;
-  --color-primary-800: 241 245 249;
-  --color-primary-900: 248 250 252;
+  /* ---- Primary (lighter mint for dark) ---- */
+  --color-primary-50: 6 78 59;
+  --color-primary-100: 6 95 71;
+  --color-primary-200: 4 120 87;
+  --color-primary-300: 5 150 105;
+  --color-primary-400: 16 185 129;
+  --color-primary-500: 52 211 153;
+  --color-primary-600: 110 231 183;
+  --color-primary-700: 167 243 213;
+  --color-primary-800: 209 250 234;
+  --color-primary-900: 236 253 247;
 
-  /* ---- Accent (Indigo lighter) ---- */
-  --color-accent-50: 49 46 129;
-  --color-accent-100: 67 56 202;
-  --color-accent-200: 79 70 229;
-  --color-accent-300: 99 102 241;
-  --color-accent-400: 129 140 248;
-  --color-accent-500: 165 180 252;
-  --color-accent-600: 199 210 254;
-  --color-accent-700: 224 231 255;
-  --color-accent-900: 238 242 255;
+  /* ---- Accent (lighter mint for dark) ---- */
+  --color-accent-50: 6 78 59;
+  --color-accent-100: 6 95 71;
+  --color-accent-200: 4 120 87;
+  --color-accent-300: 5 150 105;
+  --color-accent-400: 16 185 129;
+  --color-accent-500: 52 211 153;
+  --color-accent-600: 110 231 183;
+  --color-accent-700: 167 243 213;
+  --color-accent-800: 209 250 234;
+  --color-accent-900: 236 253 247;
 
   /* ---- Semantic (adjusted for dark) ---- */
-  --color-success-50: 20 83 45;
-  --color-success-100: 22 101 52;
-  --color-success-500: 74 222 128;
-  --color-success-600: 134 239 72;
-  --color-success-700: 163 230 53;
+  --color-success-50: 6 78 59;
+  --color-success-100: 5 100 80;
+  --color-success-200: 16 163 120;
+  --color-success-500: 52 211 153;
+  --color-success-600: 110 231 183;
+  --color-success-700: 167 243 208;
 
-  --color-warning-50: 113 63 18;
-  --color-warning-100: 133 77 14;
-  --color-warning-500: 250 204 21;
-  --color-warning-600: 254 240 138;
-  --color-warning-700: 254 249 200;
+  --color-warning-50: 120 53 15;
+  --color-warning-100: 146 64 14;
+  --color-warning-200: 217 119 6;
+  --color-warning-500: 252 211 77;
+  --color-warning-600: 253 230 138;
+  --color-warning-700: 254 243 199;
 
   --color-danger-50: 127 29 29;
   --color-danger-100: 153 27 27;
+  --color-danger-200: 220 38 38;
   --color-danger-500: 248 113 113;
-  --color-danger-600: 252 165 165;
+  --color-danger-600: 254 202 202;
   --color-danger-700: 254 226 226;
 
   --color-info-50: 30 58 138;
   --color-info-100: 30 64 175;
+  --color-info-200: 59 130 246;
   --color-info-500: 147 197 253;
   --color-info-600: 191 219 254;
   --color-info-700: 219 234 254;
 
   /* ---- Neutrals (dark mode) ---- */
-  --color-neutral-0: 15 23 42;
-  --color-neutral-50: 17 24 39;
-  --color-neutral-100: 31 41 55;
-  --color-neutral-200: 55 65 81;
-  --color-neutral-300: 75 85 99;
-  --color-neutral-400: 156 163 175;
-  --color-neutral-500: 209 213 219;
-  --color-neutral-600: 229 231 235;
-  --color-neutral-700: 243 244 246;
-  --color-neutral-800: 249 250 251;
+  --color-neutral-0: 18 18 22;
+  --color-neutral-50: 24 24 30;
+  --color-neutral-100: 32 32 40;
+  --color-neutral-200: 44 44 55;
+  --color-neutral-300: 60 60 75;
+  --color-neutral-400: 120 120 140;
+  --color-neutral-500: 160 160 180;
+  --color-neutral-600: 200 200 215;
+  --color-neutral-700: 225 225 235;
+  --color-neutral-800: 243 243 248;
   --color-neutral-900: 255 255 255;
 
   /* ---- Surfaces & text (dark mode) ---- */
-  --surface-page: var(--color-neutral-900);
-  --surface-card: var(--color-neutral-800);
-  --surface-raised: var(--color-neutral-700);
-  --surface-overlay: var(--color-neutral-800);
-  --text-primary: var(--color-neutral-100);
-  --text-secondary: var(--color-neutral-400);
-  --text-tertiary: var(--color-neutral-500);
+  --surface-page: var(--color-neutral-50);
+  --surface-card: var(--color-neutral-100);
+  --surface-raised: var(--color-neutral-200);
+  --surface-overlay: var(--color-neutral-100);
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-500);
+  --text-tertiary: var(--color-neutral-400);
   --text-inverse: var(--color-neutral-900);
-  --border-subtle: var(--color-neutral-700);
-  --border-default: var(--color-neutral-600);
-  --border-strong: var(--color-neutral-500);
+  --border-subtle: var(--color-neutral-200);
+  --border-default: var(--color-neutral-300);
+  --border-strong: var(--color-neutral-400);
 
   /* ---- Elevation (darker shadows for dark) ---- */
-  --elev-1: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --elev-2: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --elev-3: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --elev-4: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-  --elev-5: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5);
-  --elev-6: 0 25px 50px -12px rgb(0 0 0 / 0.6);
+  --elev-1: 0 1px 3px 0 rgb(0 0 0 / 0.20), 0 1px 2px -1px rgb(0 0 0 / 0.15);
+  --elev-2: 0 2px 8px -2px rgb(0 0 0 / 0.28), 0 1px 4px -1px rgb(0 0 0 / 0.20);
+  --elev-3: 0 4px 12px -3px rgb(0 0 0 / 0.32), 0 2px 6px -2px rgb(0 0 0 / 0.22);
+  --elev-4: 0 8px 20px -4px rgb(0 0 0 / 0.36), 0 4px 8px -2px rgb(0 0 0 / 0.24);
+  --elev-5: 0 16px 32px -6px rgb(0 0 0 / 0.40), 0 8px 16px -4px rgb(0 0 0 / 0.28);
+  --elev-6: 0 24px 48px -12px rgb(0 0 0 / 0.50);
 }
 
 :root {

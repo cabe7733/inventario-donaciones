@@ -79,7 +79,7 @@ export function BodegasListPage() {
                 setEditing(r);
                 setFormOpen(true);
               }}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-neutral-100 hover:text-fg dark:hover:bg-neutral-800"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted hover:bg-primary-50 hover:text-fg dark:hover:bg-primary-900/30"
             >
               <PencilSimple size={16} aria-hidden="true" />
             </button>

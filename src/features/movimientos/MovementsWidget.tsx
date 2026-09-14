@@ -58,7 +58,7 @@ export function MovementsWidget() {
         <h2 className="text-h2">Movimientos recientes</h2>
         <Link
           to="/mas/movimientos"
-          className="text-caption font-semibold text-accent-600 hover:text-accent-700"
+          className="text-caption font-semibold text-primary-600 hover:text-primary-700"
         >
           Ver todos
         </Link>
@@ -72,7 +72,7 @@ export function MovementsWidget() {
         </div>
       ) : recent.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-neutral-100">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100">
             <Plus size={24} className="text-text-tertiary" />
           </div>
           <p className="text-body text-text-secondary">No hay movimientos registrados</p>
@@ -90,7 +90,7 @@ export function MovementsWidget() {
               <li
                 key={m.id}
                 className={clsx(
-                  'flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-neutral-50',
+                  'flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-primary-50/50',
                   'animate-fade-in-up',
                 )}
                 style={{ animationDelay: `${index * 50}ms` }}
@@ -105,7 +105,7 @@ export function MovementsWidget() {
                   </span>
                 </div>
 
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-100">
                   <Icon size={16} className="text-text-secondary" />
                 </div>
 

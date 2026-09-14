@@ -18,7 +18,7 @@ const COLOR_OPTIONS = [
   { value: 'warning-700', cls: 'bg-warning-700' },
   { value: 'danger-700', cls: 'bg-danger-700' },
   { value: 'info-700', cls: 'bg-info-700' },
-  { value: 'neutral-500', cls: 'bg-neutral-500' },
+  { value: 'primary-500', cls: 'bg-primary-500' },
 ] as const;
 
 export function CategoriasPage() {
