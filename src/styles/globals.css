@@ -37,7 +37,7 @@
 
   ::selection {
     background-color: rgb(var(--color-accent-200));
-    color: rgb(var(--color-accent-900));
+    color: rgb(var(--color-accent-700));
   }
 }
 

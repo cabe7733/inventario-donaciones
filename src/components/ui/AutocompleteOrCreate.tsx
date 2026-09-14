@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, MagnifyingGlass, Plus, X } from '@phosphor-icons/react';
+import { Check, MagnifyingGlass, Plus, WarningCircle, X } from '@phosphor-icons/react';
 import { clsx } from 'clsx';
 import { normalize } from '../../lib/search';
 import { Field, inputWithError } from './Field';
@@ -9,6 +9,7 @@ export interface AocItem {
   id: string;
   label: string;
   sublabel?: string;
+  danger?: boolean;
 }
 
 interface AocProps {
@@ -170,12 +171,14 @@ export function AutocompleteOrCreate({
                   className={clsx(
                     'flex w-full items-center gap-3 px-3 py-2.5 text-left text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-inset',
                     i === active ? 'bg-accent-50' : 'hover:bg-neutral-50',
+                    item.danger && i !== active && 'bg-danger-50 hover:bg-danger-100',
                   )}
                 >
                   <span className="flex-1">
-                    <span className="block font-medium text-fg">{item.label}</span>
+                    <span className={clsx('block font-medium', item.danger ? 'text-danger-700' : 'text-fg')}>{item.label}</span>
                     {item.sublabel && <span className="block text-caption text-text-secondary">{item.sublabel}</span>}
                   </span>
+                  {item.danger && <WarningCircle size={16} className="shrink-0 text-danger-600" aria-hidden="true" />}
                   {item.id === value && <Check size={18} className="text-accent-600" aria-hidden="true" />}
                 </button>
               </li>

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowDownRight, ArrowUpRight, Stack, Warning, Package, Pill, TrendUp, TrendDown, Eye } from '@phosphor-icons/react';
 import type { IconProps } from '@phosphor-icons/react';
-import { fetchProducts, fetchMedications, fetchMovements, fetchLots, type Product, type Movement } from '../../lib/db';
+import { fetchProducts, fetchMedications, fetchMovements, fetchLotsBulk } from '../../lib/db';
 import { formatNumber, startOfTodayISO } from '../../lib/format';
 import { lotExpired } from '../../lib/medicationOps';
 import { MovementsWidget } from '../movimientos/MovementsWidget';
@@ -18,7 +19,7 @@ interface KpiCardProps {
   variant?: 'default' | 'success' | 'warning' | 'danger';
 }
 
-function KpiCard({ label, value, icon: Icon, trend, trendValue, variant = 'default' }: KpiCardProps) {
+const KpiCard = memo(function KpiCard({ label, value, icon: Icon, trend, trendValue, variant = 'default' }: KpiCardProps) {
   const variantStyles = {
     default: 'bg-surface-card border-border',
     success: 'bg-success-50 border-success-200',
@@ -61,43 +62,50 @@ function KpiCard({ label, value, icon: Icon, trend, trendValue, variant = 'defau
       </div>
     </div>
   );
-}
+});
 
 export function DashboardPage() {
   const { t } = useTranslation();
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [todayMovements, setTodayMovements] = useState<Movement[]>([]);
-  const [medMovements, setMedMovements] = useState<Movement[]>([]);
-  const [expiredLots, setExpiredLots] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const { data: products = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ['products'],
+    queryFn: fetchProducts,
+  });
 
-  useEffect(() => {
-    void (async () => {
-      const [prods, medsData, movs, medMovs] = await Promise.all([
-        fetchProducts(),
-        fetchMedications(),
-        fetchMovements({ since: startOfTodayISO() }),
-        fetchMovements({ itemType: 'medication', limit: 5 }),
-      ]);
-      setProducts(prods);
-      setTodayMovements(movs);
-      setMedMovements(medMovs);
+  const { data: medications = [], isLoading: loadingMeds } = useQuery({
+    queryKey: ['medications'],
+    queryFn: fetchMedications,
+  });
 
+  const { data: todayMovements = [], isLoading: loadingMovs } = useQuery({
+    queryKey: ['movements', 'today'],
+    queryFn: () => fetchMovements({ since: startOfTodayISO() }),
+  });
+
+  const { data: medMovements = [], isLoading: loadingMedMovs } = useQuery({
+    queryKey: ['movements', 'medication-recent'],
+    queryFn: () => fetchMovements({ itemType: 'medication', limit: 5 }),
+  });
+
+  const { data: expiredLots = 0, isLoading: loadingLots } = useQuery({
+    queryKey: ['lots', 'expired-count'],
+    queryFn: async () => {
+      const lotsMap = await fetchLotsBulk(medications.map((m) => m.id));
       let expired = 0;
-      const lotsResults = await Promise.all(medsData.map((m) => fetchLots(m.id)));
-      for (const lots of lotsResults) {
+      for (const lots of lotsMap.values()) {
         if (lots.some(lotExpired)) expired++;
       }
-      setExpiredLots(expired);
-      setLoading(false);
-    })();
-  }, []);
+      return expired;
+    },
+    enabled: medications.length > 0,
+  });
 
-  const entradaHoy = todayMovements.filter((m) => m.kind === 'entrada').reduce((acc, m) => acc + m.qty, 0);
-  const salidaHoy = todayMovements.filter((m) => m.kind === 'salida').reduce((acc, m) => acc + m.qty, 0);
-  const lowStock = products.filter((p) => p.is_active && p.min_stock != null && p.total_stock <= p.min_stock);
-  const outOfStock = products.filter((p) => p.is_active && p.total_stock === 0);
+  const loading = loadingProducts || loadingMeds || loadingMovs || loadingMedMovs || loadingLots;
+
+  const entradaHoy = useMemo(() => todayMovements.filter((m) => m.kind === 'entrada').reduce((acc, m) => acc + m.qty, 0), [todayMovements]);
+  const salidaHoy = useMemo(() => todayMovements.filter((m) => m.kind === 'salida').reduce((acc, m) => acc + m.qty, 0), [todayMovements]);
+  const lowStock = useMemo(() => products.filter((p) => p.is_active && p.min_stock != null && p.total_stock <= p.min_stock), [products]);
+  const outOfStock = useMemo(() => products.filter((p) => p.is_active && p.total_stock === 0), [products]);
 
   const alertsCount = lowStock.length + expiredLots;
 
@@ -290,7 +298,7 @@ export function DashboardPage() {
           {/* Recent Medications Activity */}
           <section className="rounded-xl border border-border bg-surface-card p-4">
             <h3 className="text-h3 mb-3">Medicamentos</h3>
-            {loading ? (
+            {loadingMedMovs ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }, (_, i) => (
                   <Skeleton key={i} className="h-12 rounded-lg" />

@@ -6,6 +6,7 @@ import { fetchKit, fetchKitComponents, fetchProducts, fetchUnits, fetchKitBuilds
 import { formatNumber, formatDate, formatTime } from '../../lib/format';
 import { Button } from '../../components/ui/Button';
 import { KitActionModal } from './KitActionModal';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export function KitDetailPage() {
   const { t } = useTranslation();
@@ -17,15 +18,32 @@ export function KitDetailPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [builds, setBuilds] = useState<KitBuild[]>([]);
   const [deliveries, setDeliveries] = useState<KitDelivery[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!id) return;
-    fetchKit(id).then(setKit);
-    fetchKitComponents(id).then(setKitComps);
-    fetchProducts().then(setProducts);
-    fetchUnits().then(setUnits);
-    fetchKitBuilds(id).then(setBuilds);
-    fetchKitDeliveries(id).then(setDeliveries);
+    setLoading(true);
+    setError('');
+    Promise.all([
+      fetchKit(id).catch(() => null),
+      fetchKitComponents(id).catch(() => []),
+      fetchProducts().catch(() => []),
+      fetchUnits().catch(() => []),
+      fetchKitBuilds(id).catch(() => []),
+      fetchKitDeliveries(id).catch(() => []),
+    ]).then(([k, comps, prods, unts, blds, dels]) => {
+      setKit(k);
+      setKitComps(comps);
+      setProducts(prods);
+      setUnits(unts);
+      setBuilds(blds);
+      setDeliveries(dels);
+      setLoading(false);
+    }).catch(() => {
+      setError('Error al cargar los datos del kit.');
+      setLoading(false);
+    });
   }, [id]);
 
   const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
@@ -47,11 +65,40 @@ export function KitDetailPage() {
 
   const refresh = () => {
     if (!id) return;
-    fetchKit(id).then(setKit);
-    fetchKitComponents(id).then(setKitComps);
-    fetchKitBuilds(id).then(setBuilds);
-    fetchKitDeliveries(id).then(setDeliveries);
+    Promise.all([
+      fetchKit(id).catch(() => null),
+      fetchKitComponents(id).catch(() => []),
+      fetchKitBuilds(id).catch(() => []),
+      fetchKitDeliveries(id).catch(() => []),
+    ]).then(([k, comps, blds, dels]) => {
+      if (k) setKit(k);
+      setKitComps(comps);
+      setBuilds(blds);
+      setDeliveries(dels);
+    });
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4 p-4">
+        <Skeleton className="h-4 w-24 rounded" />
+        <Skeleton className="h-8 w-48 rounded" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-32 w-full rounded-xl" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 p-8">
+        <p className="text-body text-danger-700">{error}</p>
+        <Link to="/kits" className="text-caption text-accent-600 hover:underline">
+          ← {t('kits.list.title')}
+        </Link>
+      </div>
+    );
+  }
 
   if (!kit) return null;
 

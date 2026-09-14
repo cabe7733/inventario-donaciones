@@ -9,6 +9,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { KitFormModal } from './KitFormModal';
 import { KitActionModal } from './KitActionModal';
+import { SkeletonList } from '../../components/ui/Skeleton';
 
 export function KitsListPage() {
   const { t } = useTranslation();
@@ -18,13 +19,23 @@ export function KitsListPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [kitComps, setKitComps] = useState<KitComponent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchKits().then(setKits);
-    fetchCategories().then(setCategories);
-    fetchUnits().then(setUnits);
-    fetchProducts().then(setProducts);
-    fetchAllKitComponents().then(setKitComps);
+    Promise.all([
+      fetchKits().catch(() => []),
+      fetchCategories().catch(() => []),
+      fetchUnits().catch(() => []),
+      fetchProducts().catch(() => []),
+      fetchAllKitComponents().catch(() => []),
+    ]).then(([k, c, u, p, kc]) => {
+      setKits(k);
+      setCategories(c);
+      setUnits(u);
+      setProducts(p);
+      setKitComps(kc);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -47,8 +58,13 @@ export function KitsListPage() {
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
   const refresh = () => {
-    fetchKits().then(setKits);
-    fetchAllKitComponents().then(setKitComps);
+    Promise.all([
+      fetchKits().catch(() => []),
+      fetchAllKitComponents().catch(() => []),
+    ]).then(([k, kc]) => {
+      setKits(k);
+      setKitComps(kc);
+    });
   };
 
   return (
@@ -66,7 +82,9 @@ export function KitsListPage() {
         </Button>
       </header>
 
-      {kits.length === 0 ? (
+      {loading ? (
+        <SkeletonList />
+      ) : kits.length === 0 ? (
         <EmptyState
           icon={Cube}
           title={t('kits.list.empty')}

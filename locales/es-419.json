@@ -184,7 +184,8 @@
     "tabs.entradas": "Entradas",
     "tabs.salidas": "Salidas",
     "tabs.movimientos": "Movimientos",
-    "mov.empty": "Sin movimientos de medicamentos aún."
+    "mov.empty": "Sin movimientos de medicamentos aún.",
+    "formula.alert.expiring": "Este medicamento tiene lotes próximos a vencer."
   },
   "kits": {
     "list.title": "Kits",

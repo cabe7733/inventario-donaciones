@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash } from '@phosphor-icons/react';
+import { Check, Plus, Trash } from '@phosphor-icons/react';
 import { fetchWarehouses, transferStock, warehouseStocksBulk } from '../../lib/warehouseOps';
 import { fetchProducts, fetchMedications, fetchKits } from '../../lib/db';
 import type { Product, Medication, Kit } from '../../lib/db';
@@ -106,24 +106,30 @@ export function TrasladosPage() {
     }
     setBusy(true);
     try {
-      for (const it of items) {
-        const qty = qtyNum(it);
-        if (!it.item_id || qty <= 0) continue;
-        const item = getItem(it.item_type, it.item_id);
-        if (!item) continue;
-        await transferStock({
-          warehouseOriginId: fromWarehouse,
-          warehouseDestId: toWarehouse,
-          itemType: it.item_type,
-          itemId: it.item_id,
-          loteId: null,
-          qty,
-          unitId: (item as any).unit_id,
-          fecha: new Date().toISOString(),
-          centerId,
-          nota: 'Traslado entre bodegas',
-        });
-      }
+      const transfers = items
+        .filter((it) => {
+          const qty = qtyNum(it);
+          return it.item_id && qty > 0;
+        })
+        .map((it) => {
+          const qty = qtyNum(it);
+          const item = getItem(it.item_type, it.item_id);
+          if (!item) return null;
+          return transferStock({
+            warehouseOriginId: fromWarehouse,
+            warehouseDestId: toWarehouse,
+            itemType: it.item_type,
+            itemId: it.item_id,
+            loteId: null,
+            qty,
+            unitId: (item as any).unit_id,
+            fecha: new Date().toISOString(),
+            centerId,
+            nota: 'Traslado entre bodegas',
+          });
+        })
+        .filter(Boolean);
+      await Promise.all(transfers);
       const fromName = warehouses.find((w) => w.id === fromWarehouse)?.name ?? '';
       const toName = warehouses.find((w) => w.id === toWarehouse)?.name ?? '';
       toast.push({ message: `Traslado registrado: ${fromName} → ${toName}`, tone: 'success' });
@@ -162,9 +168,8 @@ export function TrasladosPage() {
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-h3">Items a trasladar</h2>
-            <Button type="button" variant="ghost" onClick={addItem}>
-              <Plus size={18} className="mr-1" />
-              {t('common.add')}
+            <Button type="button" variant="ghost" onClick={addItem} aria-label={t('common.add')}>
+              <Plus size={18} />
             </Button>
           </div>
 
@@ -234,8 +239,8 @@ export function TrasladosPage() {
         </section>
 
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="primary" disabled={!valid || busy} onClick={() => void run()}>
-            {busy ? 'Registrando...' : t('bodegas.traslados.confirm')}
+          <Button type="button" variant="primary" disabled={!valid || busy} onClick={() => void run()} aria-label={t('bodegas.traslados.confirm')}>
+            {busy ? 'Registrando...' : <Check size={18} />}
           </Button>
         </div>
       </div>

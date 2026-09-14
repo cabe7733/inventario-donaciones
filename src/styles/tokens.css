@@ -20,6 +20,7 @@
   --color-accent-500: 99 102 241;
   --color-accent-600: 79 70 229;
   --color-accent-700: 67 56 202;
+  --color-accent-900: 49 46 129;
 
   /* ---- Semantic ---- */
   --color-success-50: 240 253 244;
@@ -153,6 +154,7 @@
   --color-accent-500: 165 180 252;
   --color-accent-600: 199 210 254;
   --color-accent-700: 224 231 255;
+  --color-accent-900: 238 242 255;
 
   /* ---- Semantic (adjusted for dark) ---- */
   --color-success-50: 20 83 45;

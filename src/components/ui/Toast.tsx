@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { createContext, memo, useCallback, useContext, useState, type ReactNode } from 'react';
 import { CheckCircle, XCircle, Info, X } from '@phosphor-icons/react';
 import { newId } from '../../lib/ids';
 import { clsx } from 'clsx';
@@ -56,7 +56,7 @@ interface ToastItemProps {
   onDismiss: (id: string) => void;
 }
 
-function ToastItem({ toast, onDismiss }: ToastItemProps) {
+const ToastItem = memo(function ToastItem({ toast, onDismiss }: ToastItemProps) {
   const { bg, icon, iconBg } = TONE_CLASS[toast.tone];
 
   return (
@@ -88,13 +88,13 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
         type="button"
         onClick={() => onDismiss(toast.id)}
         className="shrink-0 flex h-8 w-8 items-center justify-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
-        aria-label="Dismiss"
+        aria-label="Cerrar notificación"
       >
         <X size={16} />
       </button>
     </div>
   );
-}
+});
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
