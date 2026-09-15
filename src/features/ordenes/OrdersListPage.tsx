@@ -10,6 +10,7 @@ import { Modal } from '../../components/ui/Modal';
 import { PageContainer } from '../../components/layout/PageContainer';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { useToast } from '../../components/ui/Toast';
+import { OrderDetailModal } from './OrderDetailModal';
 
 interface OrdersListPageProps {
   type: 'entrada' | 'salida';
@@ -26,6 +27,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
   const queryClient = useQueryClient();
   const toast = useToast();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrderWithRefs | null>(null);
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', type],
@@ -69,6 +71,10 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
       });
     },
   });
+
+  const handleRowClick = (row: OrderWithRefs) => {
+    setSelectedOrder(row);
+  };
 
   const columns: Column<OrderWithRefs>[] = [
     {
@@ -181,6 +187,7 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
         data={orders}
         loading={isLoading}
         emptyMessage={`No hay ${type === 'entrada' ? 'entradas' : 'salidas'} registradas`}
+        onRowClick={handleRowClick}
       />
 
       {deletingId && (
@@ -212,6 +219,12 @@ export function OrdersListPage({ type }: OrdersListPageProps) {
           </div>
         </Modal>
       )}
+
+      <OrderDetailModal
+        order={selectedOrder}
+        open={selectedOrder !== null}
+        onClose={() => setSelectedOrder(null)}
+      />
     </PageContainer>
   );
 }

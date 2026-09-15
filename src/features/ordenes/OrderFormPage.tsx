@@ -6,7 +6,7 @@ import { fetchProducts } from '../../lib/db';
 import { createInventoryExit, createOrder, replaceOrder, fetchOrderWithItems, updateInventoryExitAuthorizer } from '../../lib/orderOps';
 import { fetchInventoryAuthorizers, type ExitAuthorizer } from '../../lib/medicalPrescriptionOps';
 import { warehouseStocksBulk } from '../../lib/warehouseOps';
-import { formatNumber } from '../../lib/format';
+import { formatNumber, todayKey } from '../../lib/format';
 import type { PartyKind } from '../../lib/donorOps';
 import type { AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Field, inputWithError } from '../../components/ui/Field';
@@ -51,6 +51,7 @@ export function OrderFormPage() {
   const [warehouseId, setWarehouseId] = useState('');
   const [partyId, setPartyId] = useState<string | null>(null);
   const [inventoryAuthorizerId, setInventoryAuthorizerId] = useState('');
+  const [orderDate, setOrderDate] = useState(todayKey());
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [vehicleType, setVehicleType] = useState('');
   const [vehicleColor, setVehicleColor] = useState('');
@@ -74,6 +75,9 @@ export function OrderFormPage() {
     setVehiclePlate(existingOrder.vehicle_plate ?? '');
     setVehicleType(existingOrder.vehicle_type ?? '');
     setVehicleColor(existingOrder.vehicle_color ?? '');
+    if (existingOrder.order_date) {
+      setOrderDate(existingOrder.order_date.split('T')[0]);
+    }
     const loaded = (existingOrder.order_items ?? []).map((it) => ({
       item_type: it.item_type,
       item_id: it.item_id,
@@ -161,6 +165,7 @@ export function OrderFormPage() {
         vehicle_type: orderType === 'entrada' ? vehicleType || undefined : undefined,
         vehicle_color: orderType === 'entrada' ? vehicleColor || undefined : undefined,
         items: parsed,
+        ...(orderType === 'salida' ? { order_date: `${orderDate}T12:00:00` } : {}),
       };
 
       if (isEditing) {
@@ -250,6 +255,20 @@ export function OrderFormPage() {
                 <option key={authorizer.id} value={authorizer.id}>{authorizer.name}</option>
               ))}
             </select>
+          </Field>
+        )}
+
+        {orderType === 'salida' && (
+          <Field id="order-date" label="Fecha de salida" required>
+            <input
+              id="order-date"
+              type="date"
+              value={orderDate}
+              onChange={(e) => setOrderDate(e.target.value)}
+              className={inputWithError(undefined)}
+              max={todayKey()}
+            />
+            <p className="text-caption text-muted mt-1">Día en que salió la mercancía</p>
           </Field>
         )}
 
