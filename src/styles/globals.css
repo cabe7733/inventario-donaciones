@@ -1,6 +1,43 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../tailwind.config.ts";
+@import "tailwindcss";
+@import "@heroui/styles";
+
+/* HeroUI v3 semantic tokens → Donario palette */
+:root {
+  --accent: oklch(0.65 0.15 170);
+  --success: oklch(0.6 0.15 155);
+  --warning: oklch(0.75 0.15 85);
+  --danger: oklch(0.6 0.2 25);
+  --background: oklch(0.97 0.005 170);
+  --foreground: oklch(0.18 0.02 210);
+  --surface: oklch(1 0 0);
+  --overlay: oklch(1 0 0);
+  --field-background: oklch(1 0 0);
+  --field-border: oklch(0.82 0.01 210);
+  --field-border-focus: oklch(0.65 0.15 170);
+  --field-border-error: oklch(0.6 0.2 25);
+  --field-text: oklch(0.18 0.02 210);
+  --field-placeholder: oklch(0.6 0.01 210);
+  --field-disabled-bg: oklch(0.96 0.005 210);
+}
+
+[data-theme='dark'] {
+  --accent: oklch(0.72 0.14 170);
+  --success: oklch(0.72 0.14 155);
+  --warning: oklch(0.82 0.14 85);
+  --danger: oklch(0.72 0.18 25);
+  --background: oklch(0.16 0.01 260);
+  --foreground: oklch(0.93 0.005 260);
+  --surface: oklch(0.2 0.01 260);
+  --overlay: oklch(0.2 0.01 260);
+  --field-background: oklch(0.22 0.01 260);
+  --field-border: oklch(0.35 0.01 260);
+  --field-border-focus: oklch(0.72 0.14 170);
+  --field-border-error: oklch(0.72 0.18 25);
+  --field-text: oklch(0.93 0.005 260);
+  --field-placeholder: oklch(0.55 0.01 260);
+  --field-disabled-bg: oklch(0.24 0.01 260);
+}
 
 @layer base {
   html {
@@ -13,6 +50,7 @@
   body {
     @apply bg-surface text-fg;
     min-height: 100dvh;
+    background-image: radial-gradient(circle at 90% -10%, rgb(var(--color-primary-100) / 0.42), transparent 28rem);
   }
 
   *,
@@ -41,36 +79,6 @@
   ::selection {
     background-color: rgb(var(--color-primary-100));
     color: rgb(var(--color-primary-800));
-  }
-
-  /* HeroUI-style input base */
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="search"],
-  input[type="tel"],
-  input[type="url"],
-  input[type="date"],
-  textarea,
-  select {
-    @apply h-10 rounded-lg border border-border-default bg-neutral-0 px-3 text-body-sm text-fg
-           placeholder:text-text-tertiary
-           transition-colors duration-fast
-           focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100;
-  }
-
-  [data-theme='dark'] input[type="text"],
-  [data-theme='dark'] input[type="email"],
-  [data-theme='dark'] input[type="password"],
-  [data-theme='dark'] input[type="number"],
-  [data-theme='dark'] input[type="search"],
-  [data-theme='dark'] input[type="tel"],
-  [data-theme='dark'] input[type="url"],
-  [data-theme='dark'] input[type="date"],
-  [data-theme='dark'] textarea,
-  [data-theme='dark'] select {
-    @apply bg-neutral-100 border-neutral-200;
   }
 }
 

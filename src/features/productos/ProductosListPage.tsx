@@ -143,7 +143,7 @@ export function ProductosListPage() {
             ariaLabel="Más acciones"
             align="right"
             trigger={
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card text-fg hover:bg-primary-50 dark:hover:bg-primary-900/30">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-card text-fg transition-colors hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30">
                 <DotsThree size={20} weight="bold" aria-hidden="true" />
               </span>
             }
@@ -185,8 +185,10 @@ export function ProductosListPage() {
           role="tab"
           aria-selected={catFilter === null}
           onClick={() => setCatFilter(null)}
-          className={`shrink-0 rounded-full px-3 py-1.5 text-caption font-semibold transition-colors ${
-            catFilter === null ? 'bg-primary-600 text-inverse' : 'bg-card text-muted border border-border hover:border-primary-300'
+          className={`shrink-0 rounded-full px-3.5 py-1.5 text-caption font-semibold transition-all ${
+            catFilter === null
+              ? 'bg-primary-600 text-white shadow-[0_2px_8px_rgb(var(--color-primary-500)/0.3)]'
+              : 'bg-neutral-0 text-muted border border-border/60 hover:border-primary-300 hover:text-primary-700'
           }`}
         >
           {t('productos.list.all')}
@@ -197,8 +199,10 @@ export function ProductosListPage() {
             role="tab"
             aria-selected={catFilter === c.id}
             onClick={() => setCatFilter(catFilter === c.id ? null : c.id)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-caption font-semibold transition-colors ${
-              catFilter === c.id ? 'bg-primary-600 text-inverse' : 'bg-card text-muted border border-border hover:border-primary-300'
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-caption font-semibold transition-all ${
+              catFilter === c.id
+                ? 'bg-primary-600 text-white shadow-[0_2px_8px_rgb(var(--color-primary-500)/0.3)]'
+                : 'bg-neutral-0 text-muted border border-border/60 hover:border-primary-300 hover:text-primary-700'
             }`}
           >
             {c.name}
@@ -221,23 +225,23 @@ export function ProductosListPage() {
           }
         />
       ) : (
-        <ul className="grid grid-cols-1 gap-2 sm:gap-3 lg:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-2.5 sm:gap-3 lg:grid-cols-2 xl:grid-cols-3">
           {visible.map((p) => {
             const unit = unitBy.get(p.unit_id);
             const low = p.min_stock != null && p.total_stock <= p.min_stock;
             return (
-              <li key={p.id} className="rounded-lg border border-border bg-card p-3">
+              <li key={p.id} className="group rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-all hover:border-primary-300/60 hover:shadow-md">
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-body font-semibold">{p.name}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    <p className="truncate text-body font-semibold group-hover:text-primary-700 transition-colors">{p.name}</p>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                       {catBy.get(p.category_id ?? '') && (
                         <span className="rounded-full bg-primary-50 px-2 py-0.5 text-caption text-primary-700">
                           {catBy.get(p.category_id!)!.name}
                         </span>
                       )}
                       {low && (
-                        <span className="flex items-center gap-1 rounded-full bg-warning-500/15 px-2 py-0.5 text-caption font-semibold text-warning-700">
+                        <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-caption font-semibold text-amber-700 ring-1 ring-amber-200/50">
                           <Warning size={12} aria-hidden="true" />
                           {t('productos.stock.low')}
                         </span>
@@ -254,18 +258,18 @@ export function ProductosListPage() {
                       size="sm"
                       aria-label={`${t('common.edit')} ${p.name}`}
                       onClick={() => openEdit(p)}
-                      className="h-11 w-11 px-0"
+                      className="h-9 w-9 px-0"
                     >
-                      <PencilSimple size={18} aria-hidden="true" />
+                      <PencilSimple size={16} aria-hidden="true" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       aria-label={`${t('common.delete')} ${p.name}`}
                       onClick={() => setDeleting(p)}
-                      className="h-11 w-11 px-0 hover:bg-danger-500/10 hover:text-danger-700"
+                      className="h-9 w-9 px-0 hover:bg-danger-500/10 hover:text-danger-700"
                     >
-                      <Trash size={18} aria-hidden="true" />
+                      <Trash size={16} aria-hidden="true" />
                     </Button>
                   </div>
                 </div>

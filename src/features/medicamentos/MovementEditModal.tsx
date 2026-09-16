@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '../../components/ui/Button';
 import { Field, inputWithError } from '../../components/ui/Field';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { updateMedicationMovement } from '../../lib/medicationOps';
@@ -40,7 +41,7 @@ export function MovementEditModal({
 
   const isEntrada = movement?.kind === 'entrada';
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<EditMovementFormData>({
+  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<EditMovementFormData>({
     resolver: zodResolver(editMovementSchema),
   });
 
@@ -111,11 +112,16 @@ export function MovementEditModal({
           </Field>
 
           <Field id="fecha_vencimiento" label="Fecha de Vencimiento" error={errors.fecha_vencimiento?.message}>
-            <input
-              id="fecha_vencimiento"
-              type="date"
-              {...register('fecha_vencimiento')}
-              className={inputWithError(errors.fecha_vencimiento)}
+            <Controller
+              control={control}
+              name="fecha_vencimiento"
+              render={({ field }) => (
+                <DatePicker
+                  id="fecha_vencimiento"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                />
+              )}
             />
           </Field>
         </div>

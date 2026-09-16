@@ -9,7 +9,8 @@ import { formatDate } from '../../lib/format';
 import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { Button } from '../../components/ui/Button';
-import { Field, inputClass } from '../../components/ui/Field';
+import { Field } from '../../components/ui/Field';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { Segmented } from '../../components/ui/Segmented';
 import { useToast } from '../../components/ui/Toast';
 
@@ -158,10 +159,10 @@ export function InformeBodegaPage() {
         <>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Field id="rep-from" label={t('informes.desde')}>
-              <input id="rep-from" type="date" className={inputClass} value={from} onChange={(e) => setFrom(e.target.value)} />
+              <DatePicker id="rep-from" value={from} onChange={setFrom} />
             </Field>
             <Field id="rep-to" label={t('informes.hasta')}>
-              <input id="rep-to" type="date" className={inputClass} value={to} onChange={(e) => setTo(e.target.value)} />
+              <DatePicker id="rep-to" value={to} onChange={setTo} />
             </Field>
             <div className="flex items-end">
               <Button

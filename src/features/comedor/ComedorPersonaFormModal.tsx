@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { createComedorPerson, registerVisit, updateComedorPerson, type ComedorPerson } from '../../lib/comedorOps';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { Field, inputWithError } from '../../components/ui/Field';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { CedulaScanner, type CedulaScanResult } from '../../components/ui/CedulaScanner';
@@ -27,7 +28,7 @@ export function ComedorPersonaFormModal({ person, onClose }: { person: ComedorPe
   const queryClient = useQueryClient();
   const [error, setError] = useState<string>();
   const toast = useToast();
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, handleSubmit, setValue, control, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: person ? { nombre: person.nombre, apellido: person.apellido ?? '', celular: person.celular ?? '', numero_documento: person.numero_documento ?? '', fecha_nacimiento: person.fecha_nacimiento ?? '', sexo: person.sexo ?? '', fecha: '' } : { fecha_nacimiento: '', sexo: '', fecha: new Date().toISOString().slice(0, 10) },
   });
@@ -69,10 +70,10 @@ export function ComedorPersonaFormModal({ person, onClose }: { person: ComedorPe
        <div className="grid grid-cols-2 gap-4">
          <Field id="celular" label="Celular"><input id="celular" type="tel" {...register('celular')} className={inputWithError(errors.celular)} /></Field>
          <Field id="numero_documento" label="Documento"><input id="numero_documento" {...register('numero_documento')} className={inputWithError(errors.numero_documento)} /></Field>
-         <Field id="fecha_nacimiento" label="Fecha de nacimiento"><input id="fecha_nacimiento" type="date" {...register('fecha_nacimiento')} className={inputWithError(errors.fecha_nacimiento)} /></Field>
-         <Field id="sexo" label="Sexo"><select id="sexo" {...register('sexo')} className={inputWithError(errors.sexo)}><option value="">Seleccionar...</option><option value="F">Femenino</option><option value="M">Masculino</option><option value="O">Otro</option></select></Field>
+         <Field id="fecha_nacimiento" label="Fecha de nacimiento"><Controller control={control} name="fecha_nacimiento" render={({ field }) => (<DatePicker id="fecha_nacimiento" value={field.value ?? ''} onChange={field.onChange} />)} /></Field>
        </div>
-      <Field id="fecha" label={person ? 'Agregar visita (opcional)' : 'Fecha de visita'} required={!person} error={errors.fecha?.message}><input id="fecha" type="date" {...register('fecha')} className={inputWithError(errors.fecha)} /></Field>
+      <Field id="sexo" label="Sexo"><select id="sexo" {...register('sexo')} className={inputWithError(errors.sexo)}><option value="">Seleccionar...</option><option value="F">Femenino</option><option value="M">Masculino</option><option value="O">Otro</option></select></Field>
+      <Field id="fecha" label={person ? 'Agregar visita (opcional)' : 'Fecha de visita'} required={!person} error={errors.fecha?.message}><Controller control={control} name="fecha" render={({ field }) => (<DatePicker id="fecha" value={field.value ?? ''} onChange={field.onChange} />)} /></Field>
       <div className="flex justify-end gap-3"><Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button><Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Guardando...' : 'Guardar'}</Button></div>
     </form>
   </Modal>;

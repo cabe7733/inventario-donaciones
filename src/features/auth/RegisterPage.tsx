@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../../lib/supabase';
 import { Field, inputWithError } from '../../components/ui/Field';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { Button } from '../../components/ui/Button';
 import { Segmented } from '../../components/ui/Segmented';
 
@@ -39,7 +40,7 @@ export function RegisterPage() {
   const [error, setError] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RegisterFormData>({
+  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       doc_type: 'cc',
@@ -177,11 +178,16 @@ export function RegisterPage() {
           </Field>
 
           <Field id="birth_date" label="Fecha de nacimiento" required error={errors.birth_date?.message}>
-            <input
-              id="birth_date"
-              type="date"
-              {...register('birth_date')}
-              className={inputWithError(errors.birth_date)}
+            <Controller
+              control={control}
+              name="birth_date"
+              render={({ field }) => (
+                <DatePicker
+                  id="birth_date"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                />
+              )}
             />
           </Field>
 

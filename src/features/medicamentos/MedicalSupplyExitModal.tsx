@@ -4,6 +4,7 @@ import { warehouseStock } from '../../lib/warehouseOps';
 import { formatNumber, todayKey } from '../../lib/format';
 import { Button } from '../../components/ui/Button';
 import { Field, inputClass } from '../../components/ui/Field';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { Modal } from '../../components/ui/Modal';
 import { QuickPartySelect } from '../../components/ui/QuickPartySelect';
 import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
@@ -48,10 +49,13 @@ export function MedicalSupplyExitModal({ supply, open, onClose }: { supply: Medi
 
   return <Modal open={open} onClose={onClose} title={`Salida de ${supply?.name ?? 'insumo'}`}>
     <div className="flex flex-col gap-4">
-      <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
+        <QuickPartySelect kind="recipient" value={recipientId} onChange={setRecipientId} required label="Beneficiario" />
+        <Field id="supply-exit-qty" label="Cantidad" required><input id="supply-exit-qty" type="number" min="0.01" step="any" className={inputClass} value={qty} onChange={(e) => setQty(e.target.value)} /></Field>
+        <Field id="supply-exit-date" label="Fecha"><DatePicker id="supply-exit-date" value={fecha} onChange={setFecha} /></Field>
+      </div>
       <p className="text-caption text-muted">Stock disponible en la bodega: <strong>{formatNumber(stock)}</strong></p>
-      <QuickPartySelect kind="recipient" value={recipientId} onChange={setRecipientId} required label="Beneficiario" />
-      <div className="grid grid-cols-2 gap-3"><Field id="supply-exit-qty" label="Cantidad" required><input id="supply-exit-qty" type="number" min="0.01" step="any" className={inputClass} value={qty} onChange={(e) => setQty(e.target.value)} /></Field><Field id="supply-exit-date" label="Fecha"><input id="supply-exit-date" type="date" className={inputClass} value={fecha} onChange={(e) => setFecha(e.target.value)} /></Field></div>
       <div className="flex justify-end gap-2"><Button variant="ghost" onClick={onClose}>Cancelar</Button><Button onClick={() => void save()} disabled={saving}>{saving ? 'Guardando...' : 'Registrar salida'}</Button></div>
     </div>
   </Modal>;

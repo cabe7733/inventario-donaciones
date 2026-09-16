@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Package, User, Warehouse, Truck, Calendar, Note } from '@phosphor-icons/react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { formatDateShort, formatNumber, formatTime } from '../../lib/format';
 import type { OrderWithRefs } from '../../lib/orderOps';
 import { supabase } from '../../lib/supabase';
+import { fetchProducts, fetchMedications, fetchKits } from '../../lib/db';
 
 interface OrderDetailModalProps {
   order: OrderWithRefs | null;
@@ -24,6 +26,18 @@ export function OrderDetailModal({ order, open, onClose }: OrderDetailModalProps
   } | null>(null);
   const [warehouseName, setWarehouseName] = useState<string>('');
   const [authorizerName, setAuthorizerName] = useState<string>('');
+
+  const { data: products = [] } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
+  const { data: medications = [] } = useQuery({ queryKey: ['medications'], queryFn: fetchMedications });
+  const { data: kits = [] } = useQuery({ queryKey: ['kits'], queryFn: fetchKits });
+
+  const itemNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of products) map.set(`product:${p.id}`, p.name);
+    for (const m of medications) map.set(`medication:${m.id}`, m.name);
+    for (const k of kits) map.set(`kit:${k.id}`, k.name);
+    return map;
+  }, [products, medications, kits]);
 
   useEffect(() => {
     if (!order) return;
@@ -242,7 +256,7 @@ export function OrderDetailModal({ order, open, onClose }: OrderDetailModalProps
                   <div className="flex items-center gap-2">
                     <Package size={18} className="text-primary-600" />
                     <div>
-                      <p className="text-body font-medium text-fg">{item.item_id}</p>
+                      <p className="text-body font-medium text-fg">{itemNameById.get(`${item.item_type}:${item.item_id}`) ?? item.item_id}</p>
                       {item.notes && <p className="text-caption text-muted">{item.notes}</p>}
                     </div>
                   </div>

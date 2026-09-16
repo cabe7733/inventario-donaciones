@@ -55,30 +55,33 @@ export function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-primary-50 via-white to-primary-100/40 p-4">
-      <div className="w-full max-w-sm">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-surface p-4">
+      <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary-300/20 blur-3xl" aria-hidden="true" />
+      <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-primary-200/25 blur-3xl" aria-hidden="true" />
+
+      <div className="relative w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500 shadow-elev-2">
+          <div className="mb-5 flex h-[72px] w-[72px] items-center justify-center rounded-[1.25rem] bg-gradient-to-br from-primary-500 to-primary-600 shadow-[0_8px_32px_rgb(var(--color-primary-500)/0.3)]">
             <img src="/donario_logo.png" alt="" className="h-10 w-10 object-contain" aria-hidden="true" />
           </div>
-          <h1 className="text-display-sm text-fg">Donario</h1>
-          <p className="mt-1.5 text-body text-text-secondary">Centro de acopio</p>
+          <h1 className="text-display-sm tracking-tight text-fg">Donario</h1>
+          <p className="mt-1 text-body text-text-secondary">Centro de acopio</p>
         </div>
 
-        <div className="rounded-2xl border border-border/50 bg-surface-card p-6 shadow-elev-2">
+        <div className="rounded-2xl border border-border bg-neutral-0 p-6 shadow-elev-3">
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
             {justRegistered && (
-              <div className="rounded-xl bg-success-50 p-3 text-caption text-success-700 ring-1 ring-success-200/40">
+              <div className="rounded-xl bg-success-50 p-3 text-caption text-success-700 ring-1 ring-success-200/50">
                 Cuenta creada. Inicia sesión para continuar.
               </div>
             )}
             {passwordReset && (
-              <div className="rounded-xl bg-success-50 p-3 text-caption text-success-700 ring-1 ring-success-200/40">
+              <div className="rounded-xl bg-success-50 p-3 text-caption text-success-700 ring-1 ring-success-200/50">
                 Contraseña actualizada. Inicia sesión con tu nueva contraseña.
               </div>
             )}
             {error && (
-              <div className="rounded-xl bg-danger-50 p-3 text-caption text-danger-700 ring-1 ring-danger-200/40">
+              <div className="rounded-xl bg-danger-50 p-3 text-caption text-danger-700 ring-1 ring-danger-200/50">
                 {error}
               </div>
             )}

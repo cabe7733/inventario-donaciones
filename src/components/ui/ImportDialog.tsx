@@ -133,7 +133,7 @@ export function ImportDialog({
                   <FileArrowDown size={16} aria-hidden="true" />
                   Descargar plantilla
                 </Button>
-                <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border-default bg-white px-4 text-body-sm font-semibold text-fg hover:bg-neutral-50">
+                <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border-default bg-neutral-0 px-4 text-body-sm font-semibold text-fg hover:bg-neutral-50">
                   <input
                     ref={fileRef}
                     type="file"
@@ -169,7 +169,7 @@ export function ImportDialog({
                     <li
                       key={`${r.lineNo}-${i}`}
                       className={`flex items-start gap-2 rounded-lg border p-2.5 text-body-sm ${
-                        r.status === 'ok' ? 'border-border-default bg-white' : 'border-danger-200 bg-danger-50'
+                        r.status === 'ok' ? 'border-border-default bg-neutral-0' : 'border-danger-200 bg-danger-50'
                       }`}
                     >
                       <span className="shrink-0 pt-0.5">

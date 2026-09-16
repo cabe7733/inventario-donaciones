@@ -55,7 +55,9 @@ function getCellText(value: ReactNode): string {
   if (value == null || typeof value === 'boolean') return '';
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint') return String(value);
   if (Array.isArray(value)) return value.map(getCellText).join(' ');
-  if (isValidElement(value)) return getCellText(value.props.children);
+  if (isValidElement(value)) {
+    return getCellText((value.props as { children?: ReactNode }).children);
+  }
   return '';
 }
 
@@ -146,7 +148,7 @@ export function DataTable<T extends { id?: string | number }>({
   };
 
   const renderControls = () => (
-    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-surface-card p-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-surface-card p-4 sm:flex-row sm:items-center sm:justify-between">
       <label className="relative min-w-0 flex-1">
         <span className="sr-only">Buscar en la tabla</span>
         <MagnifyingGlass size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" aria-hidden />
@@ -154,14 +156,14 @@ export function DataTable<T extends { id?: string | number }>({
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           placeholder="Buscar en todos los campos..."
-          className="h-10 w-full rounded-lg border border-border-default bg-white px-9 text-body-sm text-fg placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          className="h-10 w-full rounded-lg border border-border-default bg-neutral-0 px-9 text-body-sm text-fg placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
         />
         {search && <button type="button" onClick={() => { setSearch(''); setPage(0); }} className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-text-secondary hover:bg-neutral-100" aria-label="Limpiar búsqueda"><X size={16} /></button>}
       </label>
       <div className="flex items-center justify-between gap-2 sm:justify-end">
         <label className="flex items-center gap-2 text-caption text-text-secondary">
           <span>Registros:</span>
-          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }} className="h-9 rounded-lg border border-border-default bg-white px-2 text-body-sm text-fg focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" aria-label="Registros por página">
+          <select value={rowsPerPage} onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(0); }} className="h-9 rounded-lg border border-border-default bg-neutral-0 px-2 text-body-sm text-fg focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" aria-label="Registros por página">
             {[10, 20, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
           </select>
         </label>
@@ -352,7 +354,7 @@ export function DataTable<T extends { id?: string | number }>({
             <tr className="border-b border-border bg-surface-card">
               {columns.map((col) => (
                 <th key={col.key} className={clsx('px-3 py-2', col.className)}>
-                  {col.filterable !== false && <input value={columnFilters[col.key] ?? ''} onChange={(e) => { setColumnFilters((current) => ({ ...current, [col.key]: e.target.value })); setPage(0); }} placeholder={`Filtrar ${col.header}`} aria-label={`Filtrar por ${col.header}`} className="h-8 w-full min-w-24 rounded-md border border-border-default bg-white px-2 text-caption font-normal normal-case tracking-normal text-fg placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" />}
+                  {col.filterable !== false && <input value={columnFilters[col.key] ?? ''} onChange={(e) => { setColumnFilters((current) => ({ ...current, [col.key]: e.target.value })); setPage(0); }} placeholder={`Filtrar ${col.header}`} aria-label={`Filtrar por ${col.header}`} className="h-8 w-full min-w-24 rounded-md border border-border-default bg-neutral-0 px-2 text-caption font-normal normal-case tracking-normal text-fg placeholder:text-text-tertiary focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100" />}
                 </th>
               ))}
               {actions && actions.length > 0 && <th />}

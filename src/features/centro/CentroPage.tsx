@@ -60,6 +60,7 @@ export function CentroPage() {
 
   return (
     <PageContainer>
+      <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 text-primary-700">
@@ -80,9 +81,9 @@ export function CentroPage() {
         )}
       </header>
 
-      <section className="rounded-xl border border-border bg-card p-4">
-        <h2 className="text-h3 mb-3">Información general</h2>
-        <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <section className="rounded-xl border border-border bg-card p-5">
+        <h2 className="text-h3 mb-4">Información general</h2>
+        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Info label="Dirección" value={center.address} />
           <Info label="Municipio" value={center.city} />
           <Info label="Departamento" value={center.state} />
@@ -111,7 +112,7 @@ export function CentroPage() {
       {(role === 'super_admin' || role === 'admin') && (
         <Link
           to="/centro/miembros"
-          className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary-300 hover:bg-primary-50"
+          className="flex items-center gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary-300 hover:bg-primary-50"
         >
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary-100 text-secondary-700">
             <UserPlus size={24} aria-hidden="true" />
@@ -122,6 +123,7 @@ export function CentroPage() {
           </div>
         </Link>
       )}
+      </div>
     </PageContainer>
   );
 }

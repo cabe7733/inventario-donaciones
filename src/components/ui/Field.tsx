@@ -4,10 +4,10 @@ import type { FieldError } from 'react-hook-form';
 import { WarningCircle } from '@phosphor-icons/react';
 
 export const inputClass =
-  'h-10 w-full rounded-lg border border-border-default bg-white px-3 text-body text-fg placeholder:text-text-tertiary transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-100 focus:outline-none';
+  'h-10 w-full rounded-xl border border-border-default bg-surface-card dark:bg-neutral-900/60 px-3 py-2 text-body text-fg placeholder:text-text-tertiary transition-all focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none shadow-sm';
 
-export const inputErrorClass = 'border-danger-500 focus:border-danger-500 focus:ring-danger-100';
-export const inputDisabledClass = 'opacity-50 cursor-not-allowed bg-neutral-50';
+export const inputErrorClass = 'border-danger-500 dark:border-danger-400 focus:border-danger-500 focus:ring-danger-500/20';
+export const inputDisabledClass = 'opacity-50 cursor-not-allowed bg-neutral-100 dark:bg-neutral-800';
 
 interface FieldProps {
   id?: string;
@@ -28,8 +28,8 @@ export function Field({ id, label, required, error, hint, disabled, children }: 
       <label
         htmlFor={id}
         className={clsx(
-          'text-label',
-          hasError ? 'text-danger-700' : 'text-fg',
+          'text-label font-medium',
+          hasError ? 'text-danger-600 dark:text-danger-400' : 'text-fg',
           disabled && 'opacity-50',
         )}
       >
@@ -40,16 +40,16 @@ export function Field({ id, label, required, error, hint, disabled, children }: 
         {children}
         {hasError && (
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <WarningCircle size={18} className="text-danger-500" aria-hidden />
+            <WarningCircle size={18} className="text-danger-500 dark:text-danger-400" aria-hidden />
           </div>
         )}
       </div>
       {errorMsg ? (
-        <p className="flex items-center gap-1 text-caption text-danger-700" role="alert">
+        <p className="flex items-center gap-1 text-caption text-danger-600 dark:text-danger-400 font-medium" role="alert">
           <span>{errorMsg}</span>
         </p>
       ) : hint ? (
-        <p className="text-caption text-text-secondary">{hint}</p>
+        <p className="text-caption text-text-tertiary">{hint}</p>
       ) : null}
     </div>
   );

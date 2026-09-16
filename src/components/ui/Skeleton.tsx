@@ -1,18 +1,14 @@
-import { clsx } from 'clsx';
+import { Skeleton as HeroSkeleton } from '@heroui/react';
+import type { ComponentProps } from 'react';
 
-interface SkeletonProps {
+type HeroSkeletonProps = ComponentProps<typeof HeroSkeleton>;
+
+interface SkeletonProps extends Omit<HeroSkeletonProps, 'animationType'> {
   className?: string;
 }
 
-export function Skeleton({ className }: SkeletonProps) {
-  return (
-    <div
-      className={clsx(
-        'animate-shimmer rounded-lg bg-neutral-100',
-        className,
-      )}
-    />
-  );
+export function Skeleton({ className, ...rest }: SkeletonProps) {
+  return <HeroSkeleton animationType="shimmer" className={className} {...rest} />;
 }
 
 export function SkeletonCard() {
@@ -46,15 +42,16 @@ export function SkeletonText({ lines = 3, lastLineWidth = '75%' }: { lines?: num
       {Array.from({ length: lines - 1 }, (_, i) => (
         <Skeleton key={i} className="h-4 w-full" />
       ))}
-      <div className="animate-shimmer h-4 rounded-lg bg-neutral-100" style={{ width: lastLineWidth }} />
+      <div className="h-4 rounded-lg bg-neutral-100" style={{ width: lastLineWidth }} />
     </div>
   );
 }
 
 export function SkeletonCircle({ size = 40 }: { size?: number }) {
   return (
-    <div
-      className="animate-shimmer rounded-full bg-neutral-100"
+    <HeroSkeleton
+      animationType="shimmer"
+      className="rounded-full"
       style={{ width: size, height: size }}
     />
   );

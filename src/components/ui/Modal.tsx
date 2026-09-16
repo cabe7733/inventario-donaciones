@@ -1,7 +1,15 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-import { createPortal } from 'react-dom';
-import { X } from '@phosphor-icons/react';
-import { clsx } from 'clsx';
+import {
+  ModalRoot,
+  ModalBackdrop,
+  ModalContainer,
+  ModalDialog,
+  ModalHeader,
+  ModalHeading,
+  ModalBody,
+  ModalCloseTrigger,
+  useOverlayState,
+} from '@heroui/react';
+import type { ReactNode } from 'react';
 
 interface ModalProps {
   open: boolean;
@@ -13,115 +21,39 @@ interface ModalProps {
   className?: string;
 }
 
-const sizeStyles = {
-  sm: 'max-w-sm',
-  md: 'max-w-lg',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
+const sizeMap = {
+  sm: 'sm' as const,
+  md: 'md' as const,
+  lg: 'lg' as const,
+  xl: 'lg' as const,
 };
 
 export function Modal({ open, onClose, title, description, children, size = 'md', className }: ModalProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const previousActiveElement = useRef<HTMLElement | null>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  const state = useOverlayState({
+    isOpen: open,
+    onOpenChange: (isOpen) => {
+      if (!isOpen) onClose();
+    },
+  });
 
-  useEffect(() => {
-    if (!open) return;
-
-    previousActiveElement.current = document.activeElement as HTMLElement;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onCloseRef.current();
-      }
-      if (e.key === 'Tab') {
-        const focusableElements = panelRef.current?.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        );
-        if (!focusableElements || focusableElements.length === 0) return;
-
-        const firstElement = focusableElements[0];
-        const lastElement = focusableElements[focusableElements.length - 1];
-
-        if (e.shiftKey && document.activeElement === firstElement) {
-          e.preventDefault();
-          lastElement.focus();
-        } else if (!e.shiftKey && document.activeElement === lastElement) {
-          e.preventDefault();
-          firstElement.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-
-    setTimeout(() => {
-      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      firstFocusable?.focus();
-    }, 10);
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-      previousActiveElement.current?.focus();
-    };
-  }, [open]);
-
-  if (!open) return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      role="presentation"
-      aria-hidden={!open}
-    >
-      <div
-        aria-hidden="true"
-        onClick={onClose}
-        className="animate-fade-in absolute inset-0 bg-black/40 backdrop-blur-sm"
-      />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        aria-describedby={description ? 'modal-description' : undefined}
-        className={clsx(
-          'animate-scale-in relative w-full overflow-hidden rounded-2xl border border-border/50 bg-surface-card shadow-elev-5',
-          sizeStyles[size],
-          className,
-        )}
-      >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-4">
-          <div>
-            <h2 id="modal-title" className="text-h2">{title}</h2>
-            {description && (
-              <p id="modal-description" className="mt-1 text-body-sm text-text-secondary">
-                {description}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-neutral-100 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
-            aria-label="Cerrar"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="max-h-[70vh] overflow-y-auto p-6">
-          {children}
-        </div>
-      </div>
-    </div>,
-    document.body,
+  return (
+    <ModalRoot state={state}>
+      <ModalBackdrop isDismissable>
+        <ModalContainer size={sizeMap[size]} className={className}>
+          <ModalDialog>
+            <ModalHeader>
+              <ModalHeading>{title}</ModalHeading>
+              {description && (
+                <p className="mt-1 text-body-sm text-text-secondary">{description}</p>
+              )}
+            </ModalHeader>
+            <ModalBody className="max-h-[70vh] overflow-y-auto p-6">
+              {children}
+            </ModalBody>
+            <ModalCloseTrigger />
+          </ModalDialog>
+        </ModalContainer>
+      </ModalBackdrop>
+    </ModalRoot>
   );
 }

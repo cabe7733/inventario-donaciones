@@ -1,34 +1,14 @@
-import { clsx } from 'clsx';
-import type { ButtonHTMLAttributes } from 'react';
-import { CircleNotch } from '@phosphor-icons/react';
+import { Button as HeroButton, Spinner } from '@heroui/react';
+import type { ComponentProps, ReactNode } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
-type Size = 'sm' | 'md' | 'lg';
+type HeroButtonProps = ComponentProps<typeof HeroButton>;
 
-const VARIANTS: Record<Variant, string> = {
-  primary:
-    'bg-primary-500 text-white hover:bg-primary-600 active:bg-primary-700 shadow-sm hover:shadow-md',
-  secondary:
-    'bg-primary-50 text-primary-700 hover:bg-primary-100 active:bg-primary-200 border border-primary-200/60',
-  ghost:
-    'bg-transparent text-text-secondary hover:bg-neutral-100 hover:text-fg active:bg-neutral-200',
-  danger:
-    'bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-700 shadow-sm hover:shadow-md',
-  outline:
-    'bg-transparent border border-border-default text-text-secondary hover:bg-neutral-50 hover:text-fg hover:border-primary-300 active:bg-neutral-100',
-};
-
-const SIZES: Record<Size, string> = {
-  sm: 'h-8 px-3.5 text-body-sm gap-1.5 rounded-lg',
-  md: 'h-10 px-4 text-body-sm gap-2 rounded-lg',
-  lg: 'h-12 px-5 text-body gap-2.5 rounded-xl',
-};
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
-  size?: Size;
+interface ButtonProps extends Omit<HeroButtonProps, 'children' | 'isDisabled'> {
   loading?: boolean;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
+  children?: ReactNode;
+  disabled?: boolean;
+  title?: string;
 }
 
 export function Button({
@@ -39,30 +19,25 @@ export function Button({
   className,
   children,
   disabled,
+  title,
   ...rest
 }: ButtonProps) {
   return (
-    <button
-      type="button"
-      disabled={disabled || loading}
-      className={clsx(
-        'inline-flex items-center justify-center font-medium transition-all duration-fast',
-        'disabled:pointer-events-none disabled:opacity-50',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2',
-        'active:scale-[0.98]',
-        VARIANTS[variant],
-        SIZES[size],
-        className,
-      )}
+    <HeroButton
+      variant={variant}
+      size={size}
+      isDisabled={disabled || loading}
+      className={className}
+      {...(title ? { 'aria-label': title } : {})}
       {...rest}
     >
       {loading ? (
-        <CircleNotch size={size === 'sm' ? 14 : 16} className="animate-spin" aria-hidden />
+        <Spinner size="sm" />
       ) : icon ? (
         <span className="flex items-center justify-center" aria-hidden>{icon}</span>
       ) : null}
       {children}
-    </button>
+    </HeroButton>
   );
 }
 

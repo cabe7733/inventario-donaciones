@@ -59,7 +59,7 @@ export function SearchableSelect({
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={clsx(
-          'h-10 w-full rounded-lg border border-border-default bg-white px-3 text-left text-body text-fg',
+          'h-10 w-full rounded-lg border border-border-default bg-neutral-0 px-3 text-left text-body text-fg',
           'flex items-center justify-between gap-2 transition-colors',
           'hover:border-primary-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100',
           disabled && 'cursor-not-allowed opacity-50',

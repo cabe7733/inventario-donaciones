@@ -1,15 +1,15 @@
 :root {
-  /* ---- Primary (HeroUI Mint/Teal) ---- */
-  --color-primary-50: 236 253 247;
-  --color-primary-100: 209 250 234;
-  --color-primary-200: 167 243 213;
-  --color-primary-300: 110 231 183;
-  --color-primary-400: 52 211 153;
-  --color-primary-500: 16 185 129;
-  --color-primary-600: 5 150 105;
-  --color-primary-700: 4 120 87;
-  --color-primary-800: 6 95 71;
-  --color-primary-900: 6 78 59;
+  /* ---- Primary (HeroUI mint / Donario) ---- */
+  --color-primary-50: 236 253 249;
+  --color-primary-100: 204 251 241;
+  --color-primary-200: 153 246 228;
+  --color-primary-300: 94 234 212;
+  --color-primary-400: 45 212 191;
+  --color-primary-500: 20 184 166;
+  --color-primary-600: 13 148 136;
+  --color-primary-700: 15 118 110;
+  --color-primary-800: 17 94 89;
+  --color-primary-900: 19 78 74;
 
   /* ---- Accent (alias → primary) ---- */
   --color-accent-50: 236 253 247;
@@ -66,11 +66,11 @@
   --color-neutral-900: 17 24 39;
 
   /* ---- Surfaces & text ---- */
-  --surface-page: var(--color-neutral-50);
+  --surface-page: 246 248 247;
   --surface-card: var(--color-neutral-0);
   --surface-raised: var(--color-neutral-0);
   --surface-overlay: var(--color-neutral-0);
-  --text-primary: var(--color-neutral-900);
+  --text-primary: 15 31 42;
   --text-secondary: var(--color-neutral-600);
   --text-tertiary: var(--color-neutral-400);
   --text-inverse: 255 255 255;
@@ -131,9 +131,17 @@
   --ease-accel: cubic-bezier(0.4, 0, 1, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+  /* ---- Sidebar brand ---- */
+  --sidebar-bg: oklch(0.25 0.03 210);
+  --sidebar-text: oklch(0.95 0.01 210);
+  --sidebar-text-muted: oklch(0.6 0.015 210);
+  --sidebar-hover: oklch(0.3 0.01 210);
+  --sidebar-active-bg: oklch(0.32 0.02 170);
+  --sidebar-active-text: oklch(0.85 0.06 170);
+
   /* ---- Layout ---- */
   --sidebar-width: 260px;
-  --sidebar-collapsed-width: 72px;
+  --sidebar-collapsed-width: 88px;
   --header-height: 64px;
   --bottom-nav-height: 64px;
 }

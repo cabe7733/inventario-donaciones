@@ -5,6 +5,7 @@ import { fetchMovements, fetchMedications, fetchUnits, type Movement, type Medic
 import { formatNumber, formatTime, formatDateShort, toLocalDateKey, todayKey } from '../../lib/format';
 import { SkeletonList } from '../../components/ui/Skeleton';
 import { SearchInput } from '../../components/ui/SearchInput';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { Button } from '../../components/ui/Button';
 import { MovementDetailModal } from './MovementDetailModal';
 import { MovementEditModal } from './MovementEditModal';
@@ -150,12 +151,10 @@ export function MedMovementsList({ kind, onReloadInventory }: MedMovementsListPr
               <label htmlFor="filter-start" className="mb-1 block text-caption text-muted font-medium">
                 Fecha Desde
               </label>
-              <input
+              <DatePicker
                 id="filter-start"
-                type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-surface p-2 text-caption text-fg focus:border-primary-500 focus:outline-none"
+                onChange={setStartDate}
               />
             </div>
 
@@ -163,12 +162,10 @@ export function MedMovementsList({ kind, onReloadInventory }: MedMovementsListPr
               <label htmlFor="filter-end" className="mb-1 block text-caption text-muted font-medium">
                 Fecha Hasta
               </label>
-              <input
+              <DatePicker
                 id="filter-end"
-                type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-surface p-2 text-caption text-fg focus:border-primary-500 focus:outline-none"
+                onChange={setEndDate}
               />
             </div>
           </div>

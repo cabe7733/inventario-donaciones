@@ -110,13 +110,17 @@ export function DashboardPage() {
   const alertsCount = lowStock.length + expiredLots;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-6 lg:px-10 lg:py-8">
       {/* Header */}
-      <header className="mb-6">
-        <h1 className="text-display-md mb-1">{t('dashboard.title')}</h1>
-        <p className="text-body text-text-secondary">
-          Resumen del inventario y actividad reciente
-        </p>
+      <header className="relative mb-8 overflow-hidden rounded-[2rem] bg-sidebar px-6 py-7 text-white shadow-elev-4 sm:px-8 sm:py-8">
+        <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-primary-300/15 blur-3xl" aria-hidden="true" />
+        <div className="relative max-w-2xl">
+          <p className="mb-3 text-caption font-semibold uppercase tracking-[0.2em] text-primary-200">Centro de coordinación</p>
+          <h1 className="mb-2 text-display-md tracking-tight text-white">{t('dashboard.title')}</h1>
+          <p className="max-w-xl text-body text-white/80">
+            Resumen del inventario y actividad reciente para tomar decisiones con claridad.
+          </p>
+        </div>
       </header>
 
       {/* Quick Actions */}
@@ -132,28 +136,28 @@ export function DashboardPage() {
             <>
               <Link
                 to="/entradas/nueva?tipo=entrada"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-surface-card px-4 py-3 text-body font-semibold shadow-elev-1 transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <ArrowDownRight size={20} className="text-success-600" />
                 <span>Nueva entrada</span>
               </Link>
               <Link
                 to="/salidas/nueva?tipo=salida"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-surface-card px-4 py-3 text-body font-semibold shadow-elev-1 transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <ArrowUpRight size={20} className="text-warning-600" />
                 <span>Nueva salida</span>
               </Link>
               <Link
                 to="/productos"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-surface-card px-4 py-3 text-body font-semibold shadow-elev-1 transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <Package size={20} className="text-primary-600" />
                 <span>Productos</span>
               </Link>
               <Link
                 to="/informes"
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-surface-card px-4 py-3 text-body font-semibold transition-all hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
+                className="group flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-surface-card px-4 py-3 text-body font-semibold shadow-elev-1 transition-all hover:-translate-y-0.5 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 active:scale-[0.98]"
               >
                 <Eye size={20} className="text-info-600" />
                 <span>Ver reportes</span>

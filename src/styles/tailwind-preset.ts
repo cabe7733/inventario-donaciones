@@ -2,6 +2,7 @@ import type { Config } from 'tailwindcss';
 
 export const tailwindPreset = {
   theme: {
+    extend: {
     colors: {
       primary: {
         50: 'rgb(var(--color-primary-50) / <alpha-value>)',
@@ -95,6 +96,14 @@ export const tailwindPreset = {
         800: 'rgb(var(--color-neutral-800) / <alpha-value>)',
         900: 'rgb(var(--color-neutral-900) / <alpha-value>)',
       },
+      sidebar: {
+        DEFAULT: 'var(--sidebar-bg)',
+        text: 'var(--sidebar-text)',
+        muted: 'var(--sidebar-text-muted)',
+        hover: 'var(--sidebar-hover)',
+        'active-bg': 'var(--sidebar-active-bg)',
+        'active-text': 'var(--sidebar-active-text)',
+      },
     },
     borderRadius: {
       none: 'var(--radius-none)',
@@ -181,7 +190,7 @@ export const tailwindPreset = {
       accel: 'var(--ease-accel)',
       spring: 'var(--ease-spring)',
     },
-    extend: {},
+    },
   },
   plugins: [],
 } satisfies Pick<Config, 'theme' | 'plugins'>;

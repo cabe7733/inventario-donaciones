@@ -10,6 +10,7 @@ import { formatNumber, todayKey } from '../../lib/format';
 import type { PartyKind } from '../../lib/donorOps';
 import type { AocItem } from '../../components/ui/AutocompleteOrCreate';
 import { Field, inputWithError } from '../../components/ui/Field';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { Button } from '../../components/ui/Button';
 import { Segmented } from '../../components/ui/Segmented';
 import { WarehouseSelect } from '../../components/ui/WarehouseSelect';
@@ -221,97 +222,130 @@ export function OrderFormPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 p-4 lg:p-6">
-      <header>
-        <h1 className="text-h2">
-          {isEditing
-            ? `Editar ${orderType === 'entrada' ? 'entrada' : 'salida'}`
-            : (orderType === 'entrada' ? 'Registrar Entrada' : 'Registrar Salida')}
-        </h1>
+    <div className="flex flex-col gap-6 p-4 lg:p-6 max-w-5xl mx-auto">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-h2 font-semibold tracking-tight text-fg">
+            {isEditing
+              ? `Editar ${orderType === 'entrada' ? 'entrada' : 'salida'}`
+              : (orderType === 'entrada' ? 'Registrar Entrada' : 'Registrar Salida')}
+          </h1>
+          <p className="text-body-sm text-text-secondary mt-1">
+            {orderType === 'entrada'
+              ? 'Registra el ingreso de donaciones al inventario de bodegas'
+              : 'Registra la salida de mercancía asignada a beneficiarios'}
+          </p>
+        </div>
+
+        {/* Type selector */}
+        <div className="w-full sm:w-auto">
+          <Segmented
+            ariaLabel="Tipo de movimiento"
+            value={orderType}
+            onChange={(val) => { setOrderType(val); setPartyId(null); }}
+            options={[
+              { value: 'entrada', label: 'Entrada' },
+              { value: 'salida', label: 'Salida' },
+            ]}
+          />
+        </div>
       </header>
 
-      <div className="flex flex-col gap-6">
-        {/* Type selector */}
-        <Segmented
-          ariaLabel="Tipo de movimiento"
-          value={orderType}
-          onChange={(val) => { setOrderType(val); setPartyId(null); }}
-          options={[
-            { value: 'entrada', label: 'Entrada' },
-            { value: 'salida', label: 'Salida' },
-          ]}
-        />
+      {/* 2-Column Metadata Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Column 1: Ubicación & Entidad */}
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface-card p-5 shadow-elev-1">
+          <h2 className="text-h3 font-semibold text-fg flex items-center gap-2 border-b border-border/40 pb-3">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-500 text-white text-caption font-bold">1</span>
+            Origen / Destino
+          </h2>
 
-        {orderType === 'salida' && (
-          <Field id="inventory-authorizer" label="Autoriza la salida" required>
-            <select
-              id="inventory-authorizer"
-              value={inventoryAuthorizerId}
-              onChange={(e) => setInventoryAuthorizerId(e.target.value)}
-              className={inputWithError(undefined)}
-            >
-              <option value="">Seleccionar...</option>
-              {inventoryAuthorizers.map((authorizer) => (
-                <option key={authorizer.id} value={authorizer.id}>{authorizer.name}</option>
-              ))}
-            </select>
-          </Field>
-        )}
+          <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
 
-        {orderType === 'salida' && (
-          <Field id="order-date" label="Fecha de salida" required>
-            <input
-              id="order-date"
-              type="date"
-              value={orderDate}
-              onChange={(e) => setOrderDate(e.target.value)}
-              className={inputWithError(undefined)}
-              max={todayKey()}
-            />
-            <p className="text-caption text-muted mt-1">Día en que salió la mercancía</p>
-          </Field>
-        )}
+          <QuickPartySelect
+            kind={partyKind}
+            value={partyId}
+            onChange={setPartyId}
+            required
+            label={orderType === 'entrada' ? 'Donante' : 'Beneficiario'}
+          />
+        </section>
 
-        {/* Warehouse */}
-        <WarehouseSelect value={warehouseId} onChange={setWarehouseId} required />
+        {/* Column 2: Autorización / Fecha / Vehículo */}
+        <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface-card p-5 shadow-elev-1">
+          <h2 className="text-h3 font-semibold text-fg flex items-center gap-2 border-b border-border/40 pb-3">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-500 text-white text-caption font-bold">2</span>
+            {orderType === 'salida' ? 'Detalles de Salida' : 'Información Adicional'}
+          </h2>
 
-        {/* Donor/Recipient */}
-        <QuickPartySelect
-          kind={partyKind}
-          value={partyId}
-          onChange={setPartyId}
-          required
-          label={orderType === 'entrada' ? 'Donante' : 'Beneficiario'}
-        />
-
-        {/* Vehicle section (entrada only) */}
-        {orderType === 'entrada' && (
-          <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-            <h2 className="text-h3">Vehículo (opcional)</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <Field id="vehicle_plate" label="Placa">
-                <input id="vehicle_plate" value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} className={inputWithError(undefined)} />
-              </Field>
-              <Field id="vehicle_type" label="Tipo">
-                <select id="vehicle_type" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} className={inputWithError(undefined)}>
-                  <option value="">Seleccionar...</option>
-                  <option value="auto">Auto</option>
-                  <option value="camioneta">Camioneta</option>
-                  <option value="van">Van</option>
-                  <option value="camion">Camión</option>
+          {orderType === 'salida' ? (
+            <>
+              <Field id="inventory-authorizer" label="Autoriza la salida" required>
+                <select
+                  id="inventory-authorizer"
+                  value={inventoryAuthorizerId}
+                  onChange={(e) => setInventoryAuthorizerId(e.target.value)}
+                  className={inputWithError(undefined)}
+                >
+                  <option value="">Seleccionar autorizador...</option>
+                  {inventoryAuthorizers.map((authorizer) => (
+                    <option key={authorizer.id} value={authorizer.id}>{authorizer.name}</option>
+                  ))}
                 </select>
               </Field>
-              <Field id="vehicle_color" label="Color">
-                <input id="vehicle_color" value={vehicleColor} onChange={(e) => setVehicleColor(e.target.value)} className={inputWithError(undefined)} />
+
+              <Field id="order-date" label="Fecha de salida" required>
+                <DatePicker
+                  id="order-date"
+                  value={orderDate}
+                  onChange={setOrderDate}
+                  max={todayKey()}
+                />
+                <p className="text-caption text-text-tertiary mt-1">Día en que salió la mercancía</p>
               </Field>
+            </>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <span className="text-label font-medium text-fg">Vehículo de transporte (opcional)</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Field id="vehicle_plate" label="Placa">
+                  <input id="vehicle_plate" value={vehiclePlate} onChange={(e) => setVehiclePlate(e.target.value)} placeholder="Ej: ABC123" className={inputWithError(undefined)} />
+                </Field>
+                <Field id="vehicle_type" label="Tipo">
+                  <select id="vehicle_type" value={vehicleType} onChange={(e) => setVehicleType(e.target.value)} className={inputWithError(undefined)}>
+                    <option value="">Seleccionar...</option>
+                    <option value="auto">Auto</option>
+                    <option value="camioneta">Camioneta</option>
+                    <option value="van">Van</option>
+                    <option value="camion">Camión</option>
+                  </select>
+                </Field>
+                <Field id="vehicle_color" label="Color">
+                  <input id="vehicle_color" value={vehicleColor} onChange={(e) => setVehicleColor(e.target.value)} placeholder="Color" className={inputWithError(undefined)} />
+                </Field>
+              </div>
             </div>
-          </section>
-        )}
+          )}
+        </section>
+      </div>
 
-        {/* Items section */}
-        <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-          <h2 className="text-h3">Items</h2>
+      {/* Full Width Items Section */}
+      <section className="flex flex-col gap-4 rounded-2xl border border-border bg-surface-card p-5 shadow-elev-1">
+        <div className="flex items-center justify-between border-b border-border/40 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-500 text-white text-caption font-bold">3</span>
+            <h2 className="text-h3 font-semibold text-fg">Productos e Ítems</h2>
+            <span className="ml-2 rounded-full bg-primary-500/10 px-2.5 py-0.5 text-caption font-medium text-primary-600 dark:text-primary-400 border border-primary-500/20">
+              {items.length} {items.length === 1 ? 'item' : 'items'}
+            </span>
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={addItem}>
+            <Plus size={16} className="mr-1" />
+            Agregar producto
+          </Button>
+        </div>
 
+        <div className="flex flex-col gap-3">
           {items.map((item, index) => {
             const stock = item.item_id ? effectiveStockByItem(item.item_id) : 0;
             const usedInOtherRow = (id: string) =>
@@ -331,7 +365,7 @@ export function OrderFormPage() {
                 };
               });
             return (
-              <div key={index} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div key={index} className="flex flex-col gap-3 sm:flex-row sm:items-end rounded-xl border border-border/50 bg-surface/50 p-3 transition-colors hover:border-border-default">
                 <div className="flex-1">
                   <QuickProductSelect
                     label={index === 0 ? 'Producto' : ''}
@@ -344,7 +378,7 @@ export function OrderFormPage() {
                     }}
                   />
                 </div>
-                <div className="w-24">
+                <div className="w-full sm:w-32">
                   <Field id={`qty-${index}`} label={index === 0 ? 'Cantidad' : ''} error={undefined}>
                     <input
                       id={`qty-${index}`}
@@ -361,19 +395,19 @@ export function OrderFormPage() {
                 </div>
                 {item.item_id && warehouseId && (
                   stock <= 0 ? (
-                    <p className="text-caption text-danger-700 sm:max-w-[14rem] sm:self-center">
-                      Este producto no tiene stock en la bodega seleccionada.
+                    <p className="text-caption font-medium text-danger-600 dark:text-danger-400 sm:max-w-[14rem] sm:self-center">
+                      Sin stock disponible en bodega.
                     </p>
                   ) : (
-                    <p className="text-caption text-muted sm:self-center">
-                      Stock disponible: {formatNumber(stock)}
+                    <p className="text-caption text-text-secondary sm:self-center">
+                      Stock: <span className="font-semibold text-fg">{formatNumber(stock)}</span>
                     </p>
                   )
                 )}
                 <button
                   type="button"
                   onClick={() => removeItem(index)}
-                  className="mb-0.5 flex h-10 w-10 items-center justify-center rounded-lg text-muted hover:bg-danger-50 hover:text-danger-700"
+                  className="mb-0.5 flex h-10 w-10 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-danger-500/10 hover:text-danger-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-500"
                   aria-label="Eliminar item"
                 >
                   <Trash size={18} />
@@ -381,30 +415,30 @@ export function OrderFormPage() {
               </div>
             );
           })}
+        </div>
 
-          <div>
-            <Button type="button" variant="ghost" onClick={addItem}>
-              <Plus size={18} className="mr-1" />
-              Agregar
-            </Button>
-          </div>
-        </section>
-
-        {/* Actions */}
-          <div className="flex gap-3 justify-end">
-          <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            loading={saveMutation.isPending}
-            onClick={() => void saveMutation.mutateAsync()}
-          >
-            {saveMutation.isPending
-              ? (isEditing ? 'Guardando...' : 'Registrando...')
-              : (isEditing ? 'Guardar cambios' : `Registrar ${orderType === 'entrada' ? 'entrada' : 'salida'}`)}
+        <div className="pt-2">
+          <Button type="button" variant="ghost" onClick={addItem}>
+            <Plus size={18} className="mr-1" />
+            Agregar otro item
           </Button>
         </div>
+      </section>
+
+      {/* Actions */}
+      <div className="flex gap-3 justify-end pt-2">
+        <Button type="button" variant="ghost" onClick={() => navigate(-1)}>
+          Cancelar
+        </Button>
+        <Button
+          type="button"
+          loading={saveMutation.isPending}
+          onClick={() => void saveMutation.mutateAsync()}
+        >
+          {saveMutation.isPending
+            ? (isEditing ? 'Guardando...' : 'Registrando...')
+            : (isEditing ? 'Guardar cambios' : `Registrar ${orderType === 'entrada' ? 'entrada' : 'salida'}`)}
+        </Button>
       </div>
     </div>
   );
