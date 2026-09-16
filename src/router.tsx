@@ -93,6 +93,9 @@ const InformeProductosPorBodegaPage = lazy(() =>
 const ComedorPersonasPage = lazy(() =>
   import('./features/comedor/ComedorPersonasPage').then((m) => ({ default: m.ComedorPersonasPage })),
 );
+const ComedorCheckinPage = lazy(() =>
+  import('./features/comedor/ComedorCheckinPage').then((m) => ({ default: m.ComedorCheckinPage })),
+);
 const FormulasMedicasPage = lazy(() =>
   import('./features/formulas/FormulasMedicasPage').then((m) => ({ default: m.FormulasMedicasPage })),
 );
@@ -167,6 +170,7 @@ export const router = createBrowserRouter([
       // Volunteers
       { path: 'voluntarios', element: <SuspenseBoundary><VoluntariosListPage /></SuspenseBoundary> },
       { path: 'comedor', element: <SuspenseBoundary><ComedorPersonasPage /></SuspenseBoundary> },
+      { path: 'comedor/checkin', element: <SuspenseBoundary><ComedorCheckinPage /></SuspenseBoundary> },
       // Warehouses
       {
         path: 'bodegas',

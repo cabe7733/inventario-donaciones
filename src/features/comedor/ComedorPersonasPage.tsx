@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { FileArrowDown, Plus, UploadSimple } from '@phosphor-icons/react';
+import { FileArrowDown, IdentificationCard, Plus, UploadSimple } from '@phosphor-icons/react';
 import { fetchComedorPeople, fetchVisits, importComedorRows, type ComedorPerson } from '../../lib/comedorOps';
 import { parseComedorFile } from '../../lib/parseCsv';
 import { PageContainer } from '../../components/layout/PageContainer';
@@ -9,6 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { Dropdown } from '../../components/ui/Dropdown';
 import { ImportDialog, type ImportDialogConfig, type ParsedImportRow } from '../../components/ui/ImportDialog';
 import { ComedorPersonaFormModal } from './ComedorPersonaFormModal';
+import { CarnetGenerator } from './CarnetGenerator';
 import { useAuth } from '../../components/auth/AuthProvider';
 import { useToast } from '../../components/ui/Toast';
 
@@ -23,6 +24,7 @@ export function ComedorPersonasPage() {
   const [editing, setEditing] = useState<ComedorPerson | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [carnetsOpen, setCarnetsOpen] = useState(false);
   const columns: Column<ComedorPerson>[] = [
     { key: 'nombre', header: 'Nombre', sortable: true, render: (r) => `${r.nombre} ${r.apellido ?? ''}`.trim() },
     { key: 'celular', header: 'Celular', render: (r) => r.celular || '-' },
@@ -43,10 +45,11 @@ export function ComedorPersonasPage() {
   };
   const downloadTemplate = () => { const url = URL.createObjectURL(new Blob([TEMPLATE], { type: 'text/csv' })); const a = document.createElement('a'); a.href = url; a.download = 'plantilla-comedor.csv'; a.click(); URL.revokeObjectURL(url); };
   return <PageContainer className="flex flex-col gap-5">
-    <header className="flex items-center justify-between gap-2"><div><h1 className="text-h2">Comedor comunitario</h1><p className="text-body-sm text-muted">Personas y días de asistencia</p></div>{canEdit && <div className="flex gap-2"><Dropdown ariaLabel="Más acciones" align="right" trigger={<span className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card"><UploadSimple size={20} /></span>} items={[{ key: 'import', label: 'Importar archivo', icon: <UploadSimple size={16} />, onClick: () => setImportOpen(true) }, { key: 'template', label: 'Descargar plantilla', icon: <FileArrowDown size={16} />, onClick: downloadTemplate }]} /><Button onClick={() => { setEditing(null); setFormOpen(true); }}><Plus size={18} /> Nuevo</Button></div>}</header>
+    <header className="flex items-center justify-between gap-2"><div><h1 className="text-h2">Comedor comunitario</h1><p className="text-body-sm text-muted">Personas y días de asistencia</p></div>{canEdit && <div className="flex gap-2"><Dropdown ariaLabel="Más acciones" align="right" trigger={<span className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card"><UploadSimple size={20} /></span>} items={[{ key: 'import', label: 'Importar archivo', icon: <UploadSimple size={16} />, onClick: () => setImportOpen(true) }, { key: 'template', label: 'Descargar plantilla', icon: <FileArrowDown size={16} />, onClick: downloadTemplate }, { key: 'carnets', label: 'Generar carnets', icon: <IdentificationCard size={16} />, onClick: () => setCarnetsOpen(true) }]} /><Button onClick={() => { setEditing(null); setFormOpen(true); }}><Plus size={18} /> Nuevo</Button></div>}</header>
     <DataTable columns={columns} data={people} loading={isLoading} emptyMessage="No hay asistentes registrados" onRowClick={canEdit ? (row) => { setEditing(row); setFormOpen(true); } : undefined} />
     {formOpen && <ComedorPersonaFormModal person={editing} onClose={() => { setFormOpen(false); setEditing(null); }} />}
     {importOpen && <ImportDialog open onClose={() => setImportOpen(false)} config={config} />}
+    {carnetsOpen && <CarnetGenerator onClose={() => setCarnetsOpen(false)} />}
   </PageContainer>;
 }
 

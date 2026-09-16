@@ -20,6 +20,12 @@ export interface ComedorVisit {
   visit_date: string;
 }
 
+export async function fetchComedorPersonById(id: string): Promise<ComedorPerson | null> {
+  const { data, error } = await supabase.from('comedor_people').select('*').eq('id', id).eq('is_active', true).single();
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+}
+
 export async function fetchComedorPeople(): Promise<ComedorPerson[]> {
   const { data, error } = await supabase.from('comedor_people').select('*').eq('is_active', true).order('nombre');
   if (error) throw error;
