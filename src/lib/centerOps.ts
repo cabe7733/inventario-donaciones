@@ -33,6 +33,56 @@ export interface CenterUpdate {
   representative_email: string;
 }
 
+// ---------- Public types ----------
+
+export type NeedPriority = 'low' | 'medium' | 'high' | 'urgent';
+export type NeedStatus = 'active' | 'fulfilled' | 'cancelled';
+export type NeedItemType = 'product' | 'medication' | 'medical_supply';
+export type NeedSource = 'inventory' | 'manual';
+export type StockLevel = 'available' | 'sufficient' | 'moderate' | 'low' | 'critical';
+
+export interface PublicCenter {
+  id: string;
+  name: string;
+  slug: string | null;
+  public_description: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  public_phone: string | null;
+  public_email: string | null;
+  operating_hours: string | null;
+  accepts_donations: boolean;
+  total_products: number;
+  total_medications: number;
+  total_volunteers: number;
+  total_needs: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PublicNeed {
+  id: string;
+  center_id: string;
+  center_name: string;
+  center_city: string | null;
+  center_state: string | null;
+  center_slug: string | null;
+  item_type: NeedItemType;
+  title: string;
+  description: string | null;
+  quantity_needed: number;
+  quantity_received: number;
+  quantity_remaining: number;
+  priority: NeedPriority;
+  stock_level: StockLevel;
+  source: NeedSource;
+  created_at: string;
+  updated_at: string;
+}
+
+// ---------- Private operations ----------
+
 export async function fetchCenter(centerId: string): Promise<Center | null> {
   const { data, error } = await supabase
     .from('centers')
@@ -59,4 +109,46 @@ export async function updateCenter(input: CenterUpdate): Promise<void> {
     p_representative_email: input.representative_email,
   });
   if (error) throw error;
+}
+
+// ---------- Public operations ----------
+
+export async function fetchPublicCenters(): Promise<PublicCenter[]> {
+  const { data, error } = await supabase.rpc('get_public_centers');
+  if (error) throw error;
+  return (data ?? []) as PublicCenter[];
+}
+
+export async function fetchPublicCenterBySlug(slug: string): Promise<PublicCenter | null> {
+  const { data, error } = await supabase.rpc('get_public_center_by_slug', {
+    p_slug: slug,
+  });
+  if (error) return null;
+  if (!data || data.length === 0) return null;
+  return data[0] as PublicCenter;
+}
+
+export async function fetchPublicNeeds(centerId?: string): Promise<PublicNeed[]> {
+  const { data, error } = await supabase.rpc('get_public_needs', {
+    p_center_id: centerId ?? null,
+  });
+  if (error) throw error;
+  return (data ?? []) as PublicNeed[];
+}
+
+// ---------- Inventory sync ----------
+
+export async function syncNeedFromInventory(needId: string): Promise<void> {
+  const { error } = await supabase.rpc('sync_need_from_inventory', {
+    p_need_id: needId,
+  });
+  if (error) throw error;
+}
+
+export async function syncCenterNeedsFromInventory(centerId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('sync_center_needs_from_inventory', {
+    p_center_id: centerId,
+  });
+  if (error) throw error;
+  return data as number;
 }
