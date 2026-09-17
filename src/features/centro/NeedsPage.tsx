@@ -181,6 +181,7 @@ function NeedRow({
   onDelete: (id: string) => void;
 }) {
   const p = priorityConfig[need.priority] ?? priorityConfig.medium;
+  const isVolunteer = need.item_type === 'volunteer';
 
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-surface-card p-4 shadow-elev-1">
@@ -188,14 +189,16 @@ function NeedRow({
         <div className="flex items-center gap-2 flex-wrap">
           <h4 className="text-body-sm font-medium text-text-primary truncate">{need.title}</h4>
           <Badge variant={p.color as 'danger' | 'warning' | 'info' | 'success'}>{p.label}</Badge>
-          {need.item_id && (
-            <Badge variant="default">Vinculado</Badge>
+          {isVolunteer ? (
+            <Badge variant="warning">👥 Voluntarios ({need.quantity_needed || 1} pers.)</Badge>
+          ) : (
+            need.item_id && <Badge variant="default">Vinculado</Badge>
           )}
         </div>
         {need.description && (
           <p className="mt-0.5 text-caption text-text-tertiary line-clamp-1">{need.description}</p>
         )}
-        {need.quantity_needed > 0 && (
+        {!isVolunteer && need.quantity_needed > 0 && (
           <p className="mt-0.5 text-caption text-text-tertiary">
             Recibidos: {need.quantity_received} / Meta: {need.quantity_needed}
           </p>

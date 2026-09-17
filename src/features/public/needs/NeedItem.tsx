@@ -4,12 +4,14 @@ import {
   Package,
   Pill,
   FirstAid,
+  Users,
   Warning,
   WarningCircle,
   Info,
   CheckCircle,
   Database,
   Note,
+  UserPlus,
 } from '@phosphor-icons/react';
 import type { PublicNeed, NeedPriority, StockLevel, NeedItemType, NeedSource } from '../../../lib/centerOps';
 
@@ -32,12 +34,14 @@ const itemTypeIcons: Record<NeedItemType, typeof Package> = {
   product: Package,
   medication: Pill,
   medical_supply: FirstAid,
+  volunteer: Users,
 };
 
 const itemTypeLabels: Record<NeedItemType, string> = {
-  product: 'Producto',
+  product: 'Producto / Mercado',
   medication: 'Medicamento',
   medical_supply: 'Insumo médico',
+  volunteer: 'Personal / Voluntario',
 };
 
 const variantStyles: Record<string, string> = {
@@ -59,81 +63,100 @@ interface NeedItemProps {
 export function NeedItem({ need }: NeedItemProps) {
   const priority = priorityConfig[need.priority];
   const stock = stockLevelConfig[need.stock_level];
-  const TypeIcon = itemTypeIcons[need.item_type];
+  const TypeIcon = itemTypeIcons[need.item_type] || Package;
   const PriorityIcon = priority.icon;
   const source = sourceConfig[need.source];
   const SourceIcon = source.icon;
+  const isVolunteer = need.item_type === 'volunteer';
 
   const progress = need.quantity_needed > 0
     ? Math.min(100, (need.quantity_received / need.quantity_needed) * 100)
     : 100;
 
   return (
-    <div className="rounded-xl border border-border/60 bg-surface-card p-4 transition-all hover:shadow-elev-2 hover:border-border-default shadow-elev-1">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 min-w-0">
-          <div className={clsx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', variantStyles[priority.variant])}>
-            <TypeIcon size={18} aria-hidden />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h4 className="text-body font-semibold text-text-primary truncate">{need.title}</h4>
-              <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium', variantStyles[priority.variant])}>
-                <PriorityIcon size={12} aria-hidden />
-                {priority.label}
-              </span>
-              <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium', source.style)}>
-                <SourceIcon size={10} aria-hidden />
-                {source.label}
-              </span>
+    <div className="flex flex-col justify-between rounded-xl border border-border/60 bg-surface-card p-4 transition-all hover:shadow-elev-2 hover:border-border-default shadow-elev-1">
+      <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className={clsx('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', isVolunteer ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' : variantStyles[priority.variant])}>
+              <TypeIcon size={18} aria-hidden />
             </div>
-            <p className="mt-0.5 text-caption text-text-tertiary">
-              {itemTypeLabels[need.item_type]}
-              {need.center_name && (
-                <>
-                  {' · '}
-                  <Link
-                    to={`/centros/${need.center_slug ?? need.center_id}`}
-                    className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
-                  >
-                    {need.center_name}
-                  </Link>
-                </>
-              )}
-              {need.center_city && `, ${need.center_city}`}
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-body font-semibold text-text-primary truncate">{need.title}</h4>
+                <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium', variantStyles[priority.variant])}>
+                  <PriorityIcon size={12} aria-hidden />
+                  {priority.label}
+                </span>
+                <span className={clsx('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium', source.style)}>
+                  <SourceIcon size={10} aria-hidden />
+                  {source.label}
+                </span>
+              </div>
+              <p className="mt-0.5 text-caption text-text-tertiary">
+                {itemTypeLabels[need.item_type] || 'Necesidad'}
+                {need.center_name && (
+                  <>
+                    {' · '}
+                    <Link
+                      to={`/centros/${need.center_slug ?? need.center_id}`}
+                      className="hover:text-primary-600 dark:hover:text-primary-400 hover:underline"
+                    >
+                      {need.center_name}
+                    </Link>
+                  </>
+                )}
+                {need.center_city && `, ${need.center_city}`}
+              </p>
+            </div>
           </div>
+          {/* Stock level dot */}
+          {!isVolunteer && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={clsx('h-2.5 w-2.5 rounded-full', stock.color)} aria-hidden />
+              <span className="text-caption text-text-tertiary hidden sm:inline">{stock.label}</span>
+            </div>
+          )}
         </div>
-        {/* Stock level dot */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className={clsx('h-2.5 w-2.5 rounded-full', stock.color)} aria-hidden />
-          <span className="text-caption text-text-tertiary hidden sm:inline">{stock.label}</span>
-        </div>
+
+        {/* Description */}
+        {need.description && (
+          <p className="mt-2 text-body-sm text-text-secondary line-clamp-2">{need.description}</p>
+        )}
+
+        {/* Progress bar or People needed count */}
+        {need.quantity_needed > 0 && !isVolunteer && (
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-caption text-text-tertiary mb-1">
+              <span>{need.quantity_received} recibidos</span>
+              <span>Meta: {need.quantity_needed}</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+              <div
+                className={clsx('h-full rounded-full transition-all duration-500', stock.color)}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {isVolunteer && need.quantity_needed > 0 && (
+          <div className="mt-3 rounded-lg bg-purple-50 dark:bg-purple-950/30 p-2.5 text-caption font-medium text-purple-900 dark:text-purple-200">
+            👥 Se necesitan <span className="font-bold text-purple-700 dark:text-purple-300">{need.quantity_needed} personas</span> para este oficio.
+          </div>
+        )}
       </div>
 
-      {/* Description */}
-      {need.description && (
-        <p className="mt-2 text-body-sm text-text-secondary line-clamp-2">{need.description}</p>
-      )}
-
-      {/* Progress bar */}
-      {need.quantity_needed > 0 && (
-        <div className="mt-3">
-          <div className="flex items-center justify-between text-caption text-text-tertiary mb-1">
-            <span>{need.quantity_received} recibidos</span>
-            <span>Meta: {need.quantity_needed}</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-            <div
-              className={clsx('h-full rounded-full transition-all duration-500', stock.color)}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          {need.quantity_remaining > 0 && (
-            <p className="mt-1 text-caption text-text-tertiary">
-              Faltan <span className="font-medium text-text-secondary">{need.quantity_remaining}</span>
-            </p>
-          )}
+      {/* Action CTA for Volunteer Needs */}
+      {isVolunteer && (
+        <div className="mt-4 pt-3 border-t border-border/40">
+          <Link
+            to={`/auth/registro?tipo=voluntario&centro=${need.center_id}&oficio=${encodeURIComponent(need.title)}`}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-3.5 py-2 text-caption font-semibold text-white hover:bg-purple-700 transition-colors shadow-xs"
+          >
+            <UserPlus size={15} />
+            Postularme como voluntario para este oficio
+          </Link>
         </div>
       )}
     </div>
