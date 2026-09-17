@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, Link } from 'react-router-dom';
-import { List, X, Sun, Moon, Buildings } from '@phosphor-icons/react';
+import { List, X, Sun, Moon, Buildings, User } from '@phosphor-icons/react';
 import { useTheme } from '../../lib/theme/ThemeProvider';
+import { useAuth } from '../../components/auth/AuthProvider';
 
 const PUBLIC_LINKS = [
   { to: '/centros', label: 'Centros de acopio' },
@@ -10,6 +11,7 @@ const PUBLIC_LINKS = [
 
 export function PublicLayout() {
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLElement>(null);
 
@@ -79,12 +81,22 @@ export function PublicLayout() {
             >
               {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
             </button>
-            <Link
-              to="/auth/login"
-              className="hidden rounded-lg bg-primary-600 px-4 py-2 text-body-sm font-medium text-white hover:bg-primary-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 sm:inline-flex"
-            >
-              Iniciar sesión
-            </Link>
+            {user ? (
+              <Link
+                to="/inicio"
+                className="hidden rounded-lg bg-primary-600 px-4 py-2 text-body-sm font-medium text-white hover:bg-primary-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 sm:inline-flex items-center gap-2"
+              >
+                <User size={16} />
+                Ir a mi panel
+              </Link>
+            ) : (
+              <Link
+                to="/auth/login"
+                className="hidden rounded-lg bg-primary-600 px-4 py-2 text-body-sm font-medium text-white hover:bg-primary-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 sm:inline-flex"
+              >
+                Iniciar sesión
+              </Link>
+            )}
             {/* Mobile menu button */}
             <button
               type="button"
