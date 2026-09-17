@@ -92,7 +92,7 @@ export function CenterCard({ center }: CenterCardProps) {
           to={`/centros/${center.slug ?? center.id}`}
           className="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 px-3.5 py-1.5 text-body-sm font-medium text-white hover:bg-primary-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2"
         >
-          Ver detalles
+          Ver necesidades y cómo donar
           <ArrowRight size={14} aria-hidden />
         </Link>
       </div>

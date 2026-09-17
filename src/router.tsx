@@ -146,6 +146,7 @@ export const router = createBrowserRouter([
       { index: true, element: <SuspenseBoundary><LandingPage /></SuspenseBoundary> },
       { path: 'centros', element: <SuspenseBoundary><CentersListPage /></SuspenseBoundary> },
       { path: 'centros/:slug', element: <SuspenseBoundary><CenterDetailPage /></SuspenseBoundary> },
+      { path: 'centro/:id', element: <SuspenseBoundary><CenterDetailPage /></SuspenseBoundary> },
       { path: 'necesidades', element: <SuspenseBoundary><NeedsPage /></SuspenseBoundary> },
     ],
   },

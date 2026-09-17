@@ -477,5 +477,41 @@
     "errorBodega": "Selecciona una bodega",
     "errorQtyRequired": "La cantidad es obligatoria para todos los productos",
     "errorDuplicate": "Este producto ya fue agregado"
+  },
+  "landing": {
+    "title": "Centro de Acopio de Donaciones",
+    "mission": "Monitoreo transparente y en tiempo real de las necesidades del centro de acopio. Descubre qué se necesita hoy y apoya a nuestra comunidad.",
+    "registerVolunteer": "Registrarme como voluntario",
+    "requestHelp": "Solicitar ayuda",
+    "login": "Iniciar sesión",
+    "dashboard": "Ir a mi panel",
+    "whatWeNeed": "Qué necesitamos hoy",
+    "allCategories": "Todas las categorías",
+    "onlyUrgent": "Ver solo lo urgente",
+    "updatedAt": "Actualizado al {{date}}",
+    "updatedRecently": "Actualizado recientemente",
+    "acopioPoint": "Punto de acopio y recepción",
+    "address": "Dirección",
+    "hours": "Horario de atención",
+    "phone": "Teléfono de contacto",
+    "whatsappBtn": "Enviar mensaje por WhatsApp",
+    "mapsBtn": "Ver ubicación en Google Maps",
+    "whatsappPrefill": "Hola, me gustaría información sobre cómo donar en el centro de acopio.",
+    "urgency": {
+      "sin_existencias": "Sin existencias",
+      "escaso": "Escaso",
+      "regular": "Regular",
+      "abastecido": "Abastecido",
+      "muy_abastecido": "Muy abastecido"
+    }
+  },
+  "comedor": {
+    "carnet": {
+      "title": "Carnet de Comedor Comunitario",
+      "generate": "Generar carnets",
+      "print": "Imprimir",
+      "doc": "Doc: {{doc}}",
+      "scanNotice": "Presenta este carnet con tu código QR para el registro de asistencia."
+    }
   }
 }
