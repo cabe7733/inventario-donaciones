@@ -4,11 +4,27 @@ import { Skeleton } from './components/ui/Skeleton';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { RoleGuard } from './components/auth/RoleGuard';
 import { AppShellDesktop } from './components/layout/AppShellDesktop';
+import { PublicLayout } from './features/public/PublicLayout';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { ForgotPasswordPage } from './features/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from './features/auth/ResetPasswordPage';
 
+// Public pages
+const LandingPage = lazy(() =>
+  import('./features/public/LandingPage').then((m) => ({ default: m.LandingPage })),
+);
+const CentersListPage = lazy(() =>
+  import('./features/public/centers/CentersListPage').then((m) => ({ default: m.CentersListPage })),
+);
+const CenterDetailPage = lazy(() =>
+  import('./features/public/centers/CenterDetailPage').then((m) => ({ default: m.CenterDetailPage })),
+);
+const NeedsPage = lazy(() =>
+  import('./features/public/needs/NeedsPage').then((m) => ({ default: m.NeedsPage })),
+);
+
+// Private pages
 const DashboardPage = lazy(() =>
   import('./features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
 );
@@ -29,6 +45,9 @@ const EditCenterPage = lazy(() =>
 );
 const MembersPage = lazy(() =>
   import('./features/centro/MembersPage').then((m) => ({ default: m.MembersPage })),
+);
+const CentroNeedsPage = lazy(() =>
+  import('./features/centro/NeedsPage').then((m) => ({ default: m.NeedsPage })),
 );
 const CategoriasPage = lazy(() =>
   import('./features/configuracion/CategoriasPage').then((m) => ({ default: m.CategoriasPage })),
@@ -119,6 +138,18 @@ function SuspenseBoundary({ children }: { children: ReactNode }) {
 }
 
 export const router = createBrowserRouter([
+  // Public routes (no auth required)
+  {
+    path: '/',
+    element: <PublicLayout />,
+    children: [
+      { index: true, element: <SuspenseBoundary><LandingPage /></SuspenseBoundary> },
+      { path: 'centros', element: <SuspenseBoundary><CentersListPage /></SuspenseBoundary> },
+      { path: 'centros/:slug', element: <SuspenseBoundary><CenterDetailPage /></SuspenseBoundary> },
+      { path: 'centro/:id', element: <SuspenseBoundary><CenterDetailPage /></SuspenseBoundary> },
+      { path: 'necesidades', element: <SuspenseBoundary><NeedsPage /></SuspenseBoundary> },
+    ],
+  },
   // Auth routes (no sidebar)
   {
     path: '/auth',
@@ -154,7 +185,6 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { index: true, element: <Navigate to="/inicio" replace /> },
       { path: 'inicio', element: <SuspenseBoundary><DashboardPage /></SuspenseBoundary> },
       { path: 'productos', element: <SuspenseBoundary><ProductosList /></SuspenseBoundary> },
       { path: 'medicamentos', element: <SuspenseBoundary><MedicamentosList /></SuspenseBoundary> },
@@ -230,6 +260,14 @@ export const router = createBrowserRouter([
         element: (
           <RoleGuard roles={['super_admin', 'admin']}>
             <SuspenseBoundary><MembersPage /></SuspenseBoundary>
+          </RoleGuard>
+        ),
+      },
+      {
+        path: 'centro/necesidades',
+        element: (
+          <RoleGuard roles={['super_admin', 'admin']}>
+            <SuspenseBoundary><CentroNeedsPage /></SuspenseBoundary>
           </RoleGuard>
         ),
       },

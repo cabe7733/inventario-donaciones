@@ -94,6 +94,7 @@ const NAV_GROUPS: NavGroup[] = [
     title: 'administracion',
     items: [
       { to: '/centro', icon: Buildings, key: 'nav.centro' },
+      { to: '/centro/necesidades', icon: ClipboardText, key: 'nav.necesidades', roles: ['super_admin', 'admin'] },
       { to: '/config', icon: Gear, key: 'nav.config', roles: ['super_admin', 'admin'] },
     ],
   },
