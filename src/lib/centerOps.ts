@@ -123,17 +123,7 @@ export async function fetchPublicCenters(): Promise<PublicCenter[]> {
     // ignore
   }
 
-  // Fallback 1: Query public_center_details view
-  try {
-    const { data, error } = await supabase.from('public_center_details').select('*');
-    if (!error && data && data.length > 0) {
-      return data as PublicCenter[];
-    }
-  } catch {
-    // ignore
-  }
-
-  // Fallback 2: Query centers table directly
+  // Fallback: Query centers table directly
   const { data, error } = await supabase
     .from('centers')
     .select('*')
@@ -184,19 +174,6 @@ export async function fetchPublicCenterById(idOrSlug: string): Promise<PublicCen
     return fetchPublicCenterBySlug(idOrSlug);
   }
 
-  try {
-    const { data, error } = await supabase
-      .from('public_center_details')
-      .select('*')
-      .eq('id', idOrSlug)
-      .maybeSingle();
-    if (!error && data) {
-      return data as PublicCenter;
-    }
-  } catch {
-    // ignore
-  }
-
   const centers = await fetchPublicCenters();
   return centers.find((c) => c.id === idOrSlug || c.slug === idOrSlug) || null;
 }
@@ -213,40 +190,8 @@ export async function fetchPublicNeeds(centerId?: string): Promise<PublicNeed[]>
     // ignore
   }
 
-  // Fallback: Query center_needs and public_inventory_needs
+  // Fallback: Query center_needs directly
   const results: PublicNeed[] = [];
-
-  try {
-    let invQuery = supabase.from('public_inventory_needs').select('*');
-    if (centerId) invQuery = invQuery.eq('center_id', centerId);
-    const { data: invData } = await invQuery;
-
-    if (invData) {
-      for (const item of invData) {
-        results.push({
-          id: item.item_id || String(Math.random()),
-          center_id: item.center_id,
-          center_name: 'Centro de Acopio',
-          center_city: '',
-          center_state: '',
-          center_slug: '',
-          item_type: item.item_type || 'product',
-          title: item.title,
-          description: item.description,
-          quantity_needed: Number(item.quantity_needed || 0),
-          quantity_received: Number(item.quantity_received || 0),
-          quantity_remaining: Math.max(0, Number(item.quantity_needed || 0) - Number(item.quantity_received || 0)),
-          priority: item.priority || 'urgent',
-          stock_level: 'critical',
-          source: item.source || 'inventory',
-          created_at: item.updated_at || new Date().toISOString(),
-          updated_at: item.updated_at || new Date().toISOString(),
-        });
-      }
-    }
-  } catch {
-    // ignore
-  }
 
   try {
     let cnQuery = supabase.from('center_needs').select('*').eq('status', 'active');

@@ -26,20 +26,6 @@ export async function fetchPublicInventoryResumen(centerId?: string): Promise<Pu
     // Fallback if RPC fails
   }
 
-  // Fallback to reading the public view directly
-  try {
-    let query = supabase.from('public_inventario_resumen').select('*');
-    if (centerId) {
-      query = query.eq('center_id', centerId);
-    }
-    const { data, error } = await query;
-    if (!error && data) {
-      return data as PublicInventoryItem[];
-    }
-  } catch {
-    // View fallback
-  }
-
   // Final fallback: construct from products table
   let prodQuery = supabase
     .from('products')
